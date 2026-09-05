@@ -177,7 +177,7 @@ Every file written falls into exactly one of these. Handle each per its own clas
    the adopter has confirmed. A nonzero exit (1 = real error, 2 = unresolved conflict) means nothing was
    written — surface the script's own message and stop rather than retrying with different arguments.
 4. **Class 4 — standing-authority and rulebook documents.** Any item that grants standing permission to act
-   without asking (e.g. `work-backlog`'s auto-commit authorization) is confirmed individually regardless of
+   without asking (e.g. `backlog`'s auto-commit authorization) is confirmed individually regardless of
    which class its file otherwise falls into — never bundled into Class 1's batch treatment.
    `docs/methodology.md` itself gets this same individual treatment: it is a universal dependency of every
    skill *and* a document of standing behavioral rules that will often collide with an adopter's own

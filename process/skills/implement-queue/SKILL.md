@@ -98,7 +98,7 @@ inspect the worktree directly before deciding anything.
    `git merge`, `git rebase`, fast-forward, or otherwise bring the worktree's own branch/commits into
    the default branch wholesale** — always this scoped patch, never the branch itself.
 4. Move the item's `BACKLOG.md` entry (both its checklist line and its full tool-section entry) to
-   `BACKLOG_ARCHIVE.md`, per `work-backlog`'s existing cut-and-paste convention.
+   `BACKLOG_ARCHIVE.md`, per `backlog`'s existing cut-and-paste convention.
 5. Report the commit hash.
 6. Check whether the worktree needs explicit removal after a changed-then-harvested state (undocumented
    by the workflow tool for this case) — remove it if so.

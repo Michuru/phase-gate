@@ -15,7 +15,7 @@ export.
 
 **Out of scope for v1**: reviewing multiple open PRs in one pass; true per-line inline GitHub review
 comments (the `gh api .../reviews` POST path is blocked by the Auto Mode permission classifier — see
-Notes); writing to `BACKLOG.md` directly (always goes through `work-backlog`).
+Notes); writing to `BACKLOG.md` directly (always goes through `backlog`).
 
 ## Requirements
 
@@ -109,8 +109,8 @@ visible and correctable.
     report.
 13. **[ASK]** Present merge-now-vs-hold as an explicit question — never a recommendation the skill makes
     itself.
-14. Branch: **merge now** → the merge sub-flow below; **hold** → delegate (announced) to `work-backlog`
-    quick-capture mode with the note template below (if `work-backlog` isn't installed, just note this
+14. Branch: **merge now** → the merge sub-flow below; **hold** → delegate (announced) to `backlog`
+    quick-capture mode with the note template below (if `backlog` isn't installed, just note this
     yourself in whatever tracking file your own workflow uses); **still deciding** → stay in conversation,
     re-ask this same question once resolved rather than letting further discussion substitute for answering
     it.
@@ -146,7 +146,7 @@ never inherited from the earlier one.
    executed** — a different outcome than "merge now" implied — and ask whether that's acceptable or
    whether to disable it (`gh pr merge --disable-auto`).
 5. **[AUTO]** If a matching `BACKLOG.md` entry exists for this PR, remind the user to close it out via
-   `work-backlog` — a spoken reminder, not an automatic archive move.
+   `backlog` — a spoken reminder, not an automatic archive move.
 
 ## GitHub-posting body template
 
@@ -184,12 +184,12 @@ Cover all outcomes explicitly and factually, never as an implied recommendation:
   same report, even when `mergeStateStatus` says `CLEAN` — a `CHANGES_REQUESTED` review (including one
   this same skill just posted) must be named explicitly alongside "mergeable now."
 
-## `work-backlog` handoff note (when the user pauses)
+## `backlog` handoff note (when the user pauses)
 
-Literally invoke `work-backlog` quick-capture mode — never write `BACKLOG.md` directly. Note contents:
+Literally invoke `backlog` quick-capture mode — never write `BACKLOG.md` directly. Note contents:
 repo/PR identifier + URL; effort level and which pass(es) ran; whether the review already posted (verdict
 used, pointer to the PR, not a duplicate findings copy); if not yet posted, the findings list itself; the
-merge-status facts already gathered; where exactly the flow paused. If `work-backlog` isn't installed in
+merge-status facts already gathered; where exactly the flow paused. If `backlog` isn't installed in
 this repo, note the same information yourself in whatever tracking file your workflow uses instead.
 
 ## Notes

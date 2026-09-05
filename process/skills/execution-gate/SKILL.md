@@ -188,6 +188,6 @@ QA-burst escalation (a `design-gate`-scoped feature) is also outside `execution-
   not a stronger model). Step 8's point 4 above (plain-prose recommendation, only when genuinely
   warranted) is the whole fix. Revisit only if a recurring, structured need shows up that this doesn't
   cover.
-- For the full pipeline this skill fits into — from a problem arising through `work-backlog`/`design-gate`
+- For the full pipeline this skill fits into — from a problem arising through `backlog`/`design-gate`
   and on to `implement-queue` and the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
   at the repo root.

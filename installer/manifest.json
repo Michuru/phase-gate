@@ -124,7 +124,7 @@
       "files": [
         {
           "path": "process/skills/design-gate/SKILL.md",
-          "source_blob": "7215ee1a58e437ff479cead4ecf5ff69c104194f",
+          "source_blob": "f8df8cf1f193c1e8adfe893b2281ba4d93e580d5",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/design-gate/SKILL.md"
         }
@@ -150,7 +150,7 @@
       "files": [
         {
           "path": "process/skills/execution-gate/SKILL.md",
-          "source_blob": "730999f83ac533f0f900681b21ef1a5d1210e22c",
+          "source_blob": "ef4961ac2b861742a45a02dce3597803d49bdd05",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/execution-gate/SKILL.md"
         }
@@ -232,7 +232,7 @@
       "files": [
         {
           "path": "process/skills/implement-queue/SKILL.md",
-          "source_blob": "6b74aa91e15a533ea47d9f2bb8506f44b65d1966",
+          "source_blob": "9faf87f357de9bd5ba302aaf6c6a2b0a7d9dfdbb",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/implement-queue/SKILL.md"
         },
@@ -288,7 +288,7 @@
       "files": [
         {
           "path": "process/skills/review-pr/SKILL.md",
-          "source_blob": "096c2355500fbfd31a3591f20f36cd49d8a5bfaa",
+          "source_blob": "5af58f4e9aeb229c0c83dabada614409cb82f53e",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/review-pr/SKILL.md"
         }
@@ -320,15 +320,15 @@
       ]
     },
     {
-      "name": "work-backlog",
+      "name": "backlog",
       "shelf": "process",
       "description": "Handle a backlog request: quick-capture, full investigation, or list open items.",
       "files": [
         {
-          "path": "process/skills/work-backlog/SKILL.md",
-          "source_blob": "375551256190ec8a7fd6e681f63f053b1cea6c6c",
+          "path": "process/skills/backlog/SKILL.md",
+          "source_blob": "13d3ecc6c87dbf14a1090675b2130e8d9b2af59f",
           "source_hash_type": "git-blob",
-          "source_path": ".claude/skills/work-backlog/SKILL.md"
+          "source_path": ".claude/skills/backlog/SKILL.md"
         }
       ]
     },
@@ -339,7 +339,7 @@
       "files": [
         {
           "path": "process/skills/wrap-up-session/SKILL.md",
-          "source_blob": "8a90f286e970e212f5f1d44191ef64c035f95735",
+          "source_blob": "9f075f2c93b47b1b07bb2282ec6042f7e931c5e5",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/wrap-up-session/SKILL.md"
         }

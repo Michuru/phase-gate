@@ -5,7 +5,7 @@ description: Wrap up a working session across every repo touched this session �
 
 # Wrap up a session
 
-This is a manual catch-all layered on top of the repo's existing standing auto-commit triggers (your rules doc's commit triggers, and `work-backlog`'s own archive-and-commit step). Most of the time it should find little left to do, because those triggers already fired mid-session — treat this as the safety net, not the primary mechanism.
+This is a manual catch-all layered on top of the repo's existing standing auto-commit triggers (your rules doc's commit triggers, and `backlog`'s own archive-and-commit step). Most of the time it should find little left to do, because those triggers already fired mid-session — treat this as the safety net, not the primary mechanism.
 
 **Repo-aware for any nested-repo layout** — a session's work this turn may span more than one repo (a parent repo plus one or more nested sub-repos, each their own git root, skills resolving upward from the parent). Every step below runs **once per repo actually touched this session**, not just in whichever directory the session happens to be rooted in — a parent repo's own `.gitignore` commonly excludes its nested sub-repos outright, so a `git status` run only at the parent root will never see changes in a sub-repo.
 
@@ -21,7 +21,7 @@ For each doc type below, judge whether this session's work is actually reflected
 
 - **`CLAUDE.md`** — new tool, new skill, new structural fact, or a changed behavior not yet documented? If your setup has more than one rules doc (a shared parent plus per-repo ones), update whichever one actually owns the content — cross-cutting process → the shared/parent doc; a specific repo's own structure/behavior → that repo's own file. Use `Edit`, never `Write`, on any of them. If a fix only needs a one-line pointer or fact update, do it directly; anything more substantial (a new NOTES.md section) gets delegated to the `docs-writer` subagent — announce the delegation explicitly.
 - **Tool `NOTES.md`** — did this session add dated narrative history (a fix, an investigation, a verification) to a tool that has its own NOTES.md? If so and it's not written yet, delegate to `docs-writer`.
-- **`BACKLOG.md` / `BACKLOG_ARCHIVE.md`** — any item resolved and verified this session that hasn't been archived yet? Normally `work-backlog`'s own step 7 already handles this; this is only a catch for anything that slipped through.
+- **`BACKLOG.md` / `BACKLOG_ARCHIVE.md`** — any item resolved and verified this session that hasn't been archived yet? Normally `backlog`'s own step 7 already handles this; this is only a catch for anything that slipped through.
 - **`MISTAKES.md`** — any process/methodology mistake surfaced this session (a false "verified" claim, a bad runtime assumption) not yet logged? Usually already logged same-turn per standing habit; this is a last-chance catch, not a re-investigation.
 - **`CLAUDE.md` size** — if it's grown past your configured threshold (a `PostToolUse` hook will typically have already flagged this on any edit to that file), either run `/consolidate-docs` now or tell the user it's pending — don't silently ignore an already-fired nudge.
 
@@ -41,4 +41,4 @@ If you don't maintain anything like this, skip this step entirely — it's a con
 
 ## Step 5: Close-out summary
 
-One message covering: commits made (hash + one-line description each, labeled by repo), which docs were touched and how, whether any cheat-sheet artifact was refreshed, and what's still open across `BACKLOG.md` (same "show what's open" convention as `work-backlog`'s own last step) — so the user can pick up next time without re-asking.
+One message covering: commits made (hash + one-line description each, labeled by repo), which docs were touched and how, whether any cheat-sheet artifact was refreshed, and what's still open across `BACKLOG.md` (same "show what's open" convention as `backlog`'s own last step) — so the user can pick up next time without re-asking.

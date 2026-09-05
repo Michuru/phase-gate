@@ -1,6 +1,6 @@
 ---
-name: work-backlog
-description: Handle a BACKLOG.md request — either "add to the backlog" (quick, uninvestigated capture), "let's work on the backlog" (full investigation and fix), or a bare invocation (list open items to pick from). Use whenever the user asks to log, note, fix, or pick up a BACKLOG.md item, references "the backlog" at all, or types /work-backlog with no argument.
+name: backlog
+description: Handle a BACKLOG.md request — either "add to the backlog" (quick, uninvestigated capture), "let's work on the backlog" (full investigation and fix), or a bare invocation (list open items to pick from). Use whenever the user asks to log, note, fix, or pick up a BACKLOG.md item, references "the backlog" at all, or types /backlog with no argument.
 ---
 
 # Work a BACKLOG.md item
@@ -13,12 +13,12 @@ description: Handle a BACKLOG.md request — either "add to the backlog" (quick,
 
 ## Step 0: Determine the mode
 
-- **`/work-backlog` typed with no argument** (no text after the command, and no item/phrasing given in the same message) → **List mode** (below). Read `BACKLOG.md` and show every open item across all sections so the user can pick one — don't guess add-vs-work when there's nothing to guess from yet, just surface the menu.
+- **`/backlog` typed with no argument** (no text after the command, and no item/phrasing given in the same message) → **List mode** (below). Read `BACKLOG.md` and show every open item across all sections so the user can pick one — don't guess add-vs-work when there's nothing to guess from yet, just surface the menu.
 - **"Add to the backlog"** (with or without the `/` prefix) → Quick-capture mode (below). Do the minimum.
-- **"Let's work on the backlog"**, or `/work-backlog <item or description>` (with or without a prior List-mode step) → Full-investigation mode (below).
+- **"Let's work on the backlog"**, or `/backlog <item or description>` (with or without a prior List-mode step) → Full-investigation mode (below).
 - **Ambiguous phrasing** → use `AskUserQuestion` rather than guessing. Guessing wrong either wastes an investigation the user didn't want yet, or leaves a backlog note too thin to act on later.
 
-## List mode (bare `/work-backlog`)
+## List mode (bare `/backlog`)
 
 Read `BACKLOG.md` in full and print every open item, grouped by its existing section headings (don't re-sort or re-categorize). Keep each item to its existing one-line/short form — this is a menu, not a re-investigation, so don't start reading code or verifying claims yet. End by asking which item (if any) to pick up now; once the user answers, continue into Full-investigation mode for that item. If `BACKLOG.md` has no open items at all, say so plainly instead of printing an empty list.
 

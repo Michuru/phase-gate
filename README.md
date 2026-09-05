@@ -44,7 +44,7 @@ shift independently of this document, so verify directly instead of trusting a n
 There's no session-only or ad-hoc mode. Running the installer in `apply` mode writes real files
 into your repo: skills, agents, hook scripts, a `.claude/settings.json`. Those persist across every
 future session, including a standing local auto-commit authorization
-(`work-backlog`/`docs/methodology.md` §6) once installed. Want to see what would apply without
+(`backlog`/`docs/methodology.md` §6) once installed. Want to see what would apply without
 committing to any of it? `recommend-only` is the actual lightweight option. It writes two small
 JSON files under `.claude/phase-gate-install/` and nothing else (see Install, below). Want to try
 exactly one `standalone/` piece with zero install ceremony? Read that piece's file directly instead
@@ -76,7 +76,7 @@ your machine, and it holds itself to that standard.
 
 ## What's in each shelf
 
-**`process/`**: `work-backlog`, `design-gate`, `execution-gate`, `implement-queue`,
+**`process/`**: `backlog`, `design-gate`, `execution-gate`, `implement-queue`,
 `consolidate-docs`, `wrap-up-session`, `commit`, `handoff`, and `review-pr` as skills, plus
 `code-reviewer` and `docs-writer` as subagents, one workflow script, and the hooks that nudge the
 docs-sync/mistakes-log habits `docs/methodology.md` describes. Read

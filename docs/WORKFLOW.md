@@ -1,7 +1,7 @@
 # Workflow: the full project lifecycle, start to finish
 
 A map of which skill handles which stage of turning a problem/need into shipped, archived, committed work.
-The pieces (`work-backlog`, `design-gate`, `execution-gate`, `implement-queue`) each cover their own slice.
+The pieces (`backlog`, `design-gate`, `execution-gate`, `implement-queue`) each cover their own slice.
 This file lays out how they chain together into one pipeline.
 
 **This file cites other skills by named phase, not step number.** A skill's own step numbering can change
@@ -19,7 +19,7 @@ A bug, a feature idea, a backlog item, or an ambiguous ask.
 
 Self-assess against `docs/methodology.md`'s four tiers, before touching anything:
 
-- **Tier 4** (single-spot/single-file, no new UI, no schema change) → skip straight to **`work-backlog`**'s
+- **Tier 4** (single-spot/single-file, no new UI, no schema change) → skip straight to **`backlog`**'s
   Full-investigation mode: state a one-line plan, investigate/fix/verify, `code-reviewer` only if a
   flagged surface, archive, commit. Done. The rest of this file doesn't apply.
 - **Tier 1/2/3** (multi-file, new UI, shared-schema change, or a new tool/major rewrite) → **`design-gate`**.

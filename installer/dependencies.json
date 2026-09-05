@@ -3,7 +3,7 @@
   "schema_version": 1,
 
   "components": {
-    "work-backlog": {
+    "backlog": {
       "shelf": "process",
       "depends_on": {
         "hard": ["code-reviewer", "docs-writer"],
@@ -15,16 +15,16 @@
       "shelf": "process",
       "depends_on": {
         "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["execution-gate", "implement-queue", "work-backlog"]
+        "soft": ["execution-gate", "implement-queue", "backlog"]
       },
       "external_prerequisites": [],
-      "notes": "execution-gate/implement-queue/work-backlog are pipeline-stage pointers to genuinely optional next steps. execution-gate specifically: design-gate's own Step 3.5 makes considering it a mandatory, recorded checkpoint for substantial designs, but running it always stays the adopter's own optional call."
+      "notes": "execution-gate/implement-queue/backlog are pipeline-stage pointers to genuinely optional next steps. execution-gate specifically: design-gate's own Step 3.5 makes considering it a mandatory, recorded checkpoint for substantial designs, but running it always stays the adopter's own optional call."
     },
     "execution-gate": {
       "shelf": "process",
       "depends_on": {
         "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["design-gate", "implement-queue", "work-backlog"]
+        "soft": ["design-gate", "implement-queue", "backlog"]
       },
       "external_prerequisites": [],
       "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to."
@@ -32,7 +32,7 @@
     "implement-queue": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer", "docs-writer", "design-gate", "work-backlog"],
+        "hard": ["code-reviewer", "docs-writer", "design-gate", "backlog"],
         "soft": ["execution-gate"]
       },
       "external_prerequisites": [
@@ -42,7 +42,7 @@
           "note": "D3 (build spec section 0): no reduced sequential mode is shipped. The skill and the process/workflows/implement-queue.js script both assume this is available; state the precondition in the README rather than building a second implementation."
         }
       ],
-      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. design-gate/work-backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard: running it always stays optional (its own SKILL.md and docs/WORKFLOW.md section 4 both state this - only considering it is a mandatory, recorded checkpoint in design-gate Step 3.5, not the run itself), and its output is never what populates a BACKLOG.md checklist entry - that's design-gate's job alone. implement-queue reads an execution-strategy section if one exists but works correctly without it."
+      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. design-gate/backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard: running it always stays optional (its own SKILL.md and docs/WORKFLOW.md section 4 both state this - only considering it is a mandatory, recorded checkpoint in design-gate Step 3.5, not the run itself), and its output is never what populates a BACKLOG.md checklist entry - that's design-gate's job alone. implement-queue reads an execution-strategy section if one exists but works correctly without it."
     },
     "consolidate-docs": {
       "shelf": "process",
@@ -56,7 +56,7 @@
       "shelf": "process",
       "depends_on": {
         "hard": ["docs-writer"],
-        "soft": ["work-backlog"]
+        "soft": ["backlog"]
       },
       "external_prerequisites": []
     },
@@ -82,7 +82,7 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["work-backlog"]
+        "soft": ["backlog"]
       },
       "external_prerequisites": [
         {
@@ -96,7 +96,7 @@
           "note": "review-pr delegates finding-generation to these rather than re-implementing review logic."
         }
       ],
-      "notes": "work-backlog's hold-path degrade is explicitly stated twice in the skill's own text: 'if work-backlog isn't installed, note this yourself in whatever tracking file your own workflow uses instead.'"
+      "notes": "backlog's hold-path degrade is explicitly stated twice in the skill's own text: 'if backlog isn't installed, note this yourself in whatever tracking file your own workflow uses instead.'"
     },
     "ai-check": {
       "shelf": "standalone",
