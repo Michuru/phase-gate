@@ -124,7 +124,7 @@
       "files": [
         {
           "path": "process/skills/design-gate/SKILL.md",
-          "source_blob": "9e17798f385ae5ba1b8fdec353028da258a8c186",
+          "source_blob": "d51546e98b8f297104a05abb470fbbd596db4fc5",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/design-gate/SKILL.md"
         }
@@ -339,7 +339,7 @@
       "files": [
         {
           "path": "process/skills/wrap-up-session/SKILL.md",
-          "source_blob": "cb04a589920bd17655738a1feeb0f2a8684c523e",
+          "source_blob": "8a90f286e970e212f5f1d44191ef64c035f95735",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/wrap-up-session/SKILL.md"
         }
