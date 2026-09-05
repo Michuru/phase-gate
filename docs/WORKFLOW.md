@@ -41,15 +41,20 @@ done.
 
 ## 4. Decision point A — does this design's task breakdown need an execution-strategy pass?
 
-**This pass is optional and on-demand — not a required gate.** Its presence here describes where it fits
-*when used*; it is deliberately not an instruction to run it every time.
+**Considering this pass is a mandatory, recorded checkpoint above the threshold below; actually running
+it stays fully optional.** `design-gate` Step 3.5 states a recommendation (run/skip) as part of its own
+implement-now/backlog question once a design crosses the threshold, and records the outcome either way
+under a `## Execution-gate consideration` heading — but whether `execution-gate` itself runs is always
+the adopter's call.
 
-- Trivial (1–2 tasks, no real delegation/parallel question) → skip straight to section 5 below.
-- Substantial multi-task breakdown → optionally run **`execution-gate`**: the parallelization/Workflow-
-  worthiness gate first, then per-task classification into buckets (Direct / `docs-writer` / fork /
-  user-executed), a scrutiny label from a fixed vocabulary on every task including Direct ones, the rare
-  check for a genuinely-independent parallel subset, and a written `## Execution strategy` section appended
-  to the design doc.
+- **Trivial** (1–2 tasks, confined to a single sub-part/component) → skip straight to section 5 below.
+- **Substantial** (3 or more tasks **and** a real question of how they'd be delegated/ordered/parallelized
+  — not just a single, obviously-sequential track — **or** the design spans more than one
+  independently-identifiable sub-part/component) → `design-gate` states a recommendation and records the
+  outcome; **optionally run `execution-gate`**: the parallelization/Workflow-worthiness gate first, then
+  per-task classification into buckets (Direct / `docs-writer` / fork / user-executed), a scrutiny label
+  from a fixed vocabulary on every task including Direct ones, the rare check for a genuinely-independent
+  parallel subset, and a written `## Execution strategy` section appended to the design doc.
 
 ## 5. Decision point B — one design right now, or several independent already-approved designs ready to go?
 

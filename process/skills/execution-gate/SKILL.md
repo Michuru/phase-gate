@@ -1,6 +1,6 @@
 ---
 name: execution-gate
-description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Use after a Tier 1/2/3 design-gate doc is approved and has a substantial multi-task breakdown. Optional and on-demand, not a required gate. Does not execute anything itself, and does not replace implement-queue (which parallelizes across several already-approved separate designs, not within one).
+description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Use after a Tier 1/2/3 design-gate doc is approved and has a substantial multi-task breakdown — design-gate Step 3.5 now makes considering this skill a mandatory, recorded checkpoint at that point, though actually running it stays optional. Does not execute anything itself, and does not replace implement-queue (which parallelizes across several already-approved separate designs, not within one).
 ---
 
 # Execution gate: decide how one design's tasks should run
@@ -174,10 +174,13 @@ QA-burst escalation (a `design-gate`-scoped feature) is also outside `execution-
 
 ## Notes
 
-- Whether running this skill should become a required step in your rules doc's tiered-work section (Tier 1,
-  possibly Tier 2) is an open question, not yet decided — stays opt-in/standalone until revisited, per the
-  user's own decision. Don't bake this into your rules doc unilaterally in a future session without
-  asking again.
+- Whether *running* this skill should become a required step in your rules doc's tiered-work section
+  (Tier 1, possibly Tier 2) is an open question, not yet decided — stays opt-in/standalone until
+  revisited, per the user's own decision. Don't bake this into your rules doc unilaterally in a future
+  session without asking again. **Narrower question already resolved**: *considering* this skill (stating
+  a run/skip recommendation, recording the outcome) is a mandatory, recorded checkpoint in `design-gate`
+  Step 3.5 whenever a design's breakdown is substantial. This does not touch the broader, still-open
+  question above.
 - **No per-task model field, by design.** A per-project model plan (drafting on one model, reviewing on
   another, an occasional different-family pass) is usually resolved by hand without real friction — not
   enough evidence to justify a new fixed-vocabulary field alongside Step 5's `stakes`/`approval`, and

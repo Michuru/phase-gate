@@ -39,6 +39,17 @@ change independently of this document, so verify directly rather than trusting a
   by this repo).
 - **`git`**, obviously.
 
+## What installing actually does
+
+There is no session-only or ad-hoc mode. Running the installer in `apply` mode writes real files into
+your repo — skills, agents, hook scripts, a `.claude/settings.json` — that persist across every future
+session, including a standing local auto-commit authorization (`work-backlog`/`docs/methodology.md` §6)
+once installed. If you just want to see what would apply without committing to any of it,
+**`recommend-only` is the actual lightweight option** — it writes only two small JSON files under
+`.claude/phase-gate-install/` and nothing else (see Install, below). If you want to try exactly one
+`standalone/` piece with zero install ceremony at all, read that piece's file directly instead of running
+the installer.
+
 ## Install
 
 ```
