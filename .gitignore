@@ -1,0 +1,22 @@
+# Claude Code's per-machine permission allowlist. It accumulates the raw text
+# of approved commands across every session, and its redaction of captured
+# values is best-effort rather than enforced — so it is a recurring source of
+# accidentally-committed credentials. Never track it.
+.claude/settings.local.json
+
+# Installer state written into an adopter's repo (plan + receipt).
+# Adopters may choose to track this; it is ignored here in the source repo.
+.claude/phase-gate-install/
+
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini

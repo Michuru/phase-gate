@@ -1,0 +1,141 @@
+{
+  "$comment": "Static transitive dependency manifest. Built by grepping the actual generalized skill files for real cross-references (process/skills/*/SKILL.md), not from memory of the source repo. 'hard' means the skill's own documented steps invoke the target and have no stated fallback; 'soft' means the skill explicitly states a fallback ('if X isn't installed, do Y yourself') or the reference is a pipeline-stage pointer to a genuinely optional next step. All hard skill-to-agent edges are satisfied automatically for any adopter who installs process/ as the integrated shelf intends, since code-reviewer and docs-writer ship as part of that same shelf - they only matter if a component is cherry-picked out of process/ on its own.",
+  "schema_version": 1,
+
+  "components": {
+    "work-backlog": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["code-reviewer", "docs-writer"],
+        "soft": []
+      },
+      "external_prerequisites": []
+    },
+    "design-gate": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["code-reviewer", "docs-writer"],
+        "soft": ["execution-gate", "implement-queue", "work-backlog"]
+      },
+      "external_prerequisites": [],
+      "notes": "execution-gate/implement-queue/work-backlog are pipeline-stage pointers to genuinely optional next steps (design-gate's own text: execution-gate is 'optional and on-demand, not a required step')."
+    },
+    "execution-gate": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["code-reviewer", "docs-writer"],
+        "soft": ["design-gate", "implement-queue", "work-backlog"]
+      },
+      "external_prerequisites": [],
+      "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to."
+    },
+    "implement-queue": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["code-reviewer", "docs-writer", "design-gate", "work-backlog"],
+        "soft": ["execution-gate"]
+      },
+      "external_prerequisites": [
+        {
+          "name": "Workflow tool with worktree support",
+          "degrades": "fail-fast",
+          "note": "D3 (build spec section 0): no reduced sequential mode is shipped. The skill and the process/workflows/implement-queue.js script both assume this is available; state the precondition in the README rather than building a second implementation."
+        }
+      ],
+      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. design-gate/work-backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard: it is explicitly optional and on-demand (its own SKILL.md and docs/WORKFLOW.md section 4 both state this), and its output is never what populates a BACKLOG.md checklist entry - that's design-gate's job alone. implement-queue reads an execution-strategy section if one exists but works correctly without it."
+    },
+    "consolidate-docs": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["docs-writer"],
+        "soft": []
+      },
+      "external_prerequisites": []
+    },
+    "wrap-up-session": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["docs-writer"],
+        "soft": ["work-backlog"]
+      },
+      "external_prerequisites": []
+    },
+    "commit": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": ["wrap-up-session"]
+      },
+      "external_prerequisites": [],
+      "notes": "Companion/contrast relationship only ('lightweight companion to wrap-up-session') - no functional call from commit into wrap-up-session. Works standalone."
+    },
+    "handoff": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": ["context-usage-nudge"]
+      },
+      "external_prerequisites": [],
+      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger."
+    },
+    "review-pr": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": ["work-backlog"]
+      },
+      "external_prerequisites": [
+        {
+          "name": "gh (GitHub CLI), installed and authenticated",
+          "degrades": "hard requirement for this skill specifically - not optional",
+          "note": "Core logic is gh-based throughout; there is no fallback path."
+        },
+        {
+          "name": "bundled code-review / security-review skills",
+          "degrades": "these ship with Claude Code itself, not with this export - assumed present, not installed by phase-gate",
+          "note": "review-pr delegates finding-generation to these rather than re-implementing review logic."
+        }
+      ],
+      "notes": "work-backlog's hold-path degrade is explicitly stated twice in the skill's own text: 'if work-backlog isn't installed, note this yourself in whatever tracking file your own workflow uses instead.'"
+    },
+    "ai-check": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": []
+    },
+    "humanize": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": []
+    },
+    "block-dangerous-commands": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found", "note": "Runtime python3-with-fallback pattern in the settings fragment - not a hard install-time check." }
+      ]
+    },
+    "hooks-health-check": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
+        { "name": "git", "degrades": "reports nothing if the cwd isn't a git repo (by design, not an error)" }
+      ]
+    },
+    "context-usage-nudge": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" }
+      ]
+    },
+    "statusline": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "statusLine silently renders nothing if neither is found" }
+      ]
+    }
+  }
+}

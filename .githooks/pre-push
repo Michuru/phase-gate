@@ -1,0 +1,70 @@
+#!/bin/sh
+# Local pre-push hook: blocking secret-shape scan before anything reaches a
+# remote. Installed via:
+#   git config core.hooksPath .githooks
+# NOTE core.hooksPath is LOCAL config and does NOT survive a fresh clone -
+# re-set it in every new clone, or the guard is silently absent. This failure
+# mode is quiet by design: nothing errors, the hook simply never runs.
+#
+# BLOCKING here, unlike pre-commit's warn-only default, is deliberate. A commit
+# is local and amendable; a push is the actual irreversible boundary, because
+# once content reaches a remote it must be assumed cached, forked, or indexed
+# even if deleted afterwards. A false-positive block costs one
+# `git push --no-verify` (confirm it really is a false positive first - don't
+# reach for this reflexively); a false negative publishes a credential
+# permanently. Delegates the actual pattern matching to .githooks/scan-secrets.sh
+# - see that file for the exit-code contract this reuses, and
+# .githooks/secret-patterns.txt for how to write patterns worth having.
+#
+# What this scans: every git blob object newly reachable via each ref being
+# pushed (git's own recommended idiom for this purpose, per githooks(5)'s
+# pre-push example) - not just the diff. A secret added in one commit and
+# reverted in a later commit within the same push is still fully reachable
+# history, and is still scanned. This does NOT retroactively scan a remote's
+# pre-existing history; cleaning history that is already published is a
+# separate, one-time, high-stakes operation, not this hook's job.
+
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 0
+SCANNER="$SELF_DIR/scan-secrets.sh"
+
+if [ ! -f "$SCANNER" ]; then
+  echo "[pre-push] scan-secrets.sh missing - cannot verify this push is clean." >&2
+  echo "[pre-push] Blocking out of caution rather than pushing unverified." >&2
+  exit 1
+fi
+
+ZERO="0000000000000000000000000000000000000000"
+BLOCKED=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$ZERO" ] && continue   # deleting a ref - nothing new to scan
+
+  if [ "$remote_sha" = "$ZERO" ]; then
+    range="$local_sha"          # brand-new ref/remote: everything reachable is "new"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  # First field only (the sha) - deliberately NOT `NF==2 {print $1}`. That form
+  # looks equivalent, but `git rev-list --objects` prints "<sha> <path>", so any
+  # tracked path containing a space produces NF>2 and gets silently dropped.
+  # A review pass once caught exactly this: the guard was skipping the very
+  # file it existed to protect, with no error to indicate it. If your repo has
+  # no spaces in any path today, it will eventually.
+  objects=$(git rev-list --objects "$range" 2>/dev/null | awk '{print $1}')
+  [ -z "$objects" ] && continue
+
+  count=$(printf '%s\n' "$objects" | wc -l)
+  echo "[pre-push] scanning $count object(s) new to ref $local_ref before push..."
+  # shellcheck disable=SC2086
+  "$SCANNER" objects $objects
+  [ "$?" = "1" ] && BLOCKED=1
+done
+
+if [ "$BLOCKED" = "1" ]; then
+  echo "[pre-push] BLOCKED - a secret-shaped literal was found in content about to be pushed (see findings above)." >&2
+  echo "[pre-push] If this is a confirmed false positive: git push --no-verify" >&2
+  exit 1
+fi
+
+exit 0

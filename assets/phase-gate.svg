@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 560" width="660" height="560" role="img" aria-label="A circular loop diagram. Four numbered gates and a closeout step sit on a ring, connected by clockwise arrows: 01 Backlog Triage at the top, 02 Design Gate on the upper right, 03 Execution Router at the lower right, 04 Parallel Queue at the lower left, and Closeout on the upper left. The arrow from Closeout back to Backlog Triage is labelled 'next item', closing the cycle. A hub at the centre reads Phase-Gate, the working loop.">
+  <rect x="0" y="0" width="660" height="560" fill="#FAF9F5"/>
+  <defs>
+    <marker id="ringArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6B6A61"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="#6B6A61" stroke-width="2" marker-end="url(#ringArrow)">
+    <path d="M392.7,116.6 A175,175 0 0 1 466.0,169.9"/>
+    <path d="M504.8,289.2 A175,175 0 0 1 476.8,375.3"/>
+    <path d="M375.3,449.0 A175,175 0 0 1 284.7,449.0"/>
+    <path d="M183.2,375.3 A175,175 0 0 1 155.2,289.2"/>
+    <path d="M194.0,169.9 A175,175 0 0 1 267.3,116.6"/>
+  </g>
+  <text x="196" y="110" font-family="'JetBrains Mono', monospace" fill="#6B6A61" letter-spacing="0.05em" font-size="10" text-anchor="middle">NEXT ITEM</text>
+
+  <circle cx="330" cy="280" r="78" fill="#141413"/>
+  <text x="330" y="274" font-family="'Archivo', sans-serif" font-weight="700" fill="#F5F4ED" font-size="17" text-anchor="middle">Phase-Gate</text>
+  <text x="330" y="296" font-family="'JetBrains Mono', monospace" fill="#F5F4ED" opacity="0.75" font-size="10" text-anchor="middle">the working loop</text>
+
+  <circle cx="330" cy="105" r="52" fill="#FAF9F5" stroke="#D97757" stroke-width="2.5"/>
+  <text x="330" y="89" font-family="'JetBrains Mono', monospace" fill="#A94F33" font-size="10.5" text-anchor="middle">01</text>
+  <text x="330" y="107" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Backlog</text>
+  <text x="330" y="122" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Triage</text>
+
+  <circle cx="496" cy="226" r="52" fill="#FAF9F5" stroke="#D97757" stroke-width="2.5"/>
+  <text x="496" y="210" font-family="'JetBrains Mono', monospace" fill="#A94F33" font-size="10.5" text-anchor="middle">02</text>
+  <text x="496" y="228" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Design</text>
+  <text x="496" y="243" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Gate</text>
+
+  <circle cx="433" cy="422" r="52" fill="#FAF9F5" stroke="#D97757" stroke-width="2.5"/>
+  <text x="433" y="406" font-family="'JetBrains Mono', monospace" fill="#A94F33" font-size="10.5" text-anchor="middle">03</text>
+  <text x="433" y="424" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Execution</text>
+  <text x="433" y="439" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Router</text>
+
+  <circle cx="227" cy="422" r="52" fill="#FAF9F5" stroke="#D97757" stroke-width="2.5"/>
+  <text x="227" y="406" font-family="'JetBrains Mono', monospace" fill="#A94F33" font-size="10.5" text-anchor="middle">04</text>
+  <text x="227" y="424" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Parallel</text>
+  <text x="227" y="439" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Queue</text>
+
+  <circle cx="164" cy="226" r="52" fill="#FAF9F5" stroke="#788C5D" stroke-width="2.5"/>
+  <text x="164" y="222" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="12.5" text-anchor="middle">Closeout</text>
+  <text x="164" y="239" font-family="'JetBrains Mono', monospace" fill="#6B6A61" letter-spacing="0.05em" font-size="9" text-anchor="middle">SHARED</text>
+</svg>

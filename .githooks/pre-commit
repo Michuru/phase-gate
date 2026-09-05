@@ -1,0 +1,102 @@
+#!/bin/sh
+# Local pre-commit hook: warn-only lint of STAGED CONTENT. Installed via:
+#   git config core.hooksPath .githooks
+# NOTE core.hooksPath is LOCAL config and does NOT survive a fresh clone -
+# re-set it in every new clone, or this hook silently never runs.
+#
+# ---------------------------------------------------------------------------
+# CONFIGURE ME
+# ---------------------------------------------------------------------------
+# Set LINT_COMMAND to your linter. It is invoked from a scratch directory with
+# the staged file paths appended as arguments, so it must accept file paths and
+# should not assume it is running at your repo root. Leave it empty to disable
+# the lint step entirely (the hook then does nothing and exits 0).
+#
+# Examples:
+#   LINT_COMMAND="$REPO_ROOT/node_modules/.bin/eslint --config $REPO_ROOT/eslint.config.js"
+#   LINT_COMMAND="ruff check"
+#   LINT_COMMAND="$REPO_ROOT/.venv/bin/flake8"
+#
+# $REPO_ROOT is set for you before this is evaluated, because the lint runs
+# from a scratch dir - a bare relative path to a linter binary will not resolve.
+# An externally-set LINT_COMMAND in the environment wins over this default.
+#
+# LINT_EXTENSIONS is the shell case-pattern of files to lint.
+# ---------------------------------------------------------------------------
+REPO_ROOT=$(pwd)
+: "${LINT_COMMAND:=}"
+LINT_EXTENSIONS='*.js|*.mjs|*.cjs|*.ts|*.py'
+
+# Paths to never lint, as a shell case pattern. Quote any segment containing a
+# space, e.g.  node_modules/*|"My Vendored Dir"/*
+LINT_EXCLUDE='node_modules/*|.venv/*|venv/*|dist/*|build/*'
+
+# ---------------------------------------------------------------------------
+# STRUCTURALLY WARN-ONLY
+# ---------------------------------------------------------------------------
+# Every external invocation below is guarded so that nothing can end this
+# script non-zero. A missing linter, a missing mktemp, or any other
+# infrastructure hiccup is reported to the terminal and then ignored - it is
+# never allowed to silently block every future commit in the repo. That
+# failure mode is far more damaging than a missed lint warning: it turns a
+# convenience into an obstacle, and the usual response is to disable hooks
+# entirely, which also disables the pre-push secret guard that actually
+# matters.
+#
+# Note this hook does NOT scan for secrets. That is .githooks/pre-push's job,
+# and it blocks there for real, because a push is the irreversible boundary.
+# ---------------------------------------------------------------------------
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null)
+[ -z "$STAGED_FILES" ] && exit 0
+[ -z "$LINT_COMMAND" ] && exit 0
+
+# ---------------------------------------------------------------------------
+# Why lint the INDEX rather than the working tree
+# ---------------------------------------------------------------------------
+# Each staged file's index content is materialized into a scratch dir via
+# `git show :<path>` and linted there - never whatever happens to be sitting on
+# disk. If you stage narrowly (`git add -p`, or a file left in the "MM"
+# staged-and-unstaged state), linting working-tree paths would validate content
+# that is not part of this commit, or fail on unrelated in-progress edits that
+# were deliberately left unstaged.
+#
+# `git stash --keep-index` is deliberately NOT used to achieve this. An
+# unpaired stash can silently revert live work if anything between the push and
+# the pop fails or exits early; a read-only `git show` into a scratch copy has
+# no such failure mode.
+#
+# The file list is built with `set --` (positional parameters), never
+# `for f in $LIST`. Unquoted word-splitting silently mis-derives any path
+# containing a space, causing `git show ":$f"` to fail quietly and the linter
+# to be handed a nonexistent file - with no error to indicate that a file was
+# skipped. If your repo has no spaces in any path today, it eventually will.
+# ---------------------------------------------------------------------------
+set --
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  eval "case \"\$f\" in $LINT_EXTENSIONS) ;; *) continue ;; esac"
+  eval "case \"\$f\" in $LINT_EXCLUDE) continue ;; esac"
+  set -- "$@" "$f"
+done <<STAGED_FILES_EOF
+$STAGED_FILES
+STAGED_FILES_EOF
+
+[ "$#" -eq 0 ] && exit 0
+
+SCRATCH=$(mktemp -d 2>/dev/null) || {
+  echo "[pre-commit] mktemp failed - skipping lint step (infrastructure, not a lint failure)" >&2
+  exit 0
+}
+
+for f in "$@"; do
+  mkdir -p "$SCRATCH/$(dirname "$f")" 2>/dev/null
+  git show ":$f" > "$SCRATCH/$f" 2>/dev/null
+done
+
+echo "[pre-commit] linting $# staged file(s) (warn-only, never blocks the commit):"
+# shellcheck disable=SC2086
+(cd "$SCRATCH" && eval "$LINT_COMMAND" "\"\$@\"") 2>&1 || true
+
+rm -rf "$SCRATCH"
+exit 0

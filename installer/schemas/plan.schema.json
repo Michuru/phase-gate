@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phase-gate/installer/schemas/plan.schema.json",
+  "title": "phase-gate install plan",
+  "description": "The installer skill's step-2 output: what it WOULD do, produced before anything is written. This is the recommend-only mode's entire deliverable - verify_citations.py's job is partly to confirm a real plan was produced and read before any --apply step runs, not skipped past.",
+  "type": "object",
+  "required": ["generated_at", "source_commit", "manifest_version", "variables", "components", "repo_files", "conflicts"],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this plan was produced, ISO 8601."
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "The phase-gate repo's own git SHA this plan was generated from. Carried through unchanged into the receipt if the adopter proceeds to apply - this is what makes a later update able to tell 'phase-gate changed this' from 'the adopter changed this' (see the build spec's finding 10)."
+    },
+    "manifest_version": {
+      "type": "string",
+      "description": "The installer/manifest.json schema_version this plan was built against."
+    },
+    "adopter_repo_root": {
+      "type": "string",
+      "description": "Absolute path to the adopter's repo root, as detected (git rev-parse --show-toplevel)."
+    },
+    "variables": {
+      "type": "array",
+      "description": "Every installer/variables.json entry as resolved for this specific adopter - detected, asked, or left at its shipped default.",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "value", "source"],
+        "properties": {
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["default", "detected", "required", "optional"] },
+          "value": {},
+          "source": {
+            "type": "string",
+            "enum": ["shipped_default", "detected", "user_provided", "left_empty", "confirmed_none"],
+            "description": "How this value was actually arrived at for this install, not just its declared kind. 'left_empty' means the adopter has not actually answered a required-kind question yet - the dependent feature degrades silently and check 2 must fail loudly. 'confirmed_none' means the adopter was asked and confirmed the thing genuinely does not exist for this repo (e.g. no test suite at all) - a deliberate, informed answer, not an unaddressed gap, and check 2 must NOT fail on it."
+          },
+          "detection_command": {
+            "type": "string",
+            "description": "Present only when source is 'detected' - the exact command that was run."
+          }
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "description": "Every component under consideration for this install, ALWAYS one entry per component named in installer/dependencies.json - never one combined entry for a whole shelf. 'Install everything in process/' is a selection convenience the installer offers the adopter, not a different row shape: it just sets every process/ component's status to will_install in the same per-component rows every other selection produces. This matters because check 3 (verify_citations.py) checks hard dependencies by component name - a merged shelf row would make that check meaningless.",
+      "items": {
+        "type": "object",
+        "required": ["name", "shelf", "status", "target_paths", "citations"],
+        "properties": {
+          "name": { "type": "string" },
+          "shelf": { "type": "string", "enum": ["process", "standalone"] },
+          "status": {
+            "type": "string",
+            "enum": ["will_install", "already_present_identical", "already_present_will_update", "skipped_by_adopter", "skipped_prerequisite_missing"],
+            "description": "already_present_identical is the idempotent no-op case; already_present_will_update means a diff exists and re-applying will change something."
+          },
+          "target_paths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Where in the adopter's repo this component's files will land."
+          },
+          "prerequisite_note": {
+            "type": "string",
+            "description": "Present only when status is skipped_prerequisite_missing - e.g. review-pr needs a gh remote, implement-queue needs Workflow/worktree support (D3 fail-fast)."
+          },
+          "citations": {
+            "type": "array",
+            "description": "Every fact this row's verdict actually depends on, both export-side ('this export file says X') and adopter-side ('and that applies to you because Y') - the grounding verify_citations.py's check 1 re-verifies. Can be empty only for a row whose entire verdict is 'ship this file as-is, nothing about it depends on adopter state' - which is rare; most rows should have at least one adopter-side entry.",
+            "items": {
+              "type": "object",
+              "required": ["side", "type"],
+              "properties": {
+                "side": { "type": "string", "enum": ["export", "adopter"], "description": "Which of the two trusted-as-data-only inputs this citation was read from." },
+                "type": { "type": "string", "enum": ["file_quote", "command_output"], "description": "file_quote grounds a normal claim; command_output is the required form for an absence verdict, which cannot quote a file that doesn't exist." },
+                "path": { "type": "string", "description": "Required when type is file_quote - path relative to the side's own root (the export clone, or the adopter repo)." },
+                "line": { "type": "integer", "description": "Optional line number, when type is file_quote." },
+                "quote": { "type": "string", "description": "Required when type is file_quote - the actual excerpt read." },
+                "command": { "type": "string", "description": "Required when type is command_output - the exact command run." },
+                "output": { "type": "string", "description": "Required when type is command_output - its literal output, re-run by verify_citations.py rather than trusted as a stale claim." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "repo_files": {
+      "type": "array",
+      "description": "Every entry in installer/manifest.json's repo_files array (methodology.md, PORTING.md, variables.json, the schemas, merge_settings.py, .githooks/*, .gitattributes, .gitignore, LICENSE) - files that are not a 'component' in installer/dependencies.json's sense, but that component text depends on and step 4 requires individual confirmation for (docs/methodology.md above all). Without a row shape here these files had no plan/citation/diff representation at all even though they are load-bearing - see the build spec's T19b finding 2. Same rigor as a components row: grounded citations, not empty by default, and check 1/1b re-verify these exactly like a component.",
+      "items": {
+        "type": "object",
+        "required": ["path", "status", "class", "citations"],
+        "properties": {
+          "path": { "type": "string", "description": "Where in the adopter's repo this file lands, matching its manifest.json repo_files entry." },
+          "status": {
+            "type": "string",
+            "enum": ["will_install", "already_present_identical", "already_present_will_update", "skipped_by_adopter"],
+            "description": "No skipped_prerequisite_missing here - repo_files have no dependencies.json entry and so no prerequisite to be missing."
+          },
+          "class": {
+            "type": "integer",
+            "enum": [1, 2, 3, 4],
+            "description": "Step 4's risk class this file falls into. docs/methodology.md is always class 4 (standing-authority/rulebook document, individually confirmed - see step 1's conflict check). .githooks/pre-push and scan-secrets.sh are typically class 1 (inert reference prose, once substituted); installer/variables.json is typically class 2 (new adopter-facing file); anything landing in .claude/settings.json goes through merge_settings.py regardless of appearing here."
+          },
+          "citations": {
+            "type": "array",
+            "description": "Same shape and same re-verification obligation as a components row's citations - see that field's description above.",
+            "items": {
+              "type": "object",
+              "required": ["side", "type"],
+              "properties": {
+                "side": { "type": "string", "enum": ["export", "adopter"] },
+                "type": { "type": "string", "enum": ["file_quote", "command_output"] },
+                "path": { "type": "string" },
+                "line": { "type": "integer" },
+                "quote": { "type": "string" },
+                "command": { "type": "string" },
+                "output": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "description": "Every conflict merge_settings.py (or any other check) found - e.g. a statusLine already configured differently. Non-empty means --apply cannot proceed cleanly until each is resolved (dropped, or resolved by the adopter) and the plan re-generated.",
+      "items": { "type": "string" }
+    }
+  }
+}

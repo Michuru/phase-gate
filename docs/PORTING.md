@@ -1,0 +1,182 @@
+# Porting: every adopter-side variable
+
+This is the human-readable twin of [`installer/variables.json`](../installer/variables.json). That file
+is what the installer and `verify_citations.py` actually read; this one explains what each value means
+and which ones will bite you if you get them wrong.
+
+**You do not have to read this before installing.** The installer walks these with you and detects what
+it can. Read it when you want to change something afterwards, or when something isn't behaving the way
+the rulebook says it should.
+
+---
+
+## The short version
+
+Fourteen variables, in four kinds:
+
+| Kind | Meaning | What happens if you ignore it |
+|---|---|---|
+| **default** | Works out of the box | Nothing — change only if your repo uses a different name |
+| **detected** | Determined by running a command at install time | The installer fills it. **Never hardcode one.** |
+| **required** | No sensible default exists | The dependent feature degrades, visibly |
+| **optional** | Safe to leave empty | The dependent feature turns itself off |
+
+---
+
+## Defaults — file and section names
+
+These are plain find-and-replace substitutions. If your repo already uses different names, set them and
+the installer rewrites every reference across the skills, the agents, and `methodology.md`.
+
+| Variable | Default | What it is |
+|---|---|---|
+| `rules_doc` | `CLAUDE.md` | Your always-loaded rules document. Every skill cites it. |
+| `backlog_file` | `BACKLOG.md` | Open and actionable items only. |
+| `archive_file` | `BACKLOG_ARCHIVE.md` | Resolved history with citations. Never read by default. |
+| `mistakes_file` | `MISTAKES.md` | Process mistakes — how work was done wrongly, not what's broken in the code. |
+| `design_docs_dir` | `Design Docs/` | Where `design-gate` saves design documents. |
+| `notes_file_pattern` | `{tool}.NOTES.md` | Companion notes naming. `{tool}` is replaced with the component name. |
+| `checklist_section` | `Ready to implement` | The backlog heading `implement-queue` reads as its work queue. |
+
+Two notes:
+
+- **`design_docs_dir` contains a space by default.** That's fine, but it means every shell command
+  referencing it must keep it quoted. If you'd rather not think about that, `design-docs/` is a
+  reasonable change.
+- **`notes_file_pattern` supports a second shape.** If you prefer notes living inside each component's
+  own folder rather than beside it, use `{tool}/NOTES.md`.
+
+---
+
+## Detected — never write these by hand
+
+### `default_branch`
+
+**Do not hardcode this.** `main` and `master` are both common, and getting it wrong doesn't error — it
+silently targets a branch that doesn't exist, which surfaces much later as a confusing failure in
+whatever step first tried to use it.
+
+Detection, in order:
+
+```sh
+git symbolic-ref --short refs/remotes/origin/HEAD    # outputs origin/<branch> — strip the origin/ prefix
+git branch --show-current                            # fallback
+```
+
+Two ways the preferred command fails, both worth recognizing:
+
+- **No remote configured.** Nothing to ask. Falls through to the fallback.
+- **`origin/HEAD` was never set.** Common in a clone made with `--single-branch`, and in some CI
+  checkouts. Fix with `git remote set-head origin --auto`.
+
+The fallback has a real caveat: `git branch --show-current` reports whatever is **currently checked
+out**, which is only the default branch if that's what happens to be checked out at install time. The
+installer confirms rather than assuming.
+
+### `python_cmd`
+
+Which interpreter the hook scripts use.
+
+```sh
+python3 -c "print(1)"    # preferred
+python  -c "print(1)"    # fallback
+```
+
+**Test that it runs, exactly as shown above — do not use `command -v python3`.** On Windows, `python3`
+is frequently a Microsoft Store stub that resolves perfectly well on `PATH` and then fails the moment
+it's executed. A resolve-only check therefore selects a broken interpreter and reports success, and the
+failure shows up later inside a hook where it's much harder to attribute. `python` is the working
+interpreter on most Windows installs.
+
+---
+
+## Required — no default is provided on purpose
+
+### `test_command`
+
+How to run your test suite, cited by the `code-reviewer` agent so it can actually re-run tests rather
+than reasoning about whether they'd pass.
+
+There's deliberately no default. A wrong test command doesn't fail loudly — it produces a review that
+silently never tested anything and then reports clean, which is worse than no review at all, because it
+carries the authority of one.
+
+Examples: `npm test` · `pytest -q` · `cargo test` · `go test ./...`
+
+---
+
+## Optional — empty is a valid answer
+
+### `lint_command`
+
+The linter for `.githooks/pre-commit`. **Empty by default, which disables the lint step entirely** — the
+hook ships inert until you configure it.
+
+One mechanical detail that will catch you out: the hook lints your *staged* content by materializing it
+into a scratch directory and running from there, so **a bare relative path to a linter binary will not
+resolve.** Use `$REPO_ROOT`, which the hook sets for you before evaluating your command:
+
+```sh
+LINT_COMMAND="$REPO_ROOT/node_modules/.bin/eslint --config $REPO_ROOT/eslint.config.js"
+LINT_COMMAND="ruff check"
+LINT_COMMAND="$REPO_ROOT/.venv/bin/flake8"
+```
+
+The hook is structurally warn-only: a missing linter, a failing linter, or a broken scratch directory
+all report and then exit zero. It can never block a commit. That's deliberate — a hook that blocks every
+commit because of an infrastructure problem gets disabled wholesale, which also disables the `pre-push`
+secret guard that genuinely matters.
+
+### `flagged_surfaces`
+
+Specific functions, files, or modules in *your* codebase with a documented history of subtle bugs. A
+change that would otherwise be Tier 4 gets the full QA gate if it touches one. See
+[methodology.md §5](methodology.md).
+
+**Ships empty, necessarily** — it's a property of your code, not of this methodology. Grow it the way
+it's meant to be grown:
+
+> When a bug turns out to have been subtle, and it was in the same place as a previous subtle bug, add
+> that place to the list.
+
+**Resist populating it speculatively.** A list of twenty surfaces escalates everything and therefore
+escalates nothing. Its whole value is being short enough to mean something.
+
+Examples: `src/pricing/calculate.ts:applyDiscount` · `lib/parser.py:parse_header`
+
+---
+
+## Behavioral config — read, not substituted
+
+These two aren't find-and-replace targets; they're settings the skills consult.
+
+### `review_model_families`
+
+Default: `["opus", "fable"]`
+
+Which model families to use for a cross-model design review. **The point is a different family, not a
+stronger model** — a second family reads with different priors and finds a different class of problem
+than the same model re-checking its own reasoning.
+
+If only one family is available to you, **skip the review visibly** rather than running a same-family
+pass and calling it cross-model. A review labelled as something it wasn't is worse than a skipped one,
+because it gets counted as a gate that passed.
+
+### `subagent_models`
+
+Default: `code-reviewer: sonnet`, `docs-writer: haiku`
+
+`docs-writer` is mechanical transcription and runs fine on the cheapest tier. `code-reviewer` needs real
+reasoning, so it defaults higher.
+
+Override per call when a pass warrants it. The clearest case: **code that will run on someone else's
+machine deserves a stronger review, in a different family than whatever wrote it.**
+
+---
+
+## Changing a variable after installing
+
+Edit `.claude/phase-gate-install/variables.json` in your repo, then re-run the installer. It is
+idempotent — a run that changes nothing writes nothing, and one that changes a substituted name rewrites
+only the references affected. Run it in recommend-only mode first if you want to see the diff before
+anything is written.

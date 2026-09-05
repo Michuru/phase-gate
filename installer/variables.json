@@ -1,0 +1,132 @@
+{
+  "$comment": "Machine-readable adopter-side configuration. Human-readable twin: docs/PORTING.md. Keep the two in sync — verify_citations.py check 2 reads this file to detect defaults that were never substituted.",
+  "schema_version": 1,
+
+  "$kinds": {
+    "default": "Has a working default. Change it only if your repo already uses a different name.",
+    "detected": "Determined by running a command at install time. Never write a literal for these.",
+    "required": "No sensible default exists. The installer must ask, or the feature degrades visibly.",
+    "optional": "Safe to leave empty. The dependent feature turns itself off rather than failing."
+  },
+
+  "variables": {
+    "rules_doc": {
+      "kind": "default",
+      "value": "CLAUDE.md",
+      "substitution": true,
+      "description": "The always-loaded rules document for your repo. Every skill cites it."
+    },
+    "backlog_file": {
+      "kind": "default",
+      "value": "BACKLOG.md",
+      "substitution": true,
+      "description": "Open and actionable items only. Resolved entries move to archive_file."
+    },
+    "archive_file": {
+      "kind": "default",
+      "value": "BACKLOG_ARCHIVE.md",
+      "substitution": true,
+      "description": "Resolved history with citations. Never read by default."
+    },
+    "mistakes_file": {
+      "kind": "default",
+      "value": "MISTAKES.md",
+      "substitution": true,
+      "description": "Process mistakes — how work was done wrongly, not what is broken in the code."
+    },
+    "design_docs_dir": {
+      "kind": "default",
+      "value": "Design Docs/",
+      "substitution": true,
+      "description": "Where design-gate saves design documents. A trailing slash is expected. If your path contains a space, keep it quoted everywhere it appears in a shell command."
+    },
+    "notes_file_pattern": {
+      "kind": "default",
+      "value": "{tool}.NOTES.md",
+      "substitution": true,
+      "description": "Companion notes file naming. The literal token {tool} is replaced with the component's own name. Use '{tool}/NOTES.md' instead if you prefer notes inside each component's folder.",
+      "tokens": ["{tool}"]
+    },
+    "checklist_section": {
+      "kind": "default",
+      "value": "Ready to implement",
+      "substitution": true,
+      "description": "Heading text of the backlog section implement-queue reads as its work queue."
+    },
+
+    "default_branch": {
+      "kind": "detected",
+      "value": null,
+      "substitution": true,
+      "description": "Your repo's default branch. NEVER hardcode this — 'main' and 'master' are both common and getting it wrong silently targets a branch that does not exist.",
+      "detect": [
+        {
+          "command": "git symbolic-ref --short refs/remotes/origin/HEAD",
+          "note": "Preferred. Outputs 'origin/<branch>' — strip the 'origin/' prefix. Fails if the repo has no remote, or if origin/HEAD was never set (common in a clone made with --single-branch); 'git remote set-head origin --auto' fixes the latter."
+        },
+        {
+          "command": "git branch --show-current",
+          "note": "Fallback. Reports the CURRENTLY checked-out branch, which is only the default branch if that is what happens to be checked out. Confirm with the user rather than assuming."
+        }
+      ]
+    },
+    "python_cmd": {
+      "kind": "detected",
+      "value": null,
+      "substitution": true,
+      "description": "Interpreter used by the hook scripts.",
+      "detect": [
+        {
+          "command": "python3 -c \"print(1)\"",
+          "note": "Preferred. IMPORTANT: test that it actually RUNS, as shown — do not use 'command -v python3'. On Windows, 'python3' is frequently a Microsoft Store stub that resolves successfully on PATH and then fails on execution, so a resolve-only check picks a broken interpreter and reports success."
+        },
+        {
+          "command": "python -c \"print(1)\"",
+          "note": "Fallback, and the working interpreter on most Windows installs. Same rule: verify execution, not resolution."
+        }
+      ]
+    },
+
+    "test_command": {
+      "kind": "required",
+      "value": "",
+      "substitution": true,
+      "description": "How to run your test suite. Cited by the code-reviewer agent so it can re-run tests rather than reasoning about whether they would pass. No default is provided on purpose — a wrong test command produces a review that silently never tests anything. If your repo genuinely has no test suite yet, the installer records this value's source as 'confirmed_none' rather than 'left_empty' — a deliberate, informed answer, distinct from the question simply not being answered yet. code-reviewer must then state plainly in its output that no automated tests were run, rather than either fabricating a command or silently reporting clean with nothing actually checked.",
+      "examples": ["npm test", "pytest -q", "cargo test", "go test ./..."]
+    },
+    "lint_command": {
+      "kind": "optional",
+      "value": "",
+      "substitution": true,
+      "description": "Linter for .githooks/pre-commit. Invoked from a scratch directory with staged file paths appended, so a bare relative path to a linter binary will not resolve — use $REPO_ROOT, which the hook pre-sets. Empty disables the lint step entirely, which is the shipped default.",
+      "examples": [
+        "$REPO_ROOT/node_modules/.bin/eslint --config $REPO_ROOT/eslint.config.js",
+        "ruff check",
+        "$REPO_ROOT/.venv/bin/flake8"
+      ]
+    },
+    "flagged_surfaces": {
+      "kind": "optional",
+      "value": [],
+      "substitution": true,
+      "description": "Specific functions, files, or modules in YOUR codebase with a documented history of subtle bugs. A change that would otherwise be Tier 4 gets the full QA gate if it touches one. Ships empty because this is a property of your code. Grow it reactively: add a place when a subtle bug turns out to be in the same place as a previous subtle bug. Keep it short — a list of twenty escalates everything and therefore escalates nothing.",
+      "examples": ["src/pricing/calculate.ts:applyDiscount", "lib/parser.py:parse_header"]
+    },
+
+    "review_model_families": {
+      "kind": "default",
+      "value": ["opus", "fable"],
+      "substitution": false,
+      "description": "Model families used for a cross-model design review. The point is a DIFFERENT family, not a stronger model — a second family reads with different priors and finds a different class of problem. If only one family is available to you, skip the review VISIBLY rather than running a same-family pass and calling it cross-model."
+    },
+    "subagent_models": {
+      "kind": "default",
+      "value": {
+        "code-reviewer": "sonnet",
+        "docs-writer": "haiku"
+      },
+      "substitution": false,
+      "description": "Default model per bundled subagent. docs-writer is mechanical transcription and runs well on the cheapest tier; code-reviewer needs real reasoning. Override per-call when a specific pass warrants it — a review of code that will run on someone else's machine is worth a stronger, different-family model."
+    }
+  }
+}

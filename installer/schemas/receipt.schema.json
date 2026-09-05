@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phase-gate/installer/schemas/receipt.schema.json",
+  "title": "phase-gate install receipt",
+  "description": "Written to .claude/phase-gate-install/receipt.json in the ADOPTER's repo after a real --apply run (the installer skill's step 5). This is the durable record of what actually happened, and - critically - what version of phase-gate produced it. Without source_commit and manifest_version, no future update path can ever tell 'phase-gate changed this since you installed' from 'you edited this yourself' (build spec finding 10, modeled on copier's .copier-answers.yml _commit field and kubectl apply's last-applied-configuration annotation).",
+  "type": "object",
+  "required": ["installed_at", "source_commit", "manifest_version", "variables", "components", "repo_files", "settings_merge"],
+  "properties": {
+    "installed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this apply actually ran, ISO 8601."
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "The phase-gate repo's git SHA that was actually installed. Carried through unchanged from the plan that preceded this apply (plan.schema.json's source_commit) - the two MUST match; a mismatch means the adopter approved one plan and a different commit got applied, which is itself a bug worth surfacing loudly."
+    },
+    "manifest_version": {
+      "type": "string",
+      "description": "The installer/manifest.json schema_version this install was built against."
+    },
+    "adopter_repo_root": {
+      "type": "string",
+      "description": "Absolute path to the adopter's repo root this was installed into."
+    },
+    "variables": {
+      "type": "array",
+      "description": "The FINAL resolved value of every variable actually used during this install - same shape as the plan's variables array, but these are facts about what happened, not a forecast.",
+      "items": {
+        "type": "object",
+        "required": ["name", "value", "source"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": {},
+          "source": {
+            "type": "string",
+            "enum": ["shipped_default", "detected", "user_provided", "left_empty", "confirmed_none"],
+            "description": "See plan.schema.json's matching field - 'confirmed_none' is a deliberate, informed 'this genuinely does not apply' answer, distinct from 'left_empty' (unaddressed)."
+          }
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "description": "Every component that was actually installed (a subset of the plan's components - only those with status will_install or already_present_will_update in the plan should appear here as actually written).",
+      "items": {
+        "type": "object",
+        "required": ["name", "shelf", "files_written"],
+        "properties": {
+          "name": { "type": "string" },
+          "shelf": { "type": "string", "enum": ["process", "standalone"] },
+          "files_written": {
+            "type": "array",
+            "description": "Exact files written or overwritten in the adopter's repo, each with a content hash so a later re-run (step 6) can tell 'unchanged since install' from 'locally modified' without trusting a stale claim.",
+            "items": {
+              "type": "object",
+              "required": ["path", "content_hash"],
+              "properties": {
+                "path": { "type": "string", "description": "Relative to adopter_repo_root." },
+                "content_hash": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "description": "sha256 of the file's content with all line endings normalized to LF first (CRLF/CR -> LF) - the export enforces LF via .gitattributes, but the adopter's own checkout, editor, or OS may not, and a line-ending-only diff must never register as a real modification."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "repo_files": {
+      "type": "array",
+      "description": "Every installer/manifest.json repo_files entry actually written or overwritten during this install (a subset of the plan's repo_files - only those with status will_install or already_present_will_update). Same content_hash contract as components' files_written, so a re-run (step 6) can tell 'unchanged' from 'locally modified' for these too - docs/methodology.md above all, since it is the one repo_files entry every skill's own text depends on.",
+      "items": {
+        "type": "object",
+        "required": ["path", "content_hash"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative to adopter_repo_root." },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "sha256 of the file's content, LF-normalized - same contract as components' files_written.content_hash."
+          }
+        }
+      }
+    },
+    "settings_merge": {
+      "type": "object",
+      "description": "The result of the merge_settings.py step, if any settings.json changes were part of this install.",
+      "required": ["ran", "wrote_changes"],
+      "properties": {
+        "ran": { "type": "boolean" },
+        "wrote_changes": { "type": "boolean" },
+        "fragments_merged": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which settings.fragment.json / settings.hooks.json files were merged in."
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Optional: results of verify_citations.py and/or the class-1/2/3/4 risk-class checks the installer skill ran, if it recorded them here rather than only printing them.",
+      "properties": {
+        "verify_citations_passed": { "type": "boolean" }
+      }
+    }
+  }
+}
