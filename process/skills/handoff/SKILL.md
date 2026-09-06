@@ -5,9 +5,9 @@ description: Write a self-contained briefing so a fresh context window (a new se
 
 # Handoff: brief a fresh context window
 
-This skill is **not** `wrap-up-session` (that's session closeout: commit + docs-sync + done) and not the
-harness's own automatic compaction. It's for continuing the *same* in-progress task under a fresh budget,
-not ending it.
+This skill is **not** `end-task` (that's session closeout: commit + docs-sync + done, if you have that
+skill installed) and not the harness's own automatic compaction. It's for continuing the *same*
+in-progress task under a fresh budget, not ending it.
 
 ## Step 0: Determine direction — outgoing (write a primer) or incoming (resume from one)
 
@@ -121,7 +121,7 @@ file(s) it points at live in different repos, commit narrowly in each repo separ
 no such mechanism, this step is optional — its whole purpose is closing a backup-coverage gap that may
 not exist for you.
 
-Use a distinct commit message convention from `wrap-up-session`'s "this is actually finished" tone —
+Use a distinct commit message convention from `end-task`'s "this is actually finished" tone —
 lead with `WIP checkpoint:` and state plainly what's not finished, e.g.:
 
 ```
@@ -139,4 +139,9 @@ otherwise "done."
 ## Step 8: Confirm and stop
 
 Confirm the handoff is written (and committed, if Step 7 applied), and don't chain into anything else (no
-docs-sync, no archive move, no cheat-sheet refresh) — those belong to `wrap-up-session`, not this skill.
+docs-sync, no archive move, no cheat-sheet refresh) — those belong to `end-task`'s full-sync depth mode,
+not this skill.
+
+**Next command, per the next-command contract, if your setup uses one**: the recommendation is
+**`/clear`** — the primer is written and committed specifically so the session can end here; named
+alternative is continuing in this same session if there's more to do before actually clearing.

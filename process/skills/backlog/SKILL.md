@@ -44,5 +44,12 @@ The normal full effort:
 
 ## Notes
 
+- **Next command, if your setup uses a next-command contract**: List mode already closes by asking
+  which item to pick up (recommendation: that item, via Full-investigation mode; named alternative:
+  nothing, if none apply right now). Full-investigation mode's step 7 hands off to **`/ship`** when
+  a deploy target exists; otherwise, once step 9 shows what's still open, the recommendation is
+  picking the next open item (another `/backlog` pass) or **`/end-task`** if that's the session's
+  last piece of work. Quick-capture mode's recommendation is simply continuing whatever the session
+  was already doing — the note is written and nothing else is owed.
 - If another session may have touched `BACKLOG.md`/`CLAUDE.md`/`MISTAKES.md` since this session started (e.g. a very recent commit from elsewhere), re-read the file immediately before editing rather than trusting what was loaded at session start — `Edit`'s exact-string match fails safely on drift, `Write`'s full-file replacement doesn't.
 - For a tool with its own publish/release/deploy step, "resolved" also means that step actually happened — not just that the fix works locally — before archiving.

@@ -87,6 +87,11 @@ reimplement any of that here; this step is a handoff, not a second copy.
 
 ## Notes
 
+- **Next command, if your setup uses a next-command contract**: Step 4 above already names it —
+  **`/verify`** once every task is done. Named alternative if execution genuinely stalls (a task
+  blocked on the user, an unresolved decision): fix the blocker and resume, or write `## Build —
+  blocked-on-user: <what>` into the doc and stop there rather than forcing `/verify` on an
+  incomplete implementation.
 - **Why the design review gets an opt-out turn boundary and this gate doesn't.** `spec` Step 3.4
   spawns a differently-priced subagent pass on a design that hasn't been touched yet — a real,
   reversible-only-by-not-spending decision worth a pause. This gate is a main-session analysis pass

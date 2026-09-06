@@ -25,11 +25,12 @@ to inform the exploration itself.
 
 If the request is genuinely single-spot/single-file with no new UI and no schema change, it's Tier 4 — use `backlog`/normal editing instead, not this skill. If it's ambiguous which tier applies, use `AskUserQuestion` rather than guessing.
 
-## Step 0.5: Adopting onto an already-in-progress project — now `/initiate`'s job
+## Step 0.5: Adopting onto an already-in-progress project — now `/adopt`'s job
 
-If there's no `Design Docs/`/`BACKLOG.md` history yet for this project, run `/initiate` first — it
-owns the scoping-inventory pass this step used to do directly (see `initiate/SKILL.md` Step 3, and
-its Notes for the incident that motivates checking this even without invoking either skill).
+If there's no `Design Docs/`/`BACKLOG.md` history yet for this project, run `/adopt` first (if you
+have it installed) — it owns the scoping-inventory pass this step used to do directly. `/initiate`
+detects this case and hands off to `/adopt`; check this even without invoking either skill if
+neither is installed.
 
 ## Step 1: Model check (Tier 1 only) — do this before Phase 1 exploration, not after drafting
 
@@ -66,7 +67,7 @@ independently, several different ways, without a stated convention to follow.
 **Heading grammar, always**: `## <Phase> — <status>, <detail>` — e.g. `## Design review —
 pending, Opus` or `## Build — done, tasks 1-12`. One shape, no variants.
 
-**Status vocabulary, fixed**: `pending` / `running` / `done` / `blocked: <what, on whom>`.
+**Status vocabulary, fixed**: `pending` / `running` / `done` / `blocked-on-user: <what>` / `blocked-on: <who/what>`. The last two replace the old free-text `blocked: <what, on whom>` — `blocked-on-user` names a decision only the user can make (cheap to unblock: a review owed, a question not yet asked); `blocked-on` names an external party or event the user can't unblock by deciding anything (a person, a release, an external event). This split exists so a session-start ranker skill (`/initiate`, if you have it installed) can sort "waiting on you" from "waiting on someone else" mechanically, without re-reading and judging prose every time. **Plain `blocked: <detail>` is still accepted as shorthand for `blocked-on-user`**, since that's the common case — but write the explicit form going forward; don't introduce new plain-`blocked:` lines.
 
 **Write-on-entry, not only on completion.** A phase writes its own section — with a real status,
 never left blank — the moment it is *entered*, and updates that same section in place when it
@@ -121,7 +122,7 @@ this step asking whether to consider running it first.
 
 **Before adding a checklist line for option (b), run the same forbidden-path test `execution-gate`'s Step 1 runs**: if any task in the design's own breakdown touches `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, or anything under `.claude/` (skills, workflows, settings, hooks), `/implement-queue`'s Step 5 will flag it as tainted and harvest nothing — don't auto-add it to the checklist regardless of tier or prerequisite state. Instead keep the design tracked in its own tool section (or a cross-cutting section like `BACKLOG.md`'s "Environment / machine setup" for infra-shaped work), noting the disqualification and pointing at the design doc — exactly as has happened before this check existed as a repeatable step, when a design doc had to be tracked by hand after the fact.
 
-**Once option (b) is chosen and its `BACKLOG.md` edit (checklist line, or the tool-section note used when the forbidden-path check above disqualifies it) is written, auto-commit that edit together with the design doc itself** — narrowly staged (`git add "Design Docs/<slug>.md" BACKLOG.md`, never `-A`/`.`), no confirmation needed (standing local-commit authorization per your rules doc's commit-conventions section covers this the same way it covers any other verified `BACKLOG.md`-triggered commit). This closes a real gap: this exact path writes a fully-approved design doc plus its own `BACKLOG.md` pointer, and it's possible for neither `spec` nor `backlog` to actually commit them on their own — a session that just closes the window afterward, rather than separately invoking `/wrap-up-session`, could lose or leave dirty a change that was already "verified and complete" in every sense that matters. **Scoped narrowly to this one combo** — `backlog`'s own plain quick-capture mode (used for non-design `BACKLOG.md` items too) is deliberately left untouched, since making it auto-commit every quick-capture write would widen the blast radius well past what this gap actually needs fixed.
+**Once option (b) is chosen and its `BACKLOG.md` edit (checklist line, or the tool-section note used when the forbidden-path check above disqualifies it) is written, auto-commit that edit together with the design doc itself** — narrowly staged (`git add "Design Docs/<slug>.md" BACKLOG.md`, never `-A`/`.`), no confirmation needed (standing local-commit authorization per your rules doc's commit-conventions section covers this the same way it covers any other verified `BACKLOG.md`-triggered commit). This closes a real gap: this exact path writes a fully-approved design doc plus its own `BACKLOG.md` pointer, and it's possible for neither `spec` nor `backlog` to actually commit them on their own — a session that just closes the window afterward, rather than separately invoking `/end-task`, could lose or leave dirty a change that was already "verified and complete" in every sense that matters. **Scoped narrowly to this one combo** — `backlog`'s own plain quick-capture mode (used for non-design `BACKLOG.md` items too) is deliberately left untouched, since making it auto-commit every quick-capture write would widen the blast radius well past what this gap actually needs fixed.
 
 **Choosing (b) also adds a line to `BACKLOG.md`'s "Ready to implement" checklist section** (see `implement-queue`'s own skill doc), once the forbidden-path check above clears: design doc path, tool name, tier, and "no unmet prerequisite." **For a Tier 1/2 design, that prerequisite is satisfied automatically once Step 3.4 has actually run and recorded a clean or found-something outcome** — it is never "satisfied by construction" as a blanket statement, and remains a real, active carve-out specifically when Step 3.4 was declined or failed without a successful rerun (in that case don't add the checklist line yet; add it once a review actually completes). For Tier 3 (which never runs Step 3.4), the prerequisite is whatever else is genuinely unmet — a blocked question, user input not yet given. This is a deliberate, explicit queue entry, not a marker phrase to grep for — it's what actually makes the design pick-up-able by that skill instead of only by a human re-reading the tool's own `BACKLOG.md` section. **If an `execution-gate` pass ran and flagged a genuinely-independent parallel subset (its rare Bucket E), that recommendation lives in the design doc's own `## Execution strategy` section, never as a separate `implement-queue` checklist entry** — this checklist section holds only whole, independently-implementable designs, never a task fragment pulled out of one.
 
@@ -172,5 +173,9 @@ Hand the mechanical parts — a `NOTES.md` entry, a rules-doc pointer if this ch
 
 ## Notes
 
+- **Next command, if your setup uses a next-command contract**: Step 3.5's `AskUserQuestion`
+  already closes this loop — one recommendation (a, `/build`) and one named alternative (b,
+  `/backlog`), plus a further-review option (c) when Tier 1/2 applies. Never a silent stop once the
+  doc is saved.
 - Don't over-apply this: a one-line copy change or a single-function bugfix is Tier 4 even if it happens to touch a file this skill would otherwise gate — the tier criteria are about scope (multiple files, new UI, schema change, new tool, major rewrite) and, for the Tier 2/3 split specifically, whether an existing pattern is being directly copied — not about which file is involved.
 - `Design Docs/` holds one file per project/feature, named descriptively (`<slug>.md`) — a habit worth keeping deliberately rather than re-derived each time.

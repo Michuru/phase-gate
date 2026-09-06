@@ -45,6 +45,10 @@ distinct from `## Verification`, which is the plan `spec` already wrote at draft
 
 ## Notes
 
+- **Next command, if your setup uses a next-command contract**: once Step 3 writes `## QA gate —
+  done`, the recommendation is **`/ship`**. Named alternative if escalation is still unresolved
+  (`## QA gate — blocked: <what>`): stop here and surface the blocker rather than proceeding to
+  `/ship` on an unresolved finding.
 - **Scoped specifically to this gate — not a repo-level rule, and not reachable from `backlog`'s or
   `implement-queue`'s own separate QA loops**, since forked/`implement-queue` executors are
   fixed-prompt workflow stages that never run `spec`/`build`/`verify` at all (not because of any

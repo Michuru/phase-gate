@@ -49,6 +49,9 @@ design doc has nothing to write this into; skip it in that case.
 
 ## Notes
 
+- **Next command, if your setup uses a next-command contract**: once Step 2's archive-and-commit
+  lands, the recommendation is **`/end-task`** if this closes out the session's work, or
+  **`/backlog`** as the named alternative to pick up the next open item in the same session.
 - **Never a second publish mechanism.** This skill contains no tool-specific publish logic of its
   own — every actual "check locally / copy / confirm / verify live" step happens inside the
   dispatched `publish-*` skill.
