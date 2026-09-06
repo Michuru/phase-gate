@@ -447,6 +447,76 @@
           "source_path": ".claude/skills/wrap-up-session/SKILL.md"
         }
       ]
+    },
+    {
+      "name": "periodic-audit",
+      "shelf": "process",
+      "description": "Runs the coverage-gap and structural-recurrence audit passes for registered tools, on a threshold the periodic-audit-threshold-check hook flags as due.",
+      "files": [
+        {
+          "path": "process/skills/periodic-audit/SKILL.md",
+          "source_blob": "927b93781fff04df926ee59d1cfb95c189c10b22",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/periodic-audit/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": "periodic-audit-coverage",
+      "shelf": "process",
+      "description": "Coverage-gap scan agent for periodic-audit - reports which verdict-producing branches have zero regression-suite assertions. Invoked only by the periodic-audit skill.",
+      "files": [
+        {
+          "path": "process/agents/periodic-audit-coverage.md",
+          "source_blob": "4b11029e98e1eef8714a60beb72a3541725da0a1f47fb3914a059ef2fc38e29c",
+          "source_hash_type": "sha256",
+          "source_path": "ClaudeCode/agents/periodic-audit-coverage.md"
+        }
+      ]
+    },
+    {
+      "name": "periodic-audit-structural",
+      "shelf": "process",
+      "description": "Structural re-audit agent for periodic-audit - re-checks flagged functions fresh against a ledger of already-confirmed bug shapes. Invoked only by the periodic-audit skill.",
+      "files": [
+        {
+          "path": "process/agents/periodic-audit-structural.md",
+          "source_blob": "397f924d9f37587a7f1596a62438dd5df057397913f80fe25bc43394ca2e940d",
+          "source_hash_type": "sha256",
+          "source_path": "ClaudeCode/agents/periodic-audit-structural.md"
+        }
+      ]
+    },
+    {
+      "name": "periodic-audit-threshold-check",
+      "shelf": "standalone",
+      "description": "SessionStart hook deciding whether any registered tool is due for a periodic-audit pass (commit-count threshold, or a ledger-growth signal), plus its shared state/lock helper.",
+      "files": [
+        {
+          "path": "standalone/hooks/periodic-audit-threshold-check/audit-threshold-check.py",
+          "source_blob": "b5503681c77da14c5d425c823d2a7b0c9de595ad",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/audit-threshold-check.py"
+        },
+        {
+          "path": "standalone/hooks/periodic-audit-threshold-check/audit_state.py",
+          "source_blob": "1ab34f30a160e9baff5294e5c3b4460e226a74d6",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/audit_state.py"
+        },
+        {
+          "path": "standalone/hooks/periodic-audit-threshold-check/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        },
+        {
+          "path": "standalone/hooks/periodic-audit-threshold-check/settings.fragment.json",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
     }
   ],
   "repo_files": [

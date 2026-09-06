@@ -202,6 +202,24 @@
       "external_prerequisites": [
         { "name": "python3 or python on PATH", "degrades": "statusLine silently renders nothing if neither is found" }
       ]
+    },
+    "periodic-audit": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["periodic-audit-coverage", "periodic-audit-structural"],
+        "soft": ["docs-writer", "backlog"]
+      },
+      "external_prerequisites": [],
+      "notes": "Step 3 spawns both agent definitions unconditionally once their gates clear - hard edges, no stated fallback (a diff-scoped generic code-review agent is explicitly called out as the wrong shape for either pass). docs-writer is soft: Step 4's clean-result record delegates to it, but a real finding instead routes to backlog (also soft - a pipeline-stage pointer, not invoked directly by this skill)."
+    },
+    "periodic-audit-threshold-check": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
+        { "name": "git", "degrades": "reports nothing for a repo where the cwd isn't a git repo (by design, not an error)" }
+      ],
+      "notes": "One-way nudge relationship, not a dependency edge: this hook decides whether the periodic-audit skill is due and reports via systemMessage, but neither component invokes the other directly, and the skill works fine invoked directly with no hook installed at all."
     }
   }
 }
