@@ -16,19 +16,37 @@
       "shelf": "process",
       "depends_on": {
         "hard": ["docs-writer"],
-        "soft": ["initiate", "build", "implement-queue", "backlog"]
+        "soft": ["initiate", "adopt", "build", "implement-queue", "backlog"]
       },
       "external_prerequisites": [],
-      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. initiate/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself."
+      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself."
     },
     "initiate": {
       "shelf": "process",
       "depends_on": {
         "hard": ["handoff", "backlog"],
-        "soft": ["spec", "implement-queue"]
+        "soft": ["adopt", "spec", "implement-queue"]
       },
       "external_prerequisites": [],
-      "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - Step 2 signal 5 is the last-resort fallthrough ('none of the above'), always reached and always invoked when nothing else fires, with no alternative stated. spec/implement-queue are soft: offered conditionally (an adopting-project inventory pointer; a non-empty checklist offer), never invoked unconditionally."
+      "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - bucket A's last rank is an unblocked BACKLOG.md item, handed off to backlog List mode, and the report's own closing line always names backlog as the alternative regardless of which bucket-A item ranks first. adopt/spec/implement-queue are soft: offered conditionally (the no-process-history case hands off to adopt entirely, per the 2026-09-06 next-command-contract redesign that moved the scoping-inventory body out of this skill; a queued design goes to spec; a non-empty checklist to implement-queue), never invoked unconditionally."
+    },
+    "adopt": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": ["spec", "backlog"]
+      },
+      "external_prerequisites": [],
+      "notes": "Added 2026-09-06 (next-command-contract redesign), split out of initiate's former Step 3. Step 2 names /spec as the recommendation for the freshly-scoped area and /backlog as the named alternative if nothing's ready to design yet - both pipeline-stage pointers, never invoked directly by this skill itself."
+    },
+    "end-task": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["docs-writer"],
+        "soft": ["handoff", "backlog", "consolidate-docs"]
+      },
+      "external_prerequisites": [],
+      "notes": "Added 2026-09-06 (next-command-contract redesign), absorbing commit and wrap-up-session as internal depth modes - one implementation of the shared git-survey logic instead of three cross-referencing copies. docs-writer is hard for the same reason wrap-up-session's own entry had it: Step 6's docs pass delegates substantial NOTES.md/rules-doc writes to it. handoff is soft: Step 4's routing table names it in every row as the alternative (or the recommendation, when work is unfinished), but never invokes it unconditionally - the whole point of the rewrite is surfacing that fork rather than silently picking it. backlog is soft, same conditional catch-all role wrap-up-session's own entry described. consolidate-docs is soft: Step 6's rules-doc-size check recommends running it once a threshold's crossed, conditionally."
     },
     "build": {
       "shelf": "process",
@@ -92,28 +110,29 @@
     "wrap-up-session": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["docs-writer"],
-        "soft": ["backlog"]
+        "hard": [],
+        "soft": ["end-task"]
       },
-      "external_prerequisites": []
+      "external_prerequisites": [],
+      "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its full-sync depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
     },
     "commit": {
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["wrap-up-session"]
+        "soft": ["end-task"]
       },
       "external_prerequisites": [],
-      "notes": "Companion/contrast relationship only ('lightweight companion to wrap-up-session') - no functional call from commit into wrap-up-session. Works standalone."
+      "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its narrow-commit depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
     },
     "handoff": {
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["context-usage-nudge"]
+        "soft": ["context-usage-nudge", "end-task"]
       },
       "external_prerequisites": [],
-      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger."
+      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption."
     },
     "review-pr": {
       "shelf": "process",
