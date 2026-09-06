@@ -4,7 +4,7 @@
   "title": "phase-gate install plan",
   "description": "The installer skill's step-2 output: what it WOULD do, produced before anything is written. This is the recommend-only mode's entire deliverable - verify_citations.py's job is partly to confirm a real plan was produced and read before any --apply step runs, not skipped past.",
   "type": "object",
-  "required": ["generated_at", "source_commit", "manifest_version", "variables", "components", "repo_files", "conflicts"],
+  "required": ["generated_at", "source_commit", "source_origin", "manifest_version", "variables", "components", "repo_files", "conflicts"],
   "properties": {
     "generated_at": {
       "type": "string",
@@ -15,6 +15,10 @@
       "type": "string",
       "pattern": "^[0-9a-f]{40}$",
       "description": "The phase-gate repo's own git SHA this plan was generated from. Carried through unchanged into the receipt if the adopter proceeds to apply - this is what makes a later update able to tell 'phase-gate changed this' from 'the adopter changed this' (see the build spec's finding 10)."
+    },
+    "source_origin": {
+      "type": "string",
+      "description": "The git remote URL the adopter confirmed at step 0 (whatever remote name it was - origin, upstream, or otherwise; never assumed), with any embedded userinfo (user:token@) stripped before being recorded here. Carried through unchanged into the receipt if the adopter proceeds to apply. Required for the same reason source_commit is: an update-notification check needs to know which remote to compare against, and a fork installer legitimately has a different one than the canonical repo."
     },
     "manifest_version": {
       "type": "string",

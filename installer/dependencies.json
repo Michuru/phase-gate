@@ -160,6 +160,16 @@
         { "name": "git", "degrades": "reports nothing if the cwd isn't a git repo (by design, not an error)" }
       ]
     },
+    "update-notification": {
+      "shelf": "standalone",
+      "depends_on": { "hard": [], "soft": [] },
+      "external_prerequisites": [
+        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
+        { "name": "git", "degrades": "silent on any failure - auth prompt suppressed, network/DNS unreachable, or not a git repo - never a hang or error, just no notification" },
+        { "name": "network reachability to the recorded source_origin", "degrades": "silent - the throttle window still advances so it doesn't retry every session" }
+      ],
+      "notes": "Deliberately zero hard/soft dependencies on other components - reads only its own installed receipt.json, never another component's state."
+    },
     "context-usage-nudge": {
       "shelf": "standalone",
       "depends_on": { "hard": [], "soft": [] },

@@ -25,13 +25,19 @@ guess. Presence is not provenance: confirming the directory contains the right f
 filename check cleanly). So, before reading anything further:
 
 1. Run `git -C <path> remote -v` and `git -C <path> rev-parse HEAD` inside the clone. Show both to the
-   user and ask them to confirm the remote matches the phase-gate repo they intended to install from. This
+   user and ask them to confirm **which remote** matches the phase-gate repo they intended to install from
+   — don't assume it's the one named `origin`; a fork workflow commonly has `origin` pointing at the
+   adopter's own fork and `upstream` at the canonical repo, and either is a legitimate answer. This
    confirmation — not the manifest below — is the actual provenance control.
 2. Read `<path>/installer/manifest.json` and confirm every file it lists is present at the stated path.
    This only ever catches "wrong directory" — it is not a substitute for step 1's confirmation.
-3. Record `git -C <path> rev-parse HEAD` as `source_commit` and `<path>/installer/manifest.json`'s
-   `schema_version` as `manifest_version` — both required fields on the plan and the receipt (see the
-   schemas). If step 1's confirmation is declined, stop here; nothing further is read.
+3. Record `git -C <path> rev-parse HEAD` as `source_commit`, `<path>/installer/manifest.json`'s
+   `schema_version` as `manifest_version`, and `git -C <path> remote get-url <confirmed-remote-name>` as
+   `source_origin` — **strip any embedded userinfo** (`user:token@...`) from that URL before recording it,
+   since a receipt may end up tracked in the adopter's own repo. All three are required fields on the plan
+   and the receipt (see the schemas) — this is what a later update-notification check compares against, and
+   without it recorded now it can never be added retroactively for this install. If step 1's confirmation is
+   declined, stop here; nothing further is read.
 
 **Model-class floor**: this skill assumes Sonnet-class reasoning or above. The grounded, multi-file,
 citation-checked reading below is a materially higher bar than casually skimming file contents — running
@@ -198,8 +204,8 @@ the hooks they configure can vanish with no error at all.
 ## Step 5 — the install receipt
 
 After a real `apply` run, write `.claude/phase-gate-install/receipt.json` in the adopter's repo, conforming
-to `<path>/installer/schemas/receipt.schema.json`: `installed_at`, `source_commit` and `manifest_version`
-carried through unchanged from the plan that preceded this apply (the two **must** match — a mismatch means
+to `<path>/installer/schemas/receipt.schema.json`: `installed_at`, `source_commit`, `source_origin`, and
+`manifest_version` carried through unchanged from the plan that preceded this apply (the two **must** match — a mismatch means
 the adopter approved one plan and a different commit got applied, which is itself a bug worth surfacing
 loudly, not silently accepting), the final resolved `variables`, exactly the `components` actually written
 (a subset of the plan's `will_install`/`already_present_will_update` rows) with each file's `content_hash`
@@ -227,10 +233,19 @@ recorded:
 
 Also report the clone's own `HEAD` versus its `origin` on every run (`git -C <path> fetch --dry-run` or
 equivalent, stated plainly rather than assumed), so a re-run against a stale local clone is told that
-rather than told everything is current. **No update-fetch mechanism ships with this installer** — finding
-out a newer phase-gate commit exists is the adopter's own responsibility, the same as anything else pulled
-from GitHub; this step only prevents the installer from *lying* about currency, it does not solve staleness
-for the adopter.
+rather than told everything is current. **This step still doesn't fetch or apply anything on its own** —
+finding a newer phase-gate commit and deciding to re-run this installer is still the adopter's own
+responsibility, the same as anything else pulled from GitHub; this step only prevents the installer from
+*lying* about currency at the moment it happens to run.
+
+**Amended 2026-09-06** (not a silent rewrite — this section originally said flatly "No update-fetch
+mechanism ships with this installer"; that's still true of *this step*, but no longer true of the export as
+a whole): a separate `update-notification` component now ships a `SessionStart` hook that passively checks
+whether the adopter's `source_origin` has moved past their recorded `source_commit`, throttled and silent
+on failure, and nudges once per new upstream commit. It still never fetches or applies anything itself —
+see `standalone/hooks/update-notification/README.md` and `Design Docs/phase-gate-update-notification.md`
+(meta repo) for the full design. This closes the *discovery* half of the original gap; the *apply* half
+remains exactly this step's existing re-run logic.
 
 ## Step 7 — mandatory self-check, same checks in both modes
 

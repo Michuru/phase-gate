@@ -186,6 +186,16 @@ reasoning, so it defaults higher.
 Override per call when a pass warrants it. The clearest case: **code that will run on someone else's
 machine deserves a stronger review, in a different family than whatever wrote it.**
 
+### `update_check_enabled`
+
+Default: `true`
+
+Off-switch for the `update-notification` SessionStart hook (a bundled `standalone/` component — see
+that component's own README for what it checks and how). Not asked about during install the way a
+`required`-kind variable would be — the real opt-in moment is choosing to install the
+`update-notification` component at all. Set this to `false` in your installed receipt if you want the
+component present but the passive check disabled.
+
 ---
 
 ## Changing a variable after installing

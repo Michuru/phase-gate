@@ -16,7 +16,7 @@ This repo ships two things, and either one works without the other:
   of standing conventions, and its pieces reference each other. A design doc feeds an execution
   plan, which feeds a work queue. A QA gate delegates to a review agent. Adopt it whole and you get
   a consistent process instead of one that only happens when someone remembers it.
-- **`standalone/`**: a pick-and-choose catalog. Six components (three hooks, a statusline, two
+- **`standalone/`**: a pick-and-choose catalog. Seven components (four hooks, a statusline, two
   skills), each working completely on its own. Zero adaptation, zero cross-references. Take exactly
   the piece you want and skip the rest.
 
@@ -84,11 +84,11 @@ nudge the docs-sync/mistakes-log habits `docs/methodology.md` describes. Read
 [`docs/PORTING.md`](docs/PORTING.md) for every value you can configure: file names, branch, test
 command, and more, all detected or asked at install time and never hardcoded.
 
-**`standalone/`**: three hooks (`block-dangerous-commands`: hard-blocks a short list of
+**`standalone/`**: four hooks (`block-dangerous-commands`: hard-blocks a short list of
 catastrophic Bash commands regardless of permission mode; `hooks-health-check`: reports, never
 blocks, when your git-hooks configuration has drifted; `context-usage-nudge`: fires as a session's
 context usage climbs, nudging you to write yourself a handoff or continuation note before it runs
-out), a statusline (context-window usage, session cost, session duration), and two skills
+out; `update-notification`: passively checks whether phase-gate has new commits upstream since install, throttled and fail-open, never fetches or applies anything itself), a statusline (context-window usage, session cost, session duration), and two skills
 (`ai-check`: forensic AI-text detection; `humanize`: rewrites text to read less like an AI wrote
 it). Each ships in its own folder with its own README and settings fragment. Copy exactly the one
 you want.

@@ -247,6 +247,31 @@
       ]
     },
     {
+      "name": "update-notification",
+      "shelf": "standalone",
+      "description": "SessionStart hook: passively checks whether phase-gate has new commits upstream since install, throttled and fail-open. Never fetches or applies anything itself.",
+      "files": [
+        {
+          "path": "standalone/hooks/update-notification/update-notification.py",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        },
+        {
+          "path": "standalone/hooks/update-notification/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        },
+        {
+          "path": "standalone/hooks/update-notification/settings.fragment.json",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
+    },
+    {
       "name": "humanize",
       "shelf": "standalone",
       "description": "Rewrites AI-flat text to match human stylistic and statistical fingerprints.",

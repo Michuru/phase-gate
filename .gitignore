@@ -8,6 +8,10 @@
 # Adopters may choose to track this; it is ignored here in the source repo.
 .claude/phase-gate-install/
 
+# Runtime state written by bundled hooks (context-usage-nudge, update-notification) -
+# rewritten frequently, never meant to be tracked.
+.claude/state/
+
 node_modules/
 
 # Python

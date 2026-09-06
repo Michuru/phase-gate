@@ -4,7 +4,7 @@
   "title": "phase-gate install receipt",
   "description": "Written to .claude/phase-gate-install/receipt.json in the ADOPTER's repo after a real --apply run (the installer skill's step 5). This is the durable record of what actually happened, and - critically - what version of phase-gate produced it. Without source_commit and manifest_version, no future update path can ever tell 'phase-gate changed this since you installed' from 'you edited this yourself' (build spec finding 10, modeled on copier's .copier-answers.yml _commit field and kubectl apply's last-applied-configuration annotation).",
   "type": "object",
-  "required": ["installed_at", "source_commit", "manifest_version", "variables", "components", "repo_files", "settings_merge"],
+  "required": ["installed_at", "source_commit", "source_origin", "manifest_version", "variables", "components", "repo_files", "settings_merge"],
   "properties": {
     "installed_at": {
       "type": "string",
@@ -15,6 +15,10 @@
       "type": "string",
       "pattern": "^[0-9a-f]{40}$",
       "description": "The phase-gate repo's git SHA that was actually installed. Carried through unchanged from the plan that preceded this apply (plan.schema.json's source_commit) - the two MUST match; a mismatch means the adopter approved one plan and a different commit got applied, which is itself a bug worth surfacing loudly."
+    },
+    "source_origin": {
+      "type": "string",
+      "description": "The git remote URL the adopter confirmed at step 0 (whatever remote name it was - origin, upstream, or otherwise; never assumed), with any embedded userinfo (user:token@) stripped before being recorded here. Required, not optional: an old receipt predating this field already lacks it regardless of required-ness, but making it optional would let a future install silently omit it - the same silent-degradation shape this project rejects elsewhere (see source_commit/manifest_version's own required-ness). Lets a later update-check compare against the adopter's own actual remote (their fork included) instead of a hardcoded canonical URL."
     },
     "manifest_version": {
       "type": "string",

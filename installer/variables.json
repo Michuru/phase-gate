@@ -133,6 +133,12 @@
       },
       "substitution": false,
       "description": "Default model per bundled subagent. docs-writer is mechanical transcription and runs well on the cheapest tier; code-reviewer needs real reasoning. Override per-call when a specific pass warrants it — a review of code that will run on someone else's machine is worth a stronger, different-family model."
+    },
+    "update_check_enabled": {
+      "kind": "default",
+      "value": true,
+      "substitution": false,
+      "description": "Off-switch for the update-notification SessionStart hook. Not asked about during install (default-kind, per this file's own $kinds rule) — the real opt-in moment is selecting the update-notification component itself at step 2; this is a secondary override for an adopter who wants the component installed but the passive check disabled. Resolved into the plan/receipt's variables[] array exactly like every other variable here — the hook reads its own installed receipt.json for the final value rather than re-reading this source file, so no new adopter-side file/schema is introduced for it."
     }
   }
 }
