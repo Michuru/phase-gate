@@ -3,15 +3,15 @@
 Notable changes, tagged as GitHub releases when they land. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver-ish, not strictly enforced.
 
-**Nothing has been tagged yet.** Everything below is pre-1.0 — Lief is this project's beta tester,
-and `v1.0.0` is reserved for the first release considered genuinely stable, not just "the first one
-we happened to cut." Until that call is made, changes accumulate under `[Unreleased]` rather than
-being assigned version numbers. See `BACKLOG.md`'s "Sharing this repo's workflow/skills" section for
-the open item tracking when to actually cut `v1.0.0`.
+**Pre-1.0, tagged `0.x.y`.** Lief is this project's beta tester, and `v1.0.0` is reserved for the
+first release considered genuinely stable, not just "the first one we happened to cut" — `0.x` tags
+mark real beta checkpoints along the way and stay in the history once `1.0.0` lands (no retroactive
+cleanup planned). See `BACKLOG.md`'s "Sharing this repo's workflow/skills" section for the open item
+tracking when to actually cut `v1.0.0`.
 
-## [Unreleased]
+## [0.1.0] - 2026-09-06
 
-### 2026-09-06 — next-command contract, update-notification, two-axis SDLC redesign
+### 2026-09-05/06 — next-command contract, update-notification, two-axis SDLC redesign
 
 #### Changed
 - **Two-axis SDLC redesign**: re-cut the command surface along lifecycle phases (`design-gate` →

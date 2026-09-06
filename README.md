@@ -103,9 +103,9 @@ other component in this repo is under the root [`LICENSE`](LICENSE) (MIT).
 
 If you installed the `update-notification` component (`standalone/`, on by default in `process/`
 installs), you'll get a passive nudge in Claude Code when a new commit lands upstream — it never
-fetches or applies anything itself. See [`CHANGELOG.md`](CHANGELOG.md) for what changed (this
-project is still pre-1.0 — changes accumulate there before any version gets tagged). To actually
-pick up an update:
+fetches or applies anything itself. See [`CHANGELOG.md`](CHANGELOG.md) for what changed, tagged as
+GitHub releases (this project is still pre-1.0, tagged `0.x.y` — `v1.0.0` is reserved for the first
+release actually considered stable). To actually pick up an update:
 
 1. Pull the phase-gate clone (or re-clone it).
 2. Re-copy `installer/phase-gate-install/` from the updated clone into your own repo's
