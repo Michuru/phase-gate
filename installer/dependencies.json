@@ -165,7 +165,7 @@
       "depends_on": { "hard": [], "soft": [] },
       "external_prerequisites": [
         { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
-        { "name": "git", "degrades": "silent on any failure - auth prompt suppressed, network/DNS unreachable, or not a git repo - never a hang or error, just no notification" },
+        { "name": "git", "degrades": "silent on any failure - auth prompt suppressed, network/DNS unreachable, malformed remote URL, or git missing entirely - a bare 'git ls-remote' against source_origin, never dependent on the adopter's cwd being a git repo at all - never a hang or error, just no notification" },
         { "name": "network reachability to the recorded source_origin", "degrades": "silent - the throttle window still advances so it doesn't retry every session" }
       ],
       "notes": "Deliberately zero hard/soft dependencies on other components - reads only its own installed receipt.json, never another component's state."
