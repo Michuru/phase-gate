@@ -9,15 +9,48 @@ review, execution, QA — never asked about except the design review's own annou
 window.
 
 **Session axis** — the operator's own context lifecycle, orthogonal to the work axis: `/initiate`
-at the start, `/handoff` when context fills at any phase, `/end-task` to close out (absorbing
-narrow-commit and full-sync depth modes). `/consolidate-docs` is a self-firing threshold gate. This axis exists
-only because the collaborator is a context window rather than a person — no organizational SDLC
-models it, and it's covered in its own section below.
+at the start (handing off to `/adopt` once per project, if there's no process history yet),
+`/handoff` when context fills or work is unfinished, `/end-task` to route and close (at
+narrow-commit or full-sync depth, absorbing the former `/commit`/`/wrap-up-session`).
+`/consolidate-docs` is a self-firing threshold gate. This axis exists only because the collaborator
+is a context window rather than a person — no organizational SDLC models it, and it's covered in its
+own section below.
 
 **This file cites other skills by named phase, not step number.** A skill's own step numbering can
 change as it grows. Hardcoding a specific step number here would create a silent drift hazard
 nothing would catch. If a skill's own step numbering changes in a way that would make a phase name
 below misleading, update this file in the same pass.
+
+---
+
+## The next-command contract
+
+Every command closes the loop instead of stopping and leaving the operator to remember what's next.
+
+1. **One screen.** ≤12 lines of output.
+2. **Rank by actionability**, never by internal state category.
+3. **Collapse what the operator can't act on to a single line.** Never a table.
+4. **Separate "waiting on someone else" from "waiting on your decision."** The second is actionable.
+5. **Close by naming the next command** — one recommendation, one named alternative. Never a full
+   stop, never an open menu.
+
+**Rules 1-4 bind only the two parent-level ranker/router commands** — `/initiate` and `/end-task` —
+the only commands whose whole job is presenting a menu of options; they don't constrain `/verify`'s
+full numbered-findings-list output or `/spec`'s design-doc output. **Rule 5 binds nine commands**:
+`/initiate`, `/spec`, `/build`, `/verify`, `/ship`, `/end-task`, `/backlog`, `/adopt`, `/handoff` —
+closing the loop:
+
+```
+/initiate -> /spec -> /build -> /verify -> /ship -> /end-task -> /handoff or wrap-up -> /clear
+     ^                                                                                      |
+     +--------------------------------------------------------------------------------------+
+```
+
+**Exempt from rule 5, deliberately**: `execution-gate`, `implement-queue`, `consolidate-docs`,
+`review-pr` — automatic gates or narrow standalone utilities, not steps in the operator-facing chain
+the diagram above shows. `/commit` and `/wrap-up-session` are exempt too, but for a different
+reason: they're no longer primary user-facing commands at all, only `/end-task`'s internal depth
+modes (see the session axis above).
 
 ---
 
