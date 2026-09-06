@@ -3,7 +3,7 @@
 Notable changes, tagged as GitHub releases when they land. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver-ish, not strictly enforced.
 
-**Pre-1.0, tagged `0.x.y`.** Lief is this project's beta tester, and `v1.0.0` is reserved for the
+**Pre-1.0, tagged `0.x.y`.** This project has a beta tester, and `v1.0.0` is reserved for the
 first release considered genuinely stable, not just "the first one we happened to cut" — `0.x` tags
 mark real beta checkpoints along the way and stay in the history once `1.0.0` lands (no retroactive
 cleanup planned). See `BACKLOG.md`'s "Sharing this repo's workflow/skills" section for the open item
@@ -51,7 +51,7 @@ tracking when to actually cut `v1.0.0`.
   hooks, a statusline, `ai-check`, `humanize`).
 - A grounded, citation-checked installer skill (`phase-gate-install`) that reads an adopter's repo
   and proposes what applies before writing anything.
-- Verified against a real fresh install (11 required checks) and a real first adopter
-  (Lief/Dungeonkeep), whose feedback fixed three gaps: a stated persistent-adoption warning, an
-  `/adopt`-shaped retrofit path for already-in-progress projects, and a mandatory (still
+- Verified against a real fresh install (11 required checks) and a real first adopter (the beta
+  tester's own in-progress project), whose feedback fixed three gaps: a stated persistent-adoption
+  warning, an `/adopt`-shaped retrofit path for already-in-progress projects, and a mandatory (still
   optional-to-run) execution-gate checkpoint.
