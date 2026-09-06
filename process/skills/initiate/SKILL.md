@@ -83,6 +83,28 @@ exactly when several things are in flight and it matters most. Pull it straight 
 collected list: every `blocked: <what, on whom>` item, named plainly (design doc, what it's
 waiting on). If nothing is blocked, say so in one line rather than omitting the section.
 
+**Print the open-backlog line unconditionally too, for exactly the same reason.** Signals 1-4 all
+short-circuit before signal 5 ever runs, and signal 3 reads *only* the "Ready to implement"
+checklist — so without this, a session that resumes something can report nothing else while the
+whole open pool sits unmentioned. Derive it with one deterministic call, no judgment:
+
+```
+awk '/^## /{h=$0} /^- \*\*/{n++; s[h]=1} END{print n, length(s)}' BACKLOG.md
+```
+
+**Report that as a raw tracked-bullet count, explicitly approximate — never as an exact open-item
+count.** `BACKLOG.md` carries no structural open/closed marker, so superseded entries, pointer-only
+standing notes, and items whose real scope has moved elsewhere all still match that pattern.
+Telling those apart is `backlog`'s job, not this skill's — the pointer exists so this stays a
+dispatcher instead of becoming a second `backlog`. Adjust the pattern if your own `BACKLOG.md` uses
+a different bullet convention; the point is one cheap structural count, not this exact regex. One
+line, in this shape:
+
+```
+Open backlog: ~16 tracked bullets across 7 sections (some may be superseded or
+pointer entries) — run `/backlog` for the real list.
+```
+
 Then state which signal fired and which skill (if any) got invoked or offered — `handoff`,
 `implement-queue`, `spec` (via Step 3's inventory), or `backlog` — and let that skill's own output
 speak for the actual work. Don't re-summarize another skill's report; just hand off to it.
