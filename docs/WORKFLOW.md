@@ -9,8 +9,8 @@ review, execution, QA — never asked about except the design review's own annou
 window.
 
 **Session axis** — the operator's own context lifecycle, orthogonal to the work axis: `/initiate`
-at the start, `/handoff` when context fills at any phase, `/commit` to checkpoint and continue,
-`/wrap-up-session` to stop. `/consolidate-docs` is a self-firing threshold gate. This axis exists
+at the start, `/handoff` when context fills at any phase, `/end-task` to close out (absorbing
+narrow-commit and full-sync depth modes). `/consolidate-docs` is a self-firing threshold gate. This axis exists
 only because the collaborator is a context window rather than a person — no organizational SDLC
 models it, and it's covered in its own section below.
 
@@ -41,7 +41,7 @@ Self-assess against `docs/methodology.md`'s four tiers, before touching anything
 ### 3. `/spec` — the design phase
 
 Covers more ground than just drafting, in order: for a project with no `Design Docs/`/`BACKLOG.md`
-history yet, deferring to **`/initiate`**'s scoping-inventory pass first; confirming the tier out
+history yet, deferring to **`/adopt`**'s scoping-inventory pass first; confirming the tier out
 loud before any exploration; for Tier 1 only, asking whether to switch to the strongest available
 model, immediately; drafting the doc in Plan Mode (`## Intent`, `## Problem`, `## Approach`, a
 local-model-fit check, a task breakdown, plus an owed `## Design review — pending, <model>` line
@@ -103,15 +103,18 @@ fire at any point in it:
 
 - **`/initiate`** — session start. Surveys a live `handoff` primer, `BACKLOG.md`'s
   implement-queue checklist, and every `Design Docs/` file's own `Kind:`/`Status:` record; routes
-  to whichever is actually next, and always reports what's blocked and on whom. Also owns the
-  scoping-inventory pass for a project with real existing code but no process history yet.
+  to whichever is actually next, and always reports what's blocked and on whom.
+- **`/adopt`** — a one-time scoping-inventory pass for a project with real existing code or a
+  scope/spec document but no `Design Docs/`/`BACKLOG.md` history yet. `/initiate` detects this case
+  and hands off here; runs at most once per project.
 - **`/handoff`** — write a self-contained briefing so a fresh context window can continue the
   *same* in-progress task with zero shared history (not a session close-out), or resume from one
   at the start of a fresh session.
-- **`/commit`** — a lightweight, narrow git-status-and-commit pass, on demand, right before
-  clearing context.
-- **`/wrap-up-session`** — full session close-out: survey every touched repo, sync any drifted
-  docs, commit verified narrow changes.
+- **`/end-task`** — the parent-level session-close router. Detects unfinished work first and
+  routes to `/handoff` if so; otherwise wraps up at narrow-commit depth (absorbs former `/commit`)
+  or full-sync depth (absorbs former `/wrap-up-session`), whichever the docs-sync signal check
+  calls for. `/handoff` is named as the alternative in every row, so it stays discoverable even to
+  someone who doesn't know it exists.
 - **`/consolidate-docs`** — a self-firing threshold gate, not a phase anyone invokes deliberately:
   nudges splitting a rules-doc section that's grown into dated narrative history into a companion
   notes file once it crosses a size threshold.

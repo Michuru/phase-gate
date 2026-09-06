@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="A two-axis diagram. The work axis runs left to right through five phases, each fed by a dashed rail from an /initiate dispatcher box: /backlog (plan and maintain), /spec (design), /build, /verify (test), and /ship (deploy), with arrows connecting each to the next. A curved return arrow runs from /ship back to /backlog, labelled 'next item'. Below, a session axis row lists /handoff, /commit, and /wrap-up-session, connected to the phase row by a thin vertical line labelled 'runs alongside any phase'. A small Phase-Gate wordmark sits at the bottom.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="A two-axis diagram. The work axis runs left to right through five phases, each fed by a dashed rail from an /initiate dispatcher box: /backlog (plan and maintain), /spec (design), /build, /verify (test), and /ship (deploy), with arrows connecting each to the next. A curved return arrow runs from /ship back to /backlog, labelled 'next item'. Below, a session axis row lists /handoff and /end-task, connected to the phase row by a thin vertical line labelled 'runs alongside any phase'. A small Phase-Gate wordmark sits at the bottom.">
   <rect x="0" y="0" width="900" height="420" fill="#FAF9F5"/>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -62,7 +62,7 @@
   <text x="102" y="300" font-family="'JetBrains Mono', monospace" fill="#4F5C3B" font-size="9" text-anchor="start">runs alongside any phase</text>
   <rect x="20" y="320" width="820" height="46" rx="6" fill="#FAF9F5" stroke="#788C5D" stroke-width="2"/>
   <text x="40" y="340" font-family="'JetBrains Mono', monospace" fill="#6B6A61" letter-spacing="0.05em" font-size="8" text-anchor="start">SESSION AXIS</text>
-  <text x="40" y="358" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="13" text-anchor="start">/handoff · /commit · /wrap-up-session</text>
+  <text x="40" y="358" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="13" text-anchor="start">/handoff · /end-task</text>
 
   <text x="880" y="405" font-family="'Archivo', sans-serif" font-weight="700" fill="#141413" font-size="13" text-anchor="end">Phase-Gate</text>
 </svg>

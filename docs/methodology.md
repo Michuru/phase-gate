@@ -6,8 +6,8 @@ second model and a fresh context.**
 This is a two-axis software development lifecycle for people building without a team. The **work
 axis** (`/backlog` → `/spec` → `/build` → `/verify` → `/ship`) is the same six-phase shape any
 AI-native SDLC converges on. What's different is the **session axis** (`/initiate`, `/handoff`,
-`/commit`, `/end-task`, `/wrap-up-session`): the operator's own context lifecycle, which exists only
-because the collaborator is a context window rather than a person, and that no organizational SDLC has
+`/end-task`): the operator's own context lifecycle, which exists only because the collaborator is a
+context window rather than a person, and that no organizational SDLC has
 any reason to model. Where an organization enforces phase discipline with branch protection, code
 owners, and a change board, a solo developer gets the same four gates — tier check, design review,
 execution, QA — automatically, by pointing a second model at a fresh context instead of a second
