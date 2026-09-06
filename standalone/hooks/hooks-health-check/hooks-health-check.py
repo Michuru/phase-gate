@@ -72,7 +72,10 @@ else:
         staged = git("ls-files", "--stage", f"{EXPECTED_HOOKS_PATH}/{name}", root=toplevel.stdout.strip())
         out = staged.stdout.strip() if staged and staged.returncode == 0 else ""
         if not out:
-            problems.append(f"{EXPECTED_HOOKS_PATH}/{name} is missing from the index")
+            problems.append(
+                f"{EXPECTED_HOOKS_PATH}/{name} is missing from the index -- "
+                f"run `git add {EXPECTED_HOOKS_PATH}/{name}` and commit it"
+            )
         elif check_exec_bit and not out.startswith("100755"):
             problems.append(f"{EXPECTED_HOOKS_PATH}/{name} is tracked without the executable bit ({out.split()[0]})")
 

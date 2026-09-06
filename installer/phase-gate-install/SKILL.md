@@ -183,6 +183,18 @@ Every file written falls into exactly one of these. Handle each per its own clas
    skill *and* a document of standing behavioral rules that will often collide with an adopter's own
    existing rules doc — see Step 1's conflict check. Installing it is not copy-and-substitute.
 
+**Stage every file this step writes, in every class, before moving on** (`git -C <path> add <path>` per
+file, right after writing it — never a bare `git add -A`/`.`). A written-but-unstaged file is easy to lose
+track of: it won't be flagged by a later session's narrow-staging habit the way a *modified tracked* file
+would, since nothing about it looks like "a change I just made" once the install itself is a session or two
+in the past. This is load-bearing for the four `.githooks/*` repo_files specifically — the bundled
+`hooks-health-check` component checks `git ls-files --stage` for exactly these paths at every session
+start, and reports them as broken indefinitely if this step leaves them untracked (confirmed happening in
+a real adopter install, 2026-09-06: the health check nagged at every `SessionStart` across an entire
+multi-feature session with nothing in the pipeline ever resolving it). Untracked hook files also carry a
+second, quieter risk regardless of the health check: they don't survive a fresh clone or a `git clean`, so
+the hooks they configure can vanish with no error at all.
+
 ## Step 5 — the install receipt
 
 After a real `apply` run, write `.claude/phase-gate-install/receipt.json` in the adopter's repo, conforming
