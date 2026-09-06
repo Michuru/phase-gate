@@ -117,13 +117,13 @@
       "kind": "default",
       "value": ["haiku", "sonnet", "opus"],
       "substitution": false,
-      "description": "Which Claude models you have access to, ordered weakest-to-strongest, so 'the strongest model you have' has an actual answer: the last entry in this list. Paired with fable_available below."
+      "description": "Which Claude models you have access to, ordered weakest-to-strongest. This answers 'the strongest Claude model' (the last entry) — the question spec Step 3.4's non-Fable fallback and verify Step 2's escalation target actually need, since a different-family model is deliberately off-axis for those. It does NOT by itself answer 'the strongest model you have, period' — see fable_available below for that question, used by spec Step 1's Tier-1 design-pass switch."
     },
     "fable_available": {
       "kind": "default",
       "value": true,
       "substitution": false,
-      "description": "Reversed 2026-09-05 (the two-axis SDLC redesign) — this used to be review_model_families, whose rule was 'if only one family is available, skip the review VISIBLY rather than running a same-family pass and calling it cross-model.' That's no longer the rule: the review always runs, on a fresh context on the most different model you have, in preference order — Fable when this flag is true; otherwise another Claude model (checked against available_models above: sonnet-/haiku-drafted reviews on opus, opus-drafted reviews on sonnet); only when nothing else is reachable at all does it fall back to the same model in a fresh context. The heading names the actual reviewing model every time (e.g. '## Design review — Opus, fresh context') and never claims more independence than that pass actually had. Skipping is no longer an option in any case — a same-model pass, correctly labeled, is preferred over silently skipping."
+      "description": "Reversed 2026-09-05 (the two-axis SDLC redesign) — this used to be review_model_families, whose rule was 'if only one family is available, skip the review VISIBLY rather than running a same-family pass and calling it cross-model.' That's no longer the rule: the review always runs, on a fresh context on the most different model you have, in preference order — Fable when this flag is true; otherwise another Claude model (checked against available_models above: sonnet-/haiku-drafted reviews on opus, opus-drafted reviews on sonnet); only when nothing else is reachable at all does it fall back to the same model in a fresh context. The heading names the actual reviewing model every time (e.g. '## Design review — Opus, fresh context') and never claims more independence than that pass actually had. Skipping is no longer an option in any case — a same-model pass, correctly labeled, is preferred over silently skipping. Separately, when this flag is true, spec Step 1 treats Fable as outranking every entry in available_models when answering 'the strongest model you have, period' — Fable is genuinely the top of the ladder for that question, not an off-axis alternative the way it is for reviewer selection."
     },
     "subagent_models": {
       "kind": "default",
