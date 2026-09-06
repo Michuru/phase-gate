@@ -99,6 +99,23 @@ you want.
 from elsewhere, not authored here. See each folder's own README and LICENSE for attribution. Every
 other component in this repo is under the root [`LICENSE`](LICENSE) (MIT).
 
+## Updating
+
+If you installed the `update-notification` component (`standalone/`, on by default in `process/`
+installs), you'll get a passive nudge in Claude Code when a new commit lands upstream — it never
+fetches or applies anything itself. See [`CHANGELOG.md`](CHANGELOG.md) for what changed (this
+project is still pre-1.0 — changes accumulate there before any version gets tagged). To actually
+pick up an update:
+
+1. Pull the phase-gate clone (or re-clone it).
+2. Re-copy `installer/phase-gate-install/` from the updated clone into your own repo's
+   `.claude/skills/` — the installer skill itself may have changed too.
+3. Re-run `/phase-gate-install /path/to/phase-gate` in your repo and review what's new. It's
+   idempotent: nothing you've locally edited gets silently overwritten.
+
+No update-check component installed, or want to check by hand? Just `git log`/`git pull` the clone
+and compare against what you last installed — there's no separate update channel.
+
 ## Credits
 
 The `standalone/hooks/` idea, small single-purpose Claude Code hooks distributed individually
