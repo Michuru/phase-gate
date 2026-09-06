@@ -93,11 +93,13 @@ guess — don't fold a half-done change into a commit just to clear the working 
 uncommitted changes are fine to leave sitting; nothing here forces a commit before something is
 actually done.
 
-**Ask about pushing, once per repo with a remote configured — don't wait to be asked.** Check each
-repo's own `git remote -v` rather than assuming from another repo in the same workspace. After all
-of this pass's commits to a repo with a remote are in, proactively ask whether to push now, rather
-than sitting passively until the user brings it up. Still needs an explicit yes before pushing —
-this only changes who raises the question first.
+**Ask about pushing, once per repo with a remote configured — this is the only point in the whole
+session that asks, not a separate ask after every commit-producing skill.** Check each repo's own
+`git remote -v` rather than assuming from another repo in the same workspace. Covering *every*
+commit made in that repo this session (this depth's own commits, plus anything `ship`/`backlog`
+already committed earlier without asking), proactively ask whether to push now, rather than sitting
+passively until the user brings it up. Still needs an explicit yes before pushing — this only
+changes who raises the question first, and consolidates it to one ask instead of several.
 
 **Report**: commit hash + one-line description, per repo, for anything actually committed, plus an
 explicit call-out of anything deliberately left uncommitted and why (mid-investigation, not yet

@@ -42,9 +42,9 @@ Move the resolved `BACKLOG.md` entry (checklist line and tool-section entry, if 
 covers this the same way it covers `backlog`'s own step), one commit, message drafted from the
 entry.
 
-**Ask about pushing, only if that commit landed in a repo with a remote configured.** Check via
-`git remote -v` rather than assuming. Don't wait for the user to bring it up; ask right after
-committing, once per repo.
+**Don't ask about pushing here.** Pushing is batched to `/end-task` time — one ask per repo with a
+remote configured, covering everything committed across the whole session, not a separate ask
+after every individual commit-producing skill.
 
 **If this work item has a `Design Docs/<slug>.md` file, write `## Shipped — done` into it first**
 (write-on-entry, per `spec/SKILL.md` Step 3.1) — the phase record `/initiate` Step 1.4 reads to
