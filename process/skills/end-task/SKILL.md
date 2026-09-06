@@ -93,9 +93,11 @@ guess — don't fold a half-done change into a commit just to clear the working 
 uncommitted changes are fine to leave sitting; nothing here forces a commit before something is
 actually done.
 
-**Never push without explicit confirmation**, in any repo — don't assume a repo has no remote
-configured just because another one in the same workspace doesn't; check each repo's own `git
-remote -v` rather than assuming.
+**Ask about pushing, once per repo with a remote configured — don't wait to be asked.** Check each
+repo's own `git remote -v` rather than assuming from another repo in the same workspace. After all
+of this pass's commits to a repo with a remote are in, proactively ask whether to push now, rather
+than sitting passively until the user brings it up. Still needs an explicit yes before pushing —
+this only changes who raises the question first.
 
 **Report**: commit hash + one-line description, per repo, for anything actually committed, plus an
 explicit call-out of anything deliberately left uncommitted and why (mid-investigation, not yet
@@ -129,7 +131,7 @@ yet; this is a judgment call, not a mechanical sweep — skip anything already c
 
 **Commit pass** — same mechanics as Step 5's narrow-commit depth, for every verified complete
 change identified in the docs pass above plus anything Step 1's survey found; same
-never-push-without-confirmation rule.
+ask-about-pushing-per-remote-repo rule.
 
 **Cheat-sheet artifact sync (conditional, only if you maintain one)** — needed only if this session
 added, removed, or renamed a skill, or materially changed what an existing one does (not a wording

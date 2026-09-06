@@ -42,6 +42,10 @@ Move the resolved `BACKLOG.md` entry (checklist line and tool-section entry, if 
 covers this the same way it covers `backlog`'s own step), one commit, message drafted from the
 entry.
 
+**Ask about pushing, only if that commit landed in a repo with a remote configured.** Check via
+`git remote -v` rather than assuming. Don't wait for the user to bring it up; ask right after
+committing, once per repo.
+
 **If this work item has a `Design Docs/<slug>.md` file, write `## Shipped — done` into it first**
 (write-on-entry, per `spec/SKILL.md` Step 3.1) — the phase record `/initiate` Step 1.4 reads to
 know the item is actually finished rather than still mid-flight. A plain `BACKLOG.md` item with no
