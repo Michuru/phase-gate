@@ -85,7 +85,6 @@ This is deliberately **not a fifth bucket** — it's an independent flag stacked
 executed the task, never a peer a task lands in *instead of* one of those. Flag a task for an independent
 `code-reviewer` pass when your rules doc's flagged-surface rule applies, the action is irreversible, or the
 standing Tier 1/2/3 QA-gate rule requires it regardless.
-standing Tier 1/2/3 QA-gate rule requires it regardless.
 
 ## Step 4: Check for a genuinely-independent parallel subset (Bucket E) — rare
 
