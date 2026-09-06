@@ -1,5 +1,18 @@
 # The methodology
 
+**An organization buys reviewer independence with a second engineer; a solo developer buys it with a
+second model and a fresh context.**
+
+This is a two-axis software development lifecycle for people building without a team. The **work
+axis** (`/backlog` → `/spec` → `/build` → `/verify` → `/ship`) is the same six-phase shape any
+AI-native SDLC converges on. What's different is the **session axis** (`/initiate`, `/handoff`,
+`/commit`, `/end-task`, `/wrap-up-session`): the operator's own context lifecycle, which exists only
+because the collaborator is a context window rather than a person, and that no organizational SDLC has
+any reason to model. Where an organization enforces phase discipline with branch protection, code
+owners, and a change board, a solo developer gets the same four gates — tier check, design review,
+execution, QA — automatically, by pointing a second model at a fresh context instead of a second
+engineer at a meeting. See [WORKFLOW.md](WORKFLOW.md) for the full map of both axes.
+
 This is the rulebook. Everything else in this repo (the skills, the agents, the hooks) exists to make
 the rules below happen consistently, instead of only when someone remembers them.
 
@@ -41,12 +54,18 @@ Self-assess every request against four tiers **before implementing**, not only w
 "plan." State the tier out loud when you make the call, so it can be challenged before the work happens,
 not after.
 
-| Tier | What it is | Design doc? | Cross-model review? | QA gate? |
+| Tier | What it is | Design doc? | Design review? | QA gate? |
 |---|---|---|---|---|
 | **4**: trivial | Single spot, single file. No new UI, no shared-schema change. | No, but state the plan in one sentence first | No | Only if it touches a flagged surface (§5) |
-| **3**: medium, pattern-following | More than one file, new UI, or a shared data file's schema, and it closely mirrors an already-shipped, already-tested pattern in this codebase | Yes, short | Skipped | Yes |
-| **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | Standard practice | Yes |
-| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | Offered | Yes |
+| **3**: medium, pattern-following | More than one file, new UI, or a shared data file's schema, and it closely mirrors an already-shipped, already-tested pattern in this codebase | Yes, short | Skipped — the "already-shipped, already-tested pattern" this tier requires is exactly the case a review doesn't add much to | Yes |
+| **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | **Automatic** — fires the moment the doc is saved, no approval question, only an announced turn boundary to opt out in | Yes |
+| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus a further pass is offered as one option before deciding implement-now-vs-backlog | Yes |
+
+**The review always runs when it's due — never silently skipped for lack of a stronger model.**
+Target: a fresh context on the most different model available — Fable first, else another Claude
+model, else the same model in a fresh context (never labeled as more than it is). The heading names
+the actual reviewing model every time. See `installer/variables.json`'s `available_models`/
+`fable_available`.
 
 **The Tier 2/3 split is the one most worth getting right**, and it reduces to a single question, asked at
 the same moment as the tier call itself:

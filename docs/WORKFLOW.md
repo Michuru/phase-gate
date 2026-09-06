@@ -1,98 +1,126 @@
-# Workflow: the full project lifecycle, start to finish
+# Workflow — the full project lifecycle, start to finish
 
-A map of which skill handles which stage of turning a problem/need into shipped, archived, committed work.
-The pieces (`backlog`, `design-gate`, `execution-gate`, `implement-queue`) each cover their own slice.
-This file lays out how they chain together into one pipeline.
+This file maps two independent axes, not one linear pipeline. See
+[methodology.md](methodology.md)'s opening section for the full mission statement and rationale.
 
-**This file cites other skills by named phase, not step number.** A skill's own step numbering can change
-as it grows. Hardcoding a specific step number here would create a silent drift hazard nothing would
-catch. If a skill's own step numbering changes in a way that would make a phase name below misleading,
-update this file in the same pass.
+**Work axis** — a work item's own lifecycle: `/backlog` → `/spec` → `/build` → `/verify` → `/ship`
+→ back to `/backlog`. Four gates fire automatically between these phases — tier check, design
+review, execution, QA — never asked about except the design review's own announced opt-out
+window.
+
+**Session axis** — the operator's own context lifecycle, orthogonal to the work axis: `/initiate`
+at the start, `/handoff` when context fills at any phase, `/commit` to checkpoint and continue,
+`/wrap-up-session` to stop. `/consolidate-docs` is a self-firing threshold gate. This axis exists
+only because the collaborator is a context window rather than a person — no organizational SDLC
+models it, and it's covered in its own section below.
+
+**This file cites other skills by named phase, not step number.** A skill's own step numbering can
+change as it grows. Hardcoding a specific step number here would create a silent drift hazard
+nothing would catch. If a skill's own step numbering changes in a way that would make a phase name
+below misleading, update this file in the same pass.
 
 ---
 
-## 1. A problem or need arises
+## The work axis
+
+### 1. A problem or need arises
 
 A bug, a feature idea, a backlog item, or an ambiguous ask.
 
-## 2. Tier check
+### 2. Tier check (automatic gate, before `/spec`)
 
 Self-assess against `docs/methodology.md`'s four tiers, before touching anything:
 
-- **Tier 4** (single-spot/single-file, no new UI, no schema change) → skip straight to **`backlog`**'s
-  Full-investigation mode: state a one-line plan, investigate/fix/verify, `code-reviewer` only if a
-  flagged surface, archive, commit. Done. The rest of this file doesn't apply.
-- **Tier 1/2/3** (multi-file, new UI, shared-schema change, or a new tool/major rewrite) → **`design-gate`**.
+- **Tier 4** (single-spot/single-file, no new UI, no schema change) → skip straight to
+  **`/backlog`**'s Full-investigation mode: state a one-line plan, investigate/fix/verify,
+  `code-reviewer` only if a flagged surface, then `/ship` (if a deploy target exists) or archive
+  directly, commit. Done — the rest of this file doesn't apply.
+- **Tier 1/2/3** (multi-file, new UI, shared-schema change, or a new tool/major rewrite) →
+  **`/spec`**.
 
-## 3. `design-gate`'s design phase
+### 3. `/spec` — the design phase
 
-`design-gate` covers more ground than just the design pass. Its own later phases are what sections 5 and
-6 below expand on, not a separate process. Its design phase runs through several steps, in order. First,
-confirm the tier out loud before any exploration. For Tier 1 only, ask immediately whether to switch to a
-stronger model for the design pass. Draft the doc in Plan Mode: problem and scope, approach, a task
-breakdown. Save the approved doc to `Design Docs/<slug>.md`. For Tier 1/2 designs, an automatic
-design-phase review spawns immediately, before implementation or backlog questions come up, targeting a
-model from a different family than the one that drafted the doc, with an opt-out window and a durable
-record written to the doc regardless of outcome. Then ask whether to implement now, file it to
-`BACKLOG.md` for later, or get another cross-model review pass. (Tier 3's two-way choice stays unchanged.
-Tier 1/2 option (c) now means an *additional* pass, or a first review if the automatic one was declined
-or failed.) Run any further cross-model review if chosen, then switch back to the base model once the
-design pass itself is done.
+Covers more ground than just drafting, in order: for a project with no `Design Docs/`/`BACKLOG.md`
+history yet, deferring to **`/initiate`**'s scoping-inventory pass first; confirming the tier out
+loud before any exploration; for Tier 1 only, asking whether to switch to the strongest available
+model, immediately; drafting the doc in Plan Mode (`## Intent`, `## Problem`, `## Approach`, a
+local-model-fit check, a task breakdown, plus an owed `## Design review — pending, <model>` line
+and, if the breakdown looks substantial, an owed `## Execution strategy — pending` line) with a
+`Kind: work-item` marker; saving the approved doc to `Design Docs/<slug>.md`; the automatic
+design-phase review (Tier 1/2 only — see the gate below); then asking whether to (a) implement now
+via `/build`, (b) file it to `BACKLOG.md`'s "Ready to implement" checklist for later, or (c) get
+another design review pass; switching back to the starting model once the design pass is done.
 
-## 4. Decision point A: does this design's task breakdown need an execution-strategy pass?
+### 4. Design review (automatic gate, Tier 1/2 only, inside `/spec`)
 
-**Considering this pass is a mandatory, recorded checkpoint above the threshold below. Actually running
-it stays fully optional.** `design-gate` Step 3.5 states a recommendation (run/skip) as part of its own
-implement-now/backlog question once a design crosses the threshold, and records the outcome either way
-under a `## Execution-gate consideration` heading. Whether `execution-gate` itself runs is always the
-adopter's call.
+Fires the moment the doc is saved — no `AskUserQuestion` deciding *whether* it runs, only an
+announced turn boundary to opt out in before the subagent actually spawns. Target: a fresh context
+on the most different model available, in preference order — **Fable** when available, else
+**another Claude model**, else **the same model in a fresh context** (never labeled as more than it
+is — see `installer/variables.json`'s `available_models`/`fable_available`). The result appends into
+the doc's own `## Design review` section, whose heading names the actual reviewing model every time.
 
-- **Trivial** (1–2 tasks, confined to a single sub-part/component) → skip straight to section 5 below.
-- **Substantial** (3 or more tasks **and** a real question of how they'd be delegated, ordered, or
-  parallelized, not only a single, obviously-sequential track, **or** the design spans more than one
-  independently-identifiable sub-part/component) → `design-gate` states a recommendation and records the
-  outcome, then **optionally runs `execution-gate`**: the parallelization/Workflow-worthiness gate first,
-  then per-task classification into buckets (Direct / `docs-writer` / fork / user-executed), a scrutiny
-  label from a fixed vocabulary on every task including Direct ones, the rare check for a
-  genuinely-independent parallel subset, and a written `## Execution strategy` section appended to the
-  design doc.
+### 5. `/build` — implementation
 
-## 5. Decision point B: one design right now, or several independent already-approved designs ready to go?
+Two modes: **single-design** (the common case — implement one already-approved design doc) and
+**batch** (`implement-queue`, for several independent already-approved designs sitting on
+`BACKLOG.md`'s "Ready to implement" checklist).
 
-- **One design** → implement directly, task by task against the design doc (and its Execution-strategy
-  section if one exists). This is `design-gate`'s own task-by-task implementation phase. Direct tasks run
-  in the main session at their stated scrutiny level, `docs-writer` tasks go to that subagent, fork-flagged
-  tasks fork off, user-executed tasks wait on the user, and any rare independent-subset tasks run via their
-  own one-off `Workflow` call (not through `implement-queue`).
-- **Several independent designs, each with no unmet prerequisite** → each gets added to `BACKLOG.md`'s
-  "Ready to implement" checklist (`design-gate`'s backlog-it option does this automatically) → when ready,
-  invoke **`implement-queue`**: read the queue, pre-run cleanliness check + capture the batch's
-  `baseCommit`, confirm a batch (max 3, state agent count/cost), run the `Workflow`, harvest and commit
-  sequentially with the stray-commit/forbidden-path anomaly checks, batch any blocked-item questions,
-  checkpoint between batches, close with a final summary.
+### 6. Execution (automatic gate, inside `/build`)
 
-## 6. What happens at the end, regardless of which path was taken
+`execution-gate` runs as `/build`'s opening step, unconditionally — no approval question, cost
+stated per its own cost-line requirement — but it stops itself (its own first step, "worth running
+at all?") on 1-2 tasks or when there's no real delegation question. Classifies every task into a
+bucket (Direct / `docs-writer` / fork / user-executed) with a scrutiny label from a fixed
+vocabulary, checks for the rare genuinely-independent parallel subset, and writes the result to the
+doc's own `## Execution strategy` section.
 
-This is `design-gate`'s own post-implementation phases, plus this methodology's standing archive/commit
-conventions, not a separate process:
+### 7. `/verify` — the QA gate
 
-1. **QA gate**: an independent `code-reviewer` pass, mandatory for any Tier 1/2/3 work, or a Tier 4 fix on
-   a flagged surface (see `flagged_surfaces` in `installer/variables.json`). Re-verifies against real data
-   and regression suites. Never trusts the implementer's own claim.
-2. **Docs sync**: mechanical `NOTES.md`/rules-doc-pointer updates, delegated to `docs-writer`.
-3. **Archive**: move the resolved `BACKLOG.md` entry to `BACKLOG_ARCHIVE.md` verbatim, citations included.
-4. **Commit**: per this methodology's standing local-commit authorization (see `docs/methodology.md`).
-   One commit per resolved item, narrow staging, message drafted from the `BACKLOG.md` entry.
-5. **Tool-specific extra gate, if any**: some tools have their own publish/deploy step. If so, "resolved"
-   also requires that step to have actually happened, not only that the fix works locally.
-6. **Display what's still open**: show every remaining open `BACKLOG.md` item across all sections, every
-   time, without being asked.
+An independent `code-reviewer` pass against the design doc, never trusting the implementer's own
+claim; confirms any recorded baseline metric's after-number was actually measured. Reactive
+escalation to a stronger model (then Fable, if a third pass is needed) when the same finding
+survives two consecutive passes.
+
+### 8. `/ship`
+
+For a work item with a deploy target (a `publish-*` skill exists for the tool): dispatches to that
+skill for the actual publish mechanics (check locally, copy from source of truth, confirm before
+visible to others, verify live), then owns archive-and-commit. For anything with no deploy target,
+archive-and-commit stays with whichever of `/backlog`/`implement-queue` produced the item — `/ship`
+states this split explicitly rather than leaving it inferred.
+
+### Back to `/backlog`
+
+Once shipped and archived, the loop returns to step 1 for the next problem or need.
+
+---
+
+## The session axis
+
+The operator's own context lifecycle — independent of which work-axis phase is active, and can
+fire at any point in it:
+
+- **`/initiate`** — session start. Surveys a live `handoff` primer, `BACKLOG.md`'s
+  implement-queue checklist, and every `Design Docs/` file's own `Kind:`/`Status:` record; routes
+  to whichever is actually next, and always reports what's blocked and on whom. Also owns the
+  scoping-inventory pass for a project with real existing code but no process history yet.
+- **`/handoff`** — write a self-contained briefing so a fresh context window can continue the
+  *same* in-progress task with zero shared history (not a session close-out), or resume from one
+  at the start of a fresh session.
+- **`/commit`** — a lightweight, narrow git-status-and-commit pass, on demand, right before
+  clearing context.
+- **`/wrap-up-session`** — full session close-out: survey every touched repo, sync any drifted
+  docs, commit verified narrow changes.
+- **`/consolidate-docs`** — a self-firing threshold gate, not a phase anyone invokes deliberately:
+  nudges splitting a rules-doc section that's grown into dated narrative history into a companion
+  notes file once it crosses a size threshold.
 
 ---
 
 ## Parallel process: externally-submitted PRs
 
-For PRs submitted by an external contributor, use **`review-pr`** instead of the numbered workflow above.
-It handles repo/PR resolution, delegates to code-review/security-review, posts a real GitHub review,
-reports merge status, and prompts a merge-now-vs-hold decision, independent of the design-gate/
-implement-queue pipeline.
+For PRs submitted by an external contributor, use **`review-pr`** instead of the work axis above —
+it handles repo/PR resolution, delegates to code-review/security-review, posts a real GitHub
+review, reports merge status, and prompts a merge-now-vs-hold decision, independent of the
+`/spec`→`/build` pipeline.

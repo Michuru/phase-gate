@@ -1,11 +1,11 @@
 ---
 name: execution-gate
-description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Use after a Tier 1/2/3 design-gate doc is approved and has a substantial multi-task breakdown — design-gate Step 3.5 now makes considering this skill a mandatory, recorded checkpoint at that point, though actually running it stays optional. Does not execute anything itself, and does not replace implement-queue (which parallelizes across several already-approved separate designs, not within one).
+description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Runs automatically as /build's opening gate whenever implementation actually starts (no approval question) — still directly invocable standalone too, e.g. to preview cost before deciding. Does not execute anything itself, and does not replace implement-queue (which parallelizes across several already-approved separate designs, not within one).
 ---
 
 # Execution gate: decide how one design's tasks should run
 
-`design-gate` produces the design doc and its task breakdown. `implement-queue` parallelizes several
+`spec` produces the design doc and its task breakdown. `implement-queue` parallelizes several
 already-approved, separately-scoped designs against each other. Neither owns the gap this skill fills:
 taking **one already-decided design's own task list** and deciding, task by task, whether it stays on the
 main model (and at what scrutiny level), gets delegated to `docs-writer`/`code-reviewer`, gets forked off
@@ -20,7 +20,7 @@ say so in one line and stop — don't run the rest of this process for its own s
 
 **Write that one-line decline into the design doc's `## Execution strategy` section anyway, dated.** A
 silent stop is indistinguishable from this skill never having been invoked — the same failure
-`design-gate`'s own Step 0 was written to prevent. Recording the decline is cheap; recording nothing is
+`spec`'s own Step 0 was written to prevent. Recording the decline is cheap; recording nothing is
 not distinguishable from "never checked."
 
 ## Step 1: The parallelization/Workflow-worthiness gate — and the `/implement-queue` eligibility check
@@ -85,6 +85,7 @@ This is deliberately **not a fifth bucket** — it's an independent flag stacked
 executed the task, never a peer a task lands in *instead of* one of those. Flag a task for an independent
 `code-reviewer` pass when your rules doc's flagged-surface rule applies, the action is irreversible, or the
 standing Tier 1/2/3 QA-gate rule requires it regardless.
+standing Tier 1/2/3 QA-gate rule requires it regardless.
 
 ## Step 4: Check for a genuinely-independent parallel subset (Bucket E) — rare
 
@@ -118,7 +119,7 @@ can't express that.
 ## Step 6: Write the result as a new `## Execution strategy` section
 
 Append this section to `Design Docs/<slug>.md` — **append, never overwrite**, the same convention as
-`design-gate` Step 3.6's cross-model review. Once the section's content has been adopted elsewhere, it may
+`spec` Step 3.6's cross-model review. Once the section's content has been adopted elsewhere, it may
 later be *trimmed*, provided the full text stays recoverable and the doc names the commit that carries it.
 Trimming after adoption is not a violation of the append-only rule; overwriting in place is.
 
@@ -157,30 +158,35 @@ include:
 4. **A plain-prose model recommendation, only when one is genuinely warranted.** If a Bucket A task or a
    QA-gate `code-reviewer` pass would clearly benefit from a non-default model (real design judgment calling
    for a stronger model, a different-family review calling for a different one), say so directly in the
-   report — the same pattern `design-gate` Step 1 already uses for its model-switch offer (an
+   report — the same pattern `spec` Step 1 already uses for its model-switch offer (an
    `AskUserQuestion`, not a fixed field). Most tasks need no model call-out at all; don't manufacture one.
    This is deliberately **not** a third scrutiny field alongside Step 5's `stakes`/`approval` — see the
    Notes section below for why.
 
 **Note for Tier 1/2 designs reaching this stage:** A Tier 1/2 design has already had its automatic
-design-phase review via `design-gate` Step 3.4 (run before Step 3.5, before implementation/backlog/further-review
+design-phase review via `spec` Step 3.4 (run before Step 3.5, before implementation/backlog/further-review
 questions are even asked). This Step 8 cost line covers only the *implementation* cost — do not re-propose
 a design-level cross-model review pass as part of your execution strategy. Step 3.4's review is sunk cost
 by the time this step runs, not a projected expense to account for here. **Keep this separate from Step 3's
 QA-gate flag above** — that flag covers *implementation* QA on executed tasks (a different concept from the
 design-phase review), and conflating the two risks a future session treating implementation QA as
 pre-satisfied by Step 3.4's design-phase pass when they're actually independent concerns. Step 5's reactive
-QA-burst escalation (a `design-gate`-scoped feature) is also outside `execution-gate`'s scope entirely.
+QA-burst escalation (a `spec`-scoped feature) is also outside `execution-gate`'s scope entirely.
 
 ## Notes
 
-- Whether *running* this skill should become a required step in your rules doc's tiered-work section
-  (Tier 1, possibly Tier 2) is an open question, not yet decided — stays opt-in/standalone until
-  revisited, per the user's own decision. Don't bake this into your rules doc unilaterally in a future
-  session without asking again. **Narrower question already resolved**: *considering* this skill (stating
-  a run/skip recommendation, recording the outcome) is a mandatory, recorded checkpoint in `design-gate`
-  Step 3.5 whenever a design's breakdown is substantial. This does not touch the broader, still-open
-  question above.
+- Whether *running* this skill should become a required step, rather than opt-in/standalone, was an
+  open question for a while. A narrower version resolved first: *considering* this skill (stating a
+  run/skip recommendation, recording the outcome) became a mandatory, recorded checkpoint in `spec`
+  Step 3.5 whenever a design's breakdown is substantial. **The broader question is now answered too
+  — but as *waived*, not *satisfied*.** `/build` runs this skill automatically as its own opening
+  gate, with no approval question (see `build/SKILL.md` Step 1) — in practice this makes running it
+  mandatory for any Tier 1/2/3 design implemented through the normal path, without your rules doc's
+  tiered-work section ever having to state a separate rule for it. The user made this call directly
+  rather than because some original evidence bar was cleared — record that distinction (waived by
+  direct decision, not satisfied by evidence) if your own history of this skill's design still
+  records the older open question, rather than silently erasing the prior position. This skill
+  remains directly invocable standalone outside `/build` too, e.g. to preview cost before deciding.
 - **No per-task model field, by design.** A per-project model plan (drafting on one model, reviewing on
   another, an occasional different-family pass) is usually resolved by hand without real friction — not
   enough evidence to justify a new fixed-vocabulary field alongside Step 5's `stakes`/`approval`, and
@@ -188,6 +194,6 @@ QA-burst escalation (a `design-gate`-scoped feature) is also outside `execution-
   not a stronger model). Step 8's point 4 above (plain-prose recommendation, only when genuinely
   warranted) is the whole fix. Revisit only if a recurring, structured need shows up that this doesn't
   cover.
-- For the full pipeline this skill fits into — from a problem arising through `backlog`/`design-gate`
+- For the full pipeline this skill fits into — from a problem arising through `backlog`/`spec`
   and on to `implement-queue` and the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
   at the repo root.

@@ -1,0 +1,176 @@
+---
+name: spec
+description: Produce a short design doc before implementing a Tier 3 (multi-file/new-UI/shared-data-schema change that closely mirrors an existing pattern), Tier 2 (same shape, but real design judgment with no clean pattern to mirror), or Tier 1 (new tool from scratch, or major rewrite/consolidation) change, per your rules doc's tiered-work section. Use before implementing any request that will touch more than one file, add new UI, change a shared data file's schema, start a brand-new tool, or rewrite/consolidate an existing tool's architecture — even if the user didn't ask for a "plan" or "design doc" by name.
+---
+
+# Spec: write the doc before the code
+
+This repo's `backlog` flow already handles small, single-spot fixes well — investigate, fix, verify, archive. This skill covers the other end: work big enough that starting to type code immediately risks a wrong assumption that's expensive to unwind later (a new tool's data model, a rewrite's architecture, a feature that touches several files at once).
+
+## Step 0: Confirm the tier
+
+Before running this skill, make sure the request actually is Tier 1/2/3. Do this **immediately** —
+before any exploration, research, or drafting — regardless of whether Plan Mode was entered *literally*
+(the user explicitly asked for a plan or invoked Plan Mode) or *inferred* (Claude decided on its own that
+the request meets the criteria below). A tier call made after exploration has already started is too late
+to inform the exploration itself.
+
+- **Tier 3** — touches more than one file, adds a new UI section/tab/control, or changes a shared data file's schema, **and closely mirrors an already-shipped, already-tested pattern elsewhere in the same tool/repo** — verifiable by direct comparison to that precedent, not fresh judgment. Example: adding a new UI tab that copies an existing list feature's UI and persistence path, plus one new schema field — a straight copy of an already-shipped pattern.
+- **Tier 2** — same structural shape as Tier 3 (multi-file/new-UI/schema-change), but **no clean existing pattern to mirror** — a genuine choice between reasonable approaches, or a design whose consequences are expensive to get wrong (a shared-schema change other tools depend on, a binding constraint the design must never violate).
+- **Tier 1** — a brand-new tool from scratch, or a major rewrite/consolidation (anything the existing "before any large or risky rewrite" auto-commit trigger already covers), or the first time anything from this repo is externally distributed — a new standalone repo, a public artifact, anything meant for someone else's machine (real architectural ambiguity plus a genuinely higher cost of a wrong assumption, since a mistake here reaches beyond this repo).
+
+**The Tier 2/3 call is the one most worth getting right, and it's a single question: is there an already-shipped, already-tested pattern in this repo I'm directly copying, or am I making a real design choice?** Decide this at the same moment as the rest of the tier call, not mid-plan once the shape of the design becomes clearer. If genuinely unsure which side a request falls on, default to Tier 2 (the design review will fire automatically, Step 3.4) rather than assume Tier 3 — an unnecessary review costs a few minutes; a missed one reintroduces the exact wrong-assumption risk this whole gate exists to catch. **This split exists because the answer used to be an ad hoc judgment call made fresh each time** — the same kind of request, a small feature copying an existing UI/persistence pattern, once got its cross-model-review question answered case-by-case rather than by a fixed rule, and the same shape of request could land differently depending on how it happened to be judged in the moment. Naming Tier 2 vs. Tier 3 up front removes that variance.
+
+**State the tier out loud, right when the skill is invoked, before Plan Mode starts.** The tier call changes what happens next (Tier 1 triggers Step 1's early model-switch offer; Tier 2 triggers Step 3.4's automatic design review; Tier 3 skips both), and a silent skip of either offer looks identical to the check never having run at all — the user has no way to tell "this was classified Tier 3" from "the tier check was skipped" unless it's said explicitly. **For Tier 2 specifically, say explicitly that the model switch is not needed yet** — "staying on the current model for now, a review fires automatically once the doc is saved (Step 3.4)." A session once pre-emptively switched to a stronger model at the start of a Tier 2 session, assuming (reasonably, since Tier 1's Step 1 switches immediately) that Tier 2 worked the same way. It doesn't — Tier 2 drafts cheap on whatever model is already running and only involves a second model once the design doc exists to review. Don't let the user find this out by switching too early; say it up front, every time, since this is a distinction worth stating explicitly. A medium-tier item has also gone straight into Plan Mode with no stated tier before, and the user reasonably asked why no model-switch question appeared, since nothing had told them one wasn't coming. A one-line "this is Tier N, here's why" also gives the user a chance to correct a wrong tier call before the rest of the process builds on it.
+
+If the request is genuinely single-spot/single-file with no new UI and no schema change, it's Tier 4 — use `backlog`/normal editing instead, not this skill. If it's ambiguous which tier applies, use `AskUserQuestion` rather than guessing.
+
+## Step 0.5: Adopting onto an already-in-progress project — now `/initiate`'s job
+
+If there's no `Design Docs/`/`BACKLOG.md` history yet for this project, run `/initiate` first — it
+owns the scoping-inventory pass this step used to do directly (see `initiate/SKILL.md` Step 3, and
+its Notes for the incident that motivates checking this even without invoking either skill).
+
+## Step 1: Model check (Tier 1 only) — do this before Phase 1 exploration, not after drafting
+
+For Tier 1 work specifically, ask via `AskUserQuestion` whether to switch the session to **the strongest model you have** for this design pass **as the very first action, immediately after confirming the tier in Step 0** — real architectural ambiguity is the "cost of a wrong assumption is high" case the design-doc gate exists for, so it's a genuine offer with a one-line explainer (deeper reasoning for ambiguous architecture calls), not an assumption. **If the strongest available model is already the one running, say so out loud rather than skipping the question silently** — a design that never escalated should never look identical to one that did (make a capability's fallback path visible, not silent — applied here to model choice). Tier 2 and Tier 3 don't prompt this — proceed on whatever model the session is already running through exploration and drafting. (Tier 2 gets its own automatic design review later, at Step 3.4, once the design doc exists to review.)
+
+**Asking this question late defeats its purpose.** A Tier 1 session has, before, run its entire exploration-and-design pass on the default model, written the full plan, and only then asked whether to switch to a stronger one — at which point the user had to point out that the whole point of the check is to get the deeper-reasoning pass *during* drafting, not after. If a design pass is already underway and this step was skipped, don't wait for a natural stopping point — ask now, before writing anything further.
+
+## Step 2: Produce the combined doc via Plan Mode
+
+Use Claude Code's native Plan Mode for this — it's already the right mechanism (explore → design → stop for approval). **Explicitly refuse to draft Problem/Scope or Approach until the request's real requirements are confirmed — don't just quietly ask a clarifying question and move on regardless of the answer.** State directly that a specific input is needed before design work can start (e.g. "I need to know X before I can propose an approach here"), and treat that as a stated rule, not an emergent behavior. Ambiguity that isn't surfaced out loud gets silently resolved by assumption, which is exactly the wrong-assumption risk this whole skill exists to catch. The doc itself should be short and combine what a heavier process would split into charter + requirements + design:
+
+- **Problem** — what this is for, and an explicit out-of-scope line if there's an obvious adjacent thing this isn't doing.
+- **Approach** — the data model/architecture/UI shape, and which existing files/patterns it reuses.
+- **Baseline metrics (performance/optimization work only)** — before proposing an approach, capture one concrete before-number for whatever the change claims to improve (load time, calculation runtime, file size, API call count), not a qualitative "should be faster" claim. Record the after-number once implemented, at Step 5's QA gate, so "this helped" is a measured claim, not an assumption. If the change isn't performance/optimization-shaped, say so in one sentence and move on — this is a checkpoint to consider every time, not a bias toward benchmarking everything.
+- **Local-model fit** — briefly note whether a local SLM (small language model) could plausibly power any part of this tool, and if so, whether the fit is retrieval (cheap, citable, no confabulation risk) or generation (needs a propose → deterministic-gate → act structure before anything it produces is trusted). Favor a stronger deterministic rule over a probabilistic guess wherever one exists or can be found instead. If genuinely not applicable, say so in one sentence and move on — this is a checkpoint to consider every time, not a bias toward using one. If a local generative runtime is available to you, weigh it the same way: it's a plausible fit for the generation half of a propose → deterministic-gate → act pipeline, but not for open-ended judgment/QA work with no deterministic gate (code review, correctness verification) — keep that kind of work on a full model regardless of how tempting "it's free and local" is.
+- **Task breakdown** — a sequenced list, so implementation can reference "task 3" the way `backlog` items reference a `BACKLOG.md` entry.
+
+Keep it proportional: a Tier 2 or Tier 3 doc is a few paragraphs; a Tier 1 doc (new tool, major rewrite) can be fuller but should still fit on one screen. A design doc that takes longer to write than the feature takes to build has failed at being lightweight.
+
+## Step 3: Save the approved doc as a project artifact
+
+Once approved, save it to `Design Docs/<slug>.md` in the repo (create the `Design Docs/` folder if this is its first use) — not left only in the ephemeral Plan Mode plan file. This is the actual gate artifact: implementation afterward references this file, not conversational memory.
+
+**Record a one-line "Drafted on `<model>`" fact at the top of the saved doc** — a stated rule now, not an accidental convention. Step 3.4 keys its review target off this recorded value, checked immediately after this save, never off whatever model happens to be running later — this closes the drift case where a mid-session model switch between drafting and Step 3.4 firing would otherwise point the review at the wrong target.
+
+**Also write a one-line document-kind marker directly under that line** — `Kind: work-item` for anything this skill drafts (`Design Docs/` also holds deliverables — a migration note, a handout, an adopter test brief — that are `Kind: deliverable` instead, so a reader, `/initiate` included, can tell the two apart). **For Tier 1/2, also write `## Design review — pending, <model>` here**, using Step 3.4's target-selection rule, before approval is ever asked for — and say so out loud when presenting the plan. Today's review is real but invisible until after it has already happened; this is what makes an owed review visible in the artifact itself rather than only living in a transcript. **If the task breakdown looks substantial** (3 or more tasks with a real delegation/ordering/parallelization question, or more than one independently-identifiable sub-part) **also write `## Execution strategy — pending`** — `/build` runs `execution-gate` automatically and fills this in whenever implementation actually starts, but a design that gets backlogged instead should still show the gate is owed rather than leaving the section absent, which would look identical to "never assessed." Finally, open the doc's body with `## Intent` — a sentence or two on what this is and why now — not `/backlog`'s job, since a `BACKLOG.md` entry is a bullet, not a `##`-headed doc.
+
+## Step 3.1: The standard phase-record convention
+
+Every phase after this one writes into one of a fixed set of named sections, using one fixed
+heading grammar and one fixed status vocabulary — formalizing what design docs tend to hand-roll
+independently, several different ways, without a stated convention to follow.
+
+**Heading grammar, always**: `## <Phase> — <status>, <detail>` — e.g. `## Design review —
+pending, Opus` or `## Build — done, tasks 1-12`. One shape, no variants.
+
+**Status vocabulary, fixed**: `pending` / `running` / `done` / `blocked: <what, on whom>`.
+
+**Write-on-entry, not only on completion.** A phase writes its own section — with a real status,
+never left blank — the moment it is *entered*, and updates that same section in place when it
+closes. A section that doesn't exist yet and a phase that hasn't started look identical without
+this — the same gap that made `## Execution strategy` worth marking `pending` at draft time
+rather than left absent.
+
+**The fixed section table**:
+
+| Section | Written by | Notes |
+|---|---|---|
+| `## Intent` | `/spec`, opens the doc | Not `/backlog` — see Step 3 above |
+| `## Problem` + `## Approach` | `/spec` | Pick this pair only — don't invent a `## Context`/`## Scope` variant |
+| `## Design review` | the review gate (Step 3.4) | Declared `pending, <model>` at draft time per Step 3, filled in when the review runs |
+| `## Execution strategy` | `execution-gate`, run automatically by `/build` | Written `pending` if a backlogged design's breakdown looks substantial (3+ tasks with a real delegation question, or multiple sub-parts), so a backlogged design still shows the gate is owed once picked back up |
+| `## Build` | `/build` | Fills the slot that otherwise gets hand-rolled a different way in every design doc |
+| `## Verification` | `/spec`, at draft time | The plan, not the record — do not let a later phase overwrite this |
+| `## QA gate` | `/verify` | The record, a different thing from the plan above |
+| `## Shipped` | `/ship` | Written once the item is actually shipped |
+| `## Blocked` | any phase | Written whenever a phase stalls on something outside its own control |
+
+**Avoid words load-bearing elsewhere in AI tooling.** `## Context` collides with context
+window/context files/retrieved context; `## Problem` and `## Intent` don't collide with anything.
+Apply this test to any future section name.
+
+## Step 3.4: Automatic design-phase review (Tier 1/2 only)
+
+For every Tier 1/2 design — never Tier 3, already excluded per its own "closely mirrors an already-shipped pattern" definition, which is exactly the case a review doesn't add much to — this step fires automatically. There is no `AskUserQuestion` gate deciding *whether* it happens; only the announced opt-out window below can stop it.
+
+**Target selection: a fresh context on a different model than the one that drafted, in this preference order** — (1) **Fable**, when available; (2) **another Claude model** (sonnet- or haiku-drafted → `model: opus`; opus-drafted → `model: sonnet`, the most common pairing); (3) **the same model in a fresh context**, only when nothing else is available at all — weakest, still real, never labeled as more than it is. Check your own recorded model-availability configuration before picking a target — resolved upward from the current repo if this session is in a nested sub-repo (same rule `initiate/SKILL.md` Step 1.2 uses) — never assume a different-family model is available without checking. **The heading names the actual reviewing model every time** (`## Design review — Fable`, `## Design review — Opus`, `## Design review — Sonnet, fresh context`) and claims nothing else; a same-model pass is never labeled cross-model. The review still runs even when only option (3) is reachable — silently skipping for lack of a stronger independence reverses the whole point of this step.
+
+**Mechanism**: spawn a plain `Agent` call — **not** `code-reviewer`, which has no `Edit`/`Write` tools and is instruction-tuned to review an implementation's diff against a design doc, not to review the design doc itself — with the target model override, instructed to read `Design Docs/<slug>.md` (plus whatever it cites) cold and return a structured review as its final answer. The main session then appends that returned report into the `## Design review` section already opened `pending` at draft time (Step 3): a relayed report, not something the subagent writes into the doc itself.
+
+**Announce before spawning, not just report after — and actually stop for a response, don't just narrate then proceed in the same turn.** State plainly that the automatic review is about to fire and which model it targets — name the actual cost, never a vague "comparable" cost — then **end the turn there and wait for the user's next message before calling `Agent`.** Stating the announcement and spawning the subagent inside the same uninterruptible turn makes the opt-out window fictional — the user needs a real turn boundary to actually respond in, the same way Step 3.5's `AskUserQuestion` gives one. This is the only point where declining is physically reachable; finding out after the subagent already ran was never really a choice.
+
+**Opt-out**: if the user responds to that announcement saying not to run it for this design, skip it and record the decline (below) the same way a completed review is recorded. **Failure**: if the spawned subagent errors or times out, report that plainly — never silently treat it as if it ran clean — and fall through the same way.
+
+**In both the opted-out and the failed cases, Step 3.5's option (c) reverts to meaning a *first* review, not "another" one** — no review actually happened here, so (c)'s later "request an additional pass" meaning doesn't apply.
+
+**Durable record, every time, in one named place — not just a transcript message.** Whether the review ran and found something, ran clean, was declined, or failed, update the `## Design review` heading's status in place (`done`, or `blocked: declined by user`/`blocked: subagent failed`) stating which of those four happened. This reuses `execution-gate` Step 0's own precedent for the identical problem — a silent stop is indistinguishable from the step never having run at all, and the design doc, not the transcript, is what a future session actually reads.
+
+**After the review (and any follow-up discussion of its findings), explicitly return to Step 3.5's original question** before anything is implemented or backlogged — carrying forward the "review defers, doesn't answer" guardrail (stated in full at Step 3.6 below) into this now-automatic path. That guardrail matters more here than it did when a review was only ever chosen deliberately, since firing is now the default for every Tier 1/2 design rather than something asked for.
+
+## Step 3.5: Ask before implementing — plan approval is not implementation approval
+
+Exiting Plan Mode approved the *design*, not a green light to start writing code right now. After saving the doc — and, for Tier 1/2, after Step 3.4's automatic review (or its recorded decline/failure) has run — use `AskUserQuestion` to ask whether to (a) start implementation now, or (b) file it as a `BACKLOG.md` item (pointing at `Design Docs/<slug>.md`) for a future session to pick up — plus, **for Tier 1/2 only** (see the tier-based framing below for Tier 3, which never offers this), (c) get another review pass (Step 3.6) before deciding (a) or (b) — same caveat as always: a pass this step can actually produce may turn out to be same-model-fresh-context rather than genuinely cross-model, depending on availability. **What (c) means depends on whether Step 3.4 already ran**: for a Tier 1/2 design where it did, (c) means an *additional* pass (a further different-family subagent, or a direct switch to interrogate the existing review's reasoning live); for a Tier 1/2 design where Step 3.4 was declined or failed without a successful rerun, (c) means a *first* review. Don't treat plan acceptance as implicit permission to proceed — this has been corrected before, mid-session, after implementation started without permission.
+
+**Choosing (a) now means invoking `/build`**, which runs `execution-gate` automatically as its own
+opening gate — no approval question, cost stated per that gate's existing requirement, stopping
+itself when the design is trivial per its own Step 0 (see `build/SKILL.md` Step 1) — rather than
+this step asking whether to consider running it first.
+
+**Before adding a checklist line for option (b), run the same forbidden-path test `execution-gate`'s Step 1 runs**: if any task in the design's own breakdown touches `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, or anything under `.claude/` (skills, workflows, settings, hooks), `/implement-queue`'s Step 5 will flag it as tainted and harvest nothing — don't auto-add it to the checklist regardless of tier or prerequisite state. Instead keep the design tracked in its own tool section (or a cross-cutting section like `BACKLOG.md`'s "Environment / machine setup" for infra-shaped work), noting the disqualification and pointing at the design doc — exactly as has happened before this check existed as a repeatable step, when a design doc had to be tracked by hand after the fact.
+
+**Once option (b) is chosen and its `BACKLOG.md` edit (checklist line, or the tool-section note used when the forbidden-path check above disqualifies it) is written, auto-commit that edit together with the design doc itself** — narrowly staged (`git add "Design Docs/<slug>.md" BACKLOG.md`, never `-A`/`.`), no confirmation needed (standing local-commit authorization per your rules doc's commit-conventions section covers this the same way it covers any other verified `BACKLOG.md`-triggered commit). This closes a real gap: this exact path writes a fully-approved design doc plus its own `BACKLOG.md` pointer, and it's possible for neither `spec` nor `backlog` to actually commit them on their own — a session that just closes the window afterward, rather than separately invoking `/wrap-up-session`, could lose or leave dirty a change that was already "verified and complete" in every sense that matters. **Scoped narrowly to this one combo** — `backlog`'s own plain quick-capture mode (used for non-design `BACKLOG.md` items too) is deliberately left untouched, since making it auto-commit every quick-capture write would widen the blast radius well past what this gap actually needs fixed.
+
+**Choosing (b) also adds a line to `BACKLOG.md`'s "Ready to implement" checklist section** (see `implement-queue`'s own skill doc), once the forbidden-path check above clears: design doc path, tool name, tier, and "no unmet prerequisite." **For a Tier 1/2 design, that prerequisite is satisfied automatically once Step 3.4 has actually run and recorded a clean or found-something outcome** — it is never "satisfied by construction" as a blanket statement, and remains a real, active carve-out specifically when Step 3.4 was declined or failed without a successful rerun (in that case don't add the checklist line yet; add it once a review actually completes). For Tier 3 (which never runs Step 3.4), the prerequisite is whatever else is genuinely unmet — a blocked question, user input not yet given. This is a deliberate, explicit queue entry, not a marker phrase to grep for — it's what actually makes the design pick-up-able by that skill instead of only by a human re-reading the tool's own `BACKLOG.md` section. **If an `execution-gate` pass ran and flagged a genuinely-independent parallel subset (its rare Bucket E), that recommendation lives in the design doc's own `## Execution strategy` section, never as a separate `implement-queue` checklist entry** — this checklist section holds only whole, independently-implementable designs, never a task fragment pulled out of one.
+
+**How option (c) is framed depends on the tier decided in Step 0 — narrowed now that Step 3.4 covers the common Tier 1/2 case automatically:**
+- **Tier 1/2, Step 3.4 already ran (the default case)** — (c) means requesting a further pass on top of the one already done. Framing it as the primary path no longer applies here, since the standard review already happened before this question was even reached.
+- **Tier 1/2, Step 3.4 opted out or failed without a successful rerun** — (c) reverts to its original meaning, a first review, framed the way the tier split always did: **Tier 2** leads with (c) (this tier exists specifically for designs with no clean existing pattern to mirror, so a first review isn't a rare extra here); **Tier 1** offers (c) as one option among three, a real but optional add-on.
+- **Tier 3** — don't offer (c) at all. The tier's whole definition is "closely mirrors an already-shipped, already-verified pattern," which is exactly the case a cross-model review doesn't add much to — ask only (a) vs (b).
+
+## Step 3.6: Review mechanism — the shared reference for both paths
+
+By the time this step is actually invoked, one of three things is true: **Step 3.4 already ran this automatically** for a Tier 1/2 design and Step 3.5's option (c) is now requesting a *further* pass on top of it (the common case where a review happens at all — this step's mechanism is exactly what Step 3.4 used); **a review is genuinely being offered for the first time** on a Tier 1/2 design where Step 3.4 was declined or failed without a successful rerun; or **a review is being offered for the first time on Tier 3**, which never runs Step 3.4 automatically. Whichever it is, the mechanism below is the same.
+
+A second model reading the design catches a different class of issue than the same model re-checking its own work. A same-family review (one model generation reading a design from the model generation before it) tends to surface internal tensions the original pass missed — the design's own stated diagnosis contradicting its phase ordering; a different-family review tends to surface a distinct class of gap: unverified external assumptions, a missing mid-point checkpoint, no phase ownership. Each pass's strongest findings are ones the prior pass structurally couldn't make.
+
+**Two paths, and they are not interchangeable:**
+
+- **Subagent pass (cold, filtered)** — spawned directly via `Agent` with a `model` override. Zero shared context: sees only the saved design doc (and whatever else its prompt points it at). No user action required — this is what makes automatic escalation (Step 3.4) possible at all. What comes back is a relayed report, not something the user can question directly.
+- **Direct switch (unfiltered, contaminated)** — the user runs `/model`; the same running session reads the doc having already seen the entire conversation that produced it. Not cold by any real definition — the opposite, in fact — but unmediated: no relay through me, and the user can push back on the reviewing model's take directly, in the same thread. **Known limitation, stated explicitly rather than left implicit**: if this same session also authored the design, this path reviews a doc against its own just-written reasoning — the weakest form of independence available. Prefer the subagent path when independence matters more than being able to interrogate the reviewer live.
+
+State the trade-off explicitly wherever either is offered: subagent for a fast, cheap, standard, genuinely independent check; direct switch when the reasoning itself (not just whether the artifact stands alone) is what's in question, or the user wants to interrogate it live, accepting the independence trade-off above.
+
+Whichever path ran, two things always follow:
+
+- **Append the review as a new section — never overwrite or merge into the original design.** The baseline must stay intact and visible so the comparison is real. Tag findings by strength of claim (an internal contradiction in the design is a stronger finding than a judgment call the reviewer would just weight differently) — both live in this same item, not two separate ones.
+- Close with a **synthesis section**: a priority-ordered, consolidated list of proposed changes, each citing which review raised it, plus what every pass agreed should stay. **Mark it proposed, not applied** — a review produces recommendations, not an automatic edit. Ask the user which ones to actually adopt before touching the design doc or any backlog it feeds.
+
+Never a hard requirement the user can't decline, for the offered-for-the-first-time cases (Tier 3; opted-out/failed Tier 1/2) — it costs real time/tokens either way. For those residual cases the default framing still differs by tier: **Tier 2** leads with it as the expected next step; **Tier 1** offers it as one reasonable option among three. (Tier 1/2's automatic case doesn't need this framing at all — by the time Step 3.5 is reached, it's already happened.)
+
+**Choosing "review first" defers Step 3.5's decision — it doesn't answer it.** After a user once picked "cross-model review first," the review surfaced its own follow-up questions (which findings to adopt, an architecture question the user's answer raised), and answering those felt enough like forward progress that implementation started without ever re-asking implement-now-vs-backlog. The user had to stop mid-task ("I never gave you permission to start??"). Engaging with follow-up questions *about the design* is not the same as answering *whether/when to build it*. Once the review, the synthesis, and any follow-up decisions it raises are all settled, **return explicitly to Step 3.5's original question** (implement now / backlog it) before writing or editing any implementation file — never let continued back-and-forth substitute for asking it again.
+
+## Step 3.7: Switch back to the starting model once the design pass is done
+
+If Step 1 switched the session to a stronger model, that was for the design reasoning specifically — not a standing change for the rest of the session. Once the doc is saved (Step 3), the implement-now-vs-backlog call is made (Step 3.5), and any cross-model review (Step 3.6) is wrapped up, tell the user that part of this is done and switch back to whatever model was running before Step 1 (or ask them to via `/model`), rather than silently staying on the pricier model through implementation by default. If backlogging rather than implementing now, switch back immediately — there's no more work this turn to justify staying on a pricier model. The one exception is a case for staying on the design-pass model into implementation too (e.g. a data model with real remaining ambiguity) — that's worth a one-line flag, same as Step 1's original offer, not an assumption either way.
+
+## Step 4: Implementation — now `/build`
+
+Moved to its own command. `/build` runs `execution-gate` automatically as its opening gate (no
+approval question) and then implements task-by-task against this doc, the same way `backlog`
+anchors fixes to a `BACKLOG.md` entry — see `build/SKILL.md`.
+
+## Step 5: QA gate — now `/verify`
+
+Moved to its own command, reactive-escalation rules intact — see `verify/SKILL.md`.
+
+## Step 6: Docs sync
+
+Hand the mechanical parts — a `NOTES.md` entry, a rules-doc pointer if this changes something your rules doc documents — to the `docs-writer` subagent (announce it the same way). If this was a Tier 4 auto-commit-triggering rewrite too (a large single-file rewrite can be trivial by the tier criteria below yet still trip your rules doc's separate "before any large or risky rewrite" trigger), follow that existing commit convention as well.
+
+## Notes
+
+- Don't over-apply this: a one-line copy change or a single-function bugfix is Tier 4 even if it happens to touch a file this skill would otherwise gate — the tier criteria are about scope (multiple files, new UI, schema change, new tool, major rewrite) and, for the Tier 2/3 split specifically, whether an existing pattern is being directly copied — not about which file is involved.
+- `Design Docs/` holds one file per project/feature, named descriptively (`<slug>.md`) — a habit worth keeping deliberately rather than re-derived each time.

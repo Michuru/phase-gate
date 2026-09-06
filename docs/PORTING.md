@@ -12,7 +12,7 @@ the rulebook says it should.
 
 ## The short version
 
-Fourteen variables, in four kinds:
+Fifteen variables, in four kinds:
 
 | Kind | Meaning | What happens if you ignore it |
 |---|---|---|
@@ -34,7 +34,7 @@ the installer rewrites every reference across the skills, the agents, and `metho
 | `backlog_file` | `BACKLOG.md` | Open and actionable items only. |
 | `archive_file` | `BACKLOG_ARCHIVE.md` | Resolved history with citations. Never read by default. |
 | `mistakes_file` | `MISTAKES.md` | Process mistakes: how work was done wrongly, not what's broken in the code. |
-| `design_docs_dir` | `Design Docs/` | Where `design-gate` saves design documents. |
+| `design_docs_dir` | `Design Docs/` | Where `spec` saves design documents. |
 | `notes_file_pattern` | `{tool}.NOTES.md` | Companion notes naming. `{tool}` is replaced with the component name. |
 | `checklist_section` | `Ready to implement` | The backlog heading `implement-queue` reads as its work queue. |
 
@@ -148,19 +148,33 @@ Examples: `src/pricing/calculate.ts:applyDiscount` · `lib/parser.py:parse_heade
 
 ## Behavioral config: read, not substituted
 
-These two aren't find-and-replace targets. They're settings the skills consult.
+These three aren't find-and-replace targets. They're settings the skills consult.
 
-### `review_model_families`
+### `available_models` and `fable_available`
 
-Default: `["opus", "fable"]`
+Default: `available_models: ["haiku", "sonnet", "opus"]`, `fable_available: true`
 
-Which model families to use for a cross-model design review. **The point is a different family, not a
-stronger model.** A second family reads with different priors and finds a different class of problem
-than the same model re-checking its own reasoning.
+**Rewritten 2026-09-05** (the two-axis SDLC redesign) — this pair replaces the old single
+`review_model_families` variable, whose rule was different in a way worth stating plainly rather
+than silently editing over: the old rule said *"if only one family is available to you, skip the
+review visibly rather than running a same-family pass and calling it cross-model."* That's reversed
+now. The design review always runs, on a fresh context on the most different model you have,
+checked in preference order:
 
-If only one family is available to you, **skip the review visibly** rather than running a same-family
-pass and calling it cross-model. A review labelled as something it wasn't is worse than a skipped one,
-because it gets counted as a gate that passed.
+1. **Fable**, when `fable_available` is `true` — the most different priors on offer.
+2. **Another Claude model**, checked against `available_models` (ordered weakest-to-strongest):
+   sonnet- or haiku-drafted designs review on `opus`; opus-drafted designs review on `sonnet`.
+3. **The same model, in a fresh context** — only when neither of the above is reachable at all.
+   Weakest, still real, never labeled as more than it is.
+
+**The point was always independence, not a stronger model** — a second family reads with different
+priors and finds a different class of problem than the same model re-checking its own reasoning,
+and that's still true. What changed is what happens when a different family isn't available: the
+old rule treated a same-family pass as worse than no review at all ("worse than a skipped one,
+because it gets counted as a gate that passed"). The new rule treats a *mislabeled* pass as the
+actual problem, not the weaker pass itself — so the heading names the real reviewing model every
+time (`## Design review — Opus, fresh context`, never bare "cross-model review"), and the review
+simply never gets skipped for lack of a stronger option.
 
 ### `subagent_models`
 

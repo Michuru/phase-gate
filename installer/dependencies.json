@@ -7,33 +7,70 @@
       "shelf": "process",
       "depends_on": {
         "hard": ["code-reviewer", "docs-writer"],
-        "soft": []
-      },
-      "external_prerequisites": []
-    },
-    "design-gate": {
-      "shelf": "process",
-      "depends_on": {
-        "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["execution-gate", "implement-queue", "backlog"]
+        "soft": ["ship"]
       },
       "external_prerequisites": [],
-      "notes": "execution-gate/implement-queue/backlog are pipeline-stage pointers to genuinely optional next steps. execution-gate specifically: design-gate's own Step 3.5 makes considering it a mandatory, recorded checkpoint for substantial designs, but running it always stays the adopter's own optional call."
+      "notes": "ship is a conditional pipeline pointer: Step 7 dispatches archive-and-commit to /ship instead, but only for a tool with its own deploy target - most BACKLOG.md items have none, so backlog's own archive-and-commit path stays fully functional without ship installed."
+    },
+    "spec": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["docs-writer"],
+        "soft": ["initiate", "build", "implement-queue", "backlog"]
+      },
+      "external_prerequisites": [],
+      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. initiate/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself."
+    },
+    "initiate": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["handoff", "backlog"],
+        "soft": ["spec", "implement-queue"]
+      },
+      "external_prerequisites": [],
+      "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - Step 2 signal 5 is the last-resort fallthrough ('none of the above'), always reached and always invoked when nothing else fires, with no alternative stated. spec/implement-queue are soft: offered conditionally (an adopting-project inventory pointer; a non-empty checklist offer), never invoked unconditionally."
+    },
+    "build": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["execution-gate", "verify"],
+        "soft": ["implement-queue"]
+      },
+      "external_prerequisites": [],
+      "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. implement-queue is soft: batch mode is one of two mutually-exclusive entry paths (Step 0), and single-design mode - the common case - needs it not at all."
+    },
+    "verify": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": ["code-reviewer"],
+        "soft": ["ship"]
+      },
+      "external_prerequisites": [],
+      "notes": "code-reviewer is hard: Step 1 invokes it unconditionally, no fallback. ship is a soft pipeline-stage pointer to the natural next phase once QA passes - verify's own job ends at the QA gate record."
+    },
+    "ship": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
+      "external_prerequisites": [],
+      "notes": "No dependency edges of its own kind: Step 1's publish-* dispatch is to an adopter's own tool-specific skill, never a component this export ships, and is fully conditional with an explicit stated fallback ('most work items have nothing to publish'). Step 2's archive-and-commit is functionally identical to what backlog/implement-queue already do for a no-deploy-target item - ship doesn't invoke either of them, they're alternate owners of the same step for different cases, stated explicitly in all three skills' own text rather than left to be inferred."
     },
     "execution-gate": {
       "shelf": "process",
       "depends_on": {
         "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["design-gate", "implement-queue", "backlog"]
+        "soft": ["spec", "implement-queue", "backlog"]
       },
       "external_prerequisites": [],
-      "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to."
+      "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to. Invoked automatically by build now (see build's own entry) rather than being invoked by spec at all."
     },
     "implement-queue": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer", "docs-writer", "design-gate", "backlog"],
-        "soft": ["execution-gate"]
+        "hard": ["code-reviewer", "docs-writer", "spec", "backlog"],
+        "soft": ["execution-gate", "ship"]
       },
       "external_prerequisites": [
         {
@@ -42,7 +79,7 @@
           "note": "D3 (build spec section 0): no reduced sequential mode is shipped. The skill and the process/workflows/implement-queue.js script both assume this is available; state the precondition in the README rather than building a second implementation."
         }
       ],
-      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. design-gate/backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard: running it always stays optional (its own SKILL.md and docs/WORKFLOW.md section 4 both state this - only considering it is a mandatory, recorded checkpoint in design-gate Step 3.5, not the run itself), and its output is never what populates a BACKLOG.md checklist entry - that's design-gate's job alone. implement-queue reads an execution-strategy section if one exists but works correctly without it."
+      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. spec/backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard, for a corrected reason as of the two-axis redesign: it is no longer 'always optional' at all - build now runs it automatically and unconditionally - but implement-queue's own batch mode never invokes execution-gate directly itself; it only reads an already-filled execution-strategy section if one exists (written by build's automatic run, on a design implemented that way before reaching the queue) and works correctly without it. ship is soft: Step 5.4 dispatches archive-and-commit to it for a deploy-target item, conditionally, with an explicit stated fallback (do the archive move directly) for the no-deploy-target case."
     },
     "consolidate-docs": {
       "shelf": "process",

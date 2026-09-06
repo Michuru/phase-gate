@@ -38,7 +38,7 @@
       "kind": "default",
       "value": "Design Docs/",
       "substitution": true,
-      "description": "Where design-gate saves design documents. A trailing slash is expected. If your path contains a space, keep it quoted everywhere it appears in a shell command."
+      "description": "Where spec saves design documents. A trailing slash is expected. If your path contains a space, keep it quoted everywhere it appears in a shell command."
     },
     "notes_file_pattern": {
       "kind": "default",
@@ -113,11 +113,17 @@
       "examples": ["src/pricing/calculate.ts:applyDiscount", "lib/parser.py:parse_header"]
     },
 
-    "review_model_families": {
+    "available_models": {
       "kind": "default",
-      "value": ["opus", "fable"],
+      "value": ["haiku", "sonnet", "opus"],
       "substitution": false,
-      "description": "Model families used for a cross-model design review. The point is a DIFFERENT family, not a stronger model — a second family reads with different priors and finds a different class of problem. If only one family is available to you, skip the review VISIBLY rather than running a same-family pass and calling it cross-model."
+      "description": "Which Claude models you have access to, ordered weakest-to-strongest, so 'the strongest model you have' has an actual answer: the last entry in this list. Paired with fable_available below."
+    },
+    "fable_available": {
+      "kind": "default",
+      "value": true,
+      "substitution": false,
+      "description": "Reversed 2026-09-05 (the two-axis SDLC redesign) — this used to be review_model_families, whose rule was 'if only one family is available, skip the review VISIBLY rather than running a same-family pass and calling it cross-model.' That's no longer the rule: the review always runs, on a fresh context on the most different model you have, in preference order — Fable when this flag is true; otherwise another Claude model (checked against available_models above: sonnet-/haiku-drafted reviews on opus, opus-drafted reviews on sonnet); only when nothing else is reachable at all does it fall back to the same model in a fresh context. The heading names the actual reviewing model every time (e.g. '## Design review — Opus, fresh context') and never claims more independence than that pass actually had. Skipping is no longer an option in any case — a same-model pass, correctly labeled, is preferred over silently skipping."
     },
     "subagent_models": {
       "kind": "default",

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/phase-gate.svg" alt="Phase-Gate: a circular loop of Backlog Triage, Design Gate, Execution Router, Parallel Queue, and Closeout" width="480">
+  <img src="assets/phase-gate.svg" alt="Phase-Gate: a two-axis diagram. The work axis chains /backlog, /spec, /build, /verify, and /ship left to right, fed by an /initiate dispatcher and looping back from /ship to /backlog for the next item. A session axis below lists /handoff, /commit, and /wrap-up-session, running alongside any phase." width="600">
 </p>
 
 # Phase-Gate
@@ -11,7 +11,7 @@ the full argument. It's short, and the rest of this repo only makes sense once y
 
 This repo ships two things, and either one works without the other:
 
-- **`process/`**: the complete method. Nine skills, two subagents, a workflow script, and the hooks
+- **`process/`**: the complete method. Thirteen skills, two subagents, a workflow script, and the hooks
   that enforce it. Opinionated software: it assumes a backlog file, a tier discipline, and a handful
   of standing conventions, and its pieces reference each other. A design doc feeds an execution
   plan, which feeds a work queue. A QA gate delegates to a review agent. Adopt it whole and you get
@@ -76,11 +76,11 @@ your machine, and it holds itself to that standard.
 
 ## What's in each shelf
 
-**`process/`**: `backlog`, `design-gate`, `execution-gate`, `implement-queue`,
-`consolidate-docs`, `wrap-up-session`, `commit`, `handoff`, and `review-pr` as skills, plus
-`code-reviewer` and `docs-writer` as subagents, one workflow script, and the hooks that nudge the
-docs-sync/mistakes-log habits `docs/methodology.md` describes. Read
-[`docs/WORKFLOW.md`](docs/WORKFLOW.md) to see how the pieces chain into one pipeline, and
+**`process/`**: `backlog`, `spec`, `initiate`, `build`, `execution-gate`, `verify`, `ship`,
+`implement-queue`, `consolidate-docs`, `wrap-up-session`, `commit`, `handoff`, and `review-pr` as
+skills, plus `code-reviewer` and `docs-writer` as subagents, one workflow script, and the hooks that
+nudge the docs-sync/mistakes-log habits `docs/methodology.md` describes. Read
+[`docs/WORKFLOW.md`](docs/WORKFLOW.md) to see how the pieces chain into two axes, and
 [`docs/PORTING.md`](docs/PORTING.md) for every value you can configure: file names, branch, test
 command, and more, all detected or asked at install time and never hardcoded.
 

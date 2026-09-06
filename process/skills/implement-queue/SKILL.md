@@ -6,7 +6,7 @@ description: Implement several already-approved design docs in parallel via the 
 # Implement the queue
 
 This skill only replaces the *implementation* phase of already-approved designs; planning and
-`design-gate` stay fully manual, unchanged. **`execution-gate` is the upstream skill that decides a
+`spec` stay fully manual, unchanged. **`execution-gate` is the upstream skill that decides a
 design's own execution strategy** — this checklist section is for whole separate designs, each its own
 `{designDocPath, backlogEntryText, toolName}` unit, never a task fragment of one design, even one
 `execution-gate` flagged as internally parallelizable.
@@ -21,7 +21,7 @@ to prevent.
 
 Read `BACKLOG.md`'s **"Ready to implement" checklist section** — this is the queue, an explicit list,
 not a grep. Per that section's own rule, an item only appears here if it has **no unmet prerequisite**.
-For a Tier 1/2 design, a pending cross-model review is satisfied automatically once `design-gate`'s
+For a Tier 1/2 design, a pending cross-model review is satisfied automatically once `spec`'s
 Step 3.4 has actually run and recorded a clean or found-something outcome — it's still a real, unmet
 prerequisite only when that review was declined or failed without a successful rerun. Other unmet
 prerequisites (a blocked question, user input not yet given) work as before, and an item with one
@@ -97,8 +97,15 @@ inspect the worktree directly before deciding anything.
    those paths, commit with a message drafted from the design doc and its `BACKLOG.md` entry. **Never
    `git merge`, `git rebase`, fast-forward, or otherwise bring the worktree's own branch/commits into
    the default branch wholesale** — always this scoped patch, never the branch itself.
-4. Move the item's `BACKLOG.md` entry (both its checklist line and its full tool-section entry) to
-   `BACKLOG_ARCHIVE.md`, per `backlog`'s existing cut-and-paste convention.
+4. **If this design's tool has a deploy target (a `publish-*` skill exists for it), invoke `/ship`
+   instead** — it now owns the archive-and-commit step for anything it publishes, per
+   `ship/SKILL.md` Step 2. Otherwise, move the item's `BACKLOG.md` entry (both its checklist line
+   and its full tool-section entry) to `BACKLOG_ARCHIVE.md`, per `backlog`'s existing cut-and-paste
+   convention, **and write `## Shipped — done` into this item's `Design Docs/<slug>.md` file first**
+   (same write-on-entry instruction `ship/SKILL.md` Step 2 uses for the deploy-target case) — this
+   design doc always exists here (this checklist only ever holds items that went through `spec`),
+   so this write is never skippable in this branch the way it can be for a plain `BACKLOG.md`-only
+   item elsewhere.
 5. Report the commit hash.
 6. Check whether the worktree needs explicit removal after a changed-then-harvested state (undocumented
    by the workflow tool for this case) — remove it if so.
