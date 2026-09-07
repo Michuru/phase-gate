@@ -191,6 +191,15 @@ real upgrade that also changes the installer's own file is realistically **at le
 not one guided step. If that row's status is anything else (`will_install` on a first-ever install,
 `already_present_identical`, etc.), this special case doesn't apply — proceed normally below.
 
+**If the adopter declines the diff-confirm on this one row, the whole run stops here — nothing else in
+`plan.json` gets applied either, not even rows with no connection to the installer.** This is a forced
+precondition, not a normal `skipped_by_adopter` choice: the entire reason this row is checked first and
+alone is that every other row's write happens *under* whatever installer logic is currently loaded, and a
+decline means that logic is confirmed stale. Applying the rest of the plan anyway would silently
+reintroduce the exact risk this rule exists to close. Tell the adopter plainly why nothing else was
+written, and that recommend-only mode is the way to review what else *would* apply without committing to
+the installer refresh first.
+
 Two modes only:
 
 - **recommend-only**: report Step 2's table. Never write anything to the adopter's repo beyond
