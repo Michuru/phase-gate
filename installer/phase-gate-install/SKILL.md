@@ -38,6 +38,19 @@ filename check cleanly). So, before reading anything further:
    and the receipt (see the schemas) — this is what a later update-notification check compares against, and
    without it recorded now it can never be added retroactively for this install. If step 1's confirmation is
    declined, stop here; nothing further is read.
+4. **If `.claude/phase-gate-install/receipt.json` already exists** (this is an upgrade, not a first
+   install), compare this run's freshly-recorded `source_commit`/`source_origin` against the receipt's own
+   recorded values before going any further:
+   - **`source_commit` differs** → state this plainly as a real fact, not silently absorbed into "current":
+     "your last install recorded `<old short SHA>`; this clone is now at `<new short SHA>`." This is the
+     upgrade the rest of this run exists to apply — Step 2's grounded table is what actually shows what
+     changed.
+   - **`source_origin` differs** → flag this explicitly and ask before proceeding — a different remote than
+     the one the adopter's last install actually came from (e.g. a fork switch) is not something to apply
+     silently under the same trust the original install carried. Confirm this is intentional before Step 1
+     continues.
+   - Neither differing means this run is a true no-op re-run — say so, and expect Step 2's table to show
+     everything as `already_present_identical`.
 
 **Model-class floor**: this skill assumes Sonnet-class reasoning or above. The grounded, multi-file,
 citation-checked reading below is a materially higher bar than casually skimming file contents — running
@@ -129,15 +142,40 @@ finished row — do not present it as one.
 **Also produce one row per `<path>/installer/manifest.json` `repo_files` entry, in `plan.json`'s
 `repo_files` array (`plan.schema.json`) — never skip these because they aren't in `dependencies.json`.**
 `docs/methodology.md`, `docs/PORTING.md`, `installer/variables.json`, both schemas,
-`installer/merge_settings.py`, the four `.githooks/*` files, `.gitattributes`, `.gitignore`, and `LICENSE`
-have no component name and no hard/soft dependency edges, but several components' own text depends on them
-directly (e.g. `code-reviewer.md` instructs reading `installer/variables.json`'s `test_command`) — they
-still need the same grounded-citation, same-rigor treatment as a components row, just without a `shelf` or
-dependency check. Each `repo_files` row needs a `status` (the same enum, minus
-`skipped_prerequisite_missing` — these have no prerequisite to be missing) and a `class` (Step 4's four risk
-classes — `docs/methodology.md` is always class 4).
+`installer/merge_settings.py`, `installer/phase-gate-install/SKILL.md`, the four `.githooks/*` files,
+`.gitattributes`, `.gitignore`, and `LICENSE` have no component name and no hard/soft dependency edges,
+but several components' own text depends on them directly — they still need the same grounded-citation,
+same-rigor treatment as a components row, just without a `shelf` or dependency check. Each `repo_files`
+row needs a `status` (the same enum, minus `skipped_prerequisite_missing` — these have no prerequisite to
+be missing) and a `class` (Step 4's four risk classes — `docs/methodology.md` is always class 4).
+
+**A manifest `repo_files` entry's own `path` is always its location within the phase-gate clone/export
+layout — the plan/receipt row's `path` is the *adopter-repo destination*, and is only ever different when
+the manifest entry carries an optional `target_path` field, in which case use that instead.** Today this
+applies to exactly one entry: `installer/phase-gate-install/SKILL.md`'s `target_path` is
+`.claude/skills/phase-gate-install/SKILL.md` — the file this installer's own manual bootstrap step
+(README's Install section) copies there, and the only one of this installer's own four files an adopter's
+Claude Code actually loads from a local copy (`verify_citations.py`/`manifest.json`/`dependencies.json`
+are always read live from `<path>` itself, every invocation — no adopter-side copy of those three is ever
+read by anything, so none of them gets a `repo_files` row). Every other existing `repo_files` entry has no
+`target_path`, so its plan/receipt `path` stays identical to the manifest entry's own `path`, unchanged.
 
 ## Step 3 — pick a mode, then confirm with diffs, not the table again
+
+**The installer's own row comes first, and alone, whenever it needs updating.** In apply mode, check the
+grounded table's row for `.claude/skills/phase-gate-install/SKILL.md` (the `repo_files` entry with
+`target_path` set — see Step 2) before doing anything else. If its status is
+`already_present_will_update`, this entire run's apply scope is that one file: show its diff, confirm,
+write it (Step 4's Class 1 handling), stage it, and merge it into the receipt (Step 5) — then **stop**.
+Do not proceed to any other row in this same invocation. A skill's own prose is loaded once at invocation
+start and never hot-reloads mid-run; applying every other row in the same pass would mean the rest of
+*this* run still executes under the stale rules the freshly-written file was meant to replace — the exact
+shape of a real bug already fixed once (`0f58d2e`: `.githooks/*` files written untracked under stale Step
+4 logic, before that fix existed). Tell the adopter plainly: the installer itself was just refreshed:
+re-invoke `/phase-gate-install <path>` to apply everything else under the current rules. This is why a
+real upgrade that also changes the installer's own file is realistically **at least two invocations**,
+not one guided step. If that row's status is anything else (`will_install` on a first-ever install,
+`already_present_identical`, etc.), this special case doesn't apply — proceed normally below.
 
 Two modes only:
 
@@ -163,6 +201,18 @@ never re-ask via a second confirmation round; state it once, plainly, as part of
 step and in `conflicts`.
 
 ## Step 4 — apply, by risk class (four classes, not one bucket)
+
+**Pre-write precondition on every upgrade (fixes F3 — no crash/interrupt recovery story otherwise).** If
+`.claude/phase-gate-install/receipt.json` already exists, run `git status --porcelain -- <path>` for every
+path listed in its `components[].files_written`/`repo_files` arrays before writing anything in this step.
+Any dirty path (locally modified, staged, or untracked-where-a-receipt-entry-expects-tracked) — stop and
+ask the adopter how to proceed rather than writing over it; this is the same "installed and locally
+modified, never silently overwrite" rule Step 6 already applies to a single mismatched hash, just run
+*before* the write starts instead of discovered after. A first-ever install has no receipt yet, so this
+check is a no-op on the common case. **If a run is interrupted partway through this step** (a crash, or
+`merge_settings.py` exiting nonzero mid-run per Class 3 below), the recovery is `git restore --staged
+--worktree <the specific paths this run had written before stopping>` — safe precisely because this
+precondition already confirmed those paths were clean before the run began.
 
 Every file written falls into exactly one of these. Handle each per its own class, not a single uniform
 "copy the file" step:
@@ -207,16 +257,25 @@ After a real `apply` run, write `.claude/phase-gate-install/receipt.json` in the
 to `<path>/installer/schemas/receipt.schema.json`: `installed_at`, `source_commit`, `source_origin`, and
 `manifest_version` carried through unchanged from the plan that preceded this apply (the two **must** match — a mismatch means
 the adopter approved one plan and a different commit got applied, which is itself a bug worth surfacing
-loudly, not silently accepting), the final resolved `variables`, exactly the `components` actually written
-(a subset of the plan's `will_install`/`already_present_will_update` rows) with each file's `content_hash`
-(sha256 of the file's content **after normalizing every line ending to LF** — never hash the raw bytes
-directly, since the adopter's own checkout/editor/OS may not preserve LF the way this export's own
-`.gitattributes` does, and a line-ending-only difference must never register as a real modification), the
-matching `repo_files` array (same `content_hash` contract, one entry per `manifest.json` `repo_files` entry
-actually written this run — `docs/methodology.md` above all, since it's the one every skill's own text
-depends on), and `settings_merge` recording whether `merge_settings.py` ran and whether it actually wrote
-changes. The receipt's own path and creation is itself a Class 2 line item — it is not an implicit side
-effect of everything else.
+loudly, not silently accepting), the final resolved `variables`, `components`/`repo_files` per the
+merge-forward rule below with each file's `content_hash` (sha256 of the file's content **after
+normalizing every line ending to LF** — never hash the raw bytes directly, since the adopter's own
+checkout/editor/OS may not preserve LF the way this export's own `.gitattributes` does, and a
+line-ending-only difference must never register as a real modification), and `settings_merge` recording
+whether `merge_settings.py` ran and whether it actually wrote changes. The receipt's own path and creation
+is itself a Class 2 line item — it is not an implicit side effect of everything else.
+
+**Merge-forward, never replace (fixes F2 — an upgrade that only touches 3 of 45 files must not drop hash
+protection for the other 42).** If `.claude/phase-gate-install/receipt.json` already exists, read it first
+and start from its own `components`/`repo_files` arrays. For each entry this run actually wrote (a
+`will_install`/`already_present_will_update` row that Step 4 wrote or overwrote), write a fresh
+`content_hash` and set `written_this_run: true`. Carry every other prior entry through byte-for-byte
+unchanged — same `content_hash`, and set `written_this_run: false` — rather than dropping it because this
+run's own selection didn't happen to touch it. On a first-ever install (no prior receipt), every entry is
+naturally `written_this_run: true`, so this rule costs nothing on the common case; it only matters from
+the second run on. `written_this_run` is what lets check 1 (Step 7) skip re-verifying only the entries
+genuinely touched this run, while check 1b re-validates every entry's hash regardless of the flag — the
+mechanism that actually restores full-receipt hash protection after an incremental upgrade.
 
 Validate the written receipt against `receipt.schema.json` before considering the run complete (see Step 7
 — this is one of the mandatory checks, not optional polish).

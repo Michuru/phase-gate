@@ -597,6 +597,13 @@
       "source_blob": null,
       "source_hash_type": null,
       "source_path": null
+    },
+    {
+      "path": "installer/phase-gate-install/SKILL.md",
+      "target_path": ".claude/skills/phase-gate-install/SKILL.md",
+      "source_blob": null,
+      "source_hash_type": null,
+      "source_path": null
     }
   ]
 }

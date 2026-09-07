@@ -47,7 +47,7 @@
     },
     "components": {
       "type": "array",
-      "description": "Every component that was actually installed (a subset of the plan's components - only those with status will_install or already_present_will_update in the plan should appear here as actually written).",
+      "description": "Every component ever installed across this receipt's history, merge-forward (build spec finding F2, 2026-09-06): each write starts from the prior receipt's own entries (if one exists), overwrites only the files this run actually wrote, and carries every other prior entry through unchanged. An entry's own written_this_run flag (see files_written below) is what distinguishes the two - the array itself is never replaced wholesale, only ever merged into.",
       "items": {
         "type": "object",
         "required": ["name", "shelf", "files_written"],
@@ -56,16 +56,20 @@
           "shelf": { "type": "string", "enum": ["process", "standalone"] },
           "files_written": {
             "type": "array",
-            "description": "Exact files written or overwritten in the adopter's repo, each with a content hash so a later re-run (step 6) can tell 'unchanged since install' from 'locally modified' without trusting a stale claim.",
+            "description": "Every file this component has ever had written in the adopter's repo (merged forward across every install/upgrade run - see the array's own description above), each with a content hash so a later re-run (step 6) can tell 'unchanged since install' from 'locally modified' without trusting a stale claim.",
             "items": {
               "type": "object",
-              "required": ["path", "content_hash"],
+              "required": ["path", "content_hash", "written_this_run"],
               "properties": {
                 "path": { "type": "string", "description": "Relative to adopter_repo_root." },
                 "content_hash": {
                   "type": "string",
                   "pattern": "^sha256:[0-9a-f]{64}$",
                   "description": "sha256 of the file's content with all line endings normalized to LF first (CRLF/CR -> LF) - the export enforces LF via .gitattributes, but the adopter's own checkout, editor, or OS may not, and a line-ending-only diff must never register as a real modification."
+                },
+                "written_this_run": {
+                  "type": "boolean",
+                  "description": "true only if this specific apply run actually wrote this file (content_hash is fresh); false means this entry was carried forward unchanged from a prior receipt. verify_citations.py's check 1 (citation re-verification) uses this to skip re-checking only the entries actually written this run - carried-forward entries stay fully re-checked, same as anything never installed. Check 1b (receipt file hashes) re-validates every entry regardless of this flag, written_this_run or not - that is the mechanism that actually closes F2 (an upgrade touching 3 of 45 files no longer silently drops hash protection for the other 42)."
                 }
               }
             }
@@ -75,16 +79,20 @@
     },
     "repo_files": {
       "type": "array",
-      "description": "Every installer/manifest.json repo_files entry actually written or overwritten during this install (a subset of the plan's repo_files - only those with status will_install or already_present_will_update). Same content_hash contract as components' files_written, so a re-run (step 6) can tell 'unchanged' from 'locally modified' for these too - docs/methodology.md above all, since it is the one repo_files entry every skill's own text depends on.",
+      "description": "Every installer/manifest.json repo_files entry ever installed across this receipt's history, same merge-forward contract as components above - docs/methodology.md above all, since it is the one repo_files entry every skill's own text depends on.",
       "items": {
         "type": "object",
-        "required": ["path", "content_hash"],
+        "required": ["path", "content_hash", "written_this_run"],
         "properties": {
-          "path": { "type": "string", "description": "Relative to adopter_repo_root." },
+          "path": { "type": "string", "description": "Relative to adopter_repo_root - the plan's own repo_files[].path (which is the manifest entry's target_path when one exists, e.g. installer/phase-gate-install/SKILL.md lands at .claude/skills/phase-gate-install/SKILL.md - otherwise identical to the manifest entry's own path)." },
           "content_hash": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
             "description": "sha256 of the file's content, LF-normalized - same contract as components' files_written.content_hash."
+          },
+          "written_this_run": {
+            "type": "boolean",
+            "description": "Same contract as components' files_written.written_this_run - true only if this run actually wrote this file, false if carried forward unchanged from a prior receipt."
           }
         }
       }

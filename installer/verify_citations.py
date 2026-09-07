@@ -164,13 +164,24 @@ def is_safe_probe_command(command: str, *, root: Path, variables_schema: dict) -
 
 def _written_keys(receipt: dict | None) -> set[tuple[str, str]]:
     """Every ('component', name) / ('repo_file', path) pair the receipt shows was actually
-    written by this apply - Check 1 skips citation re-verification for exactly these (see the
+    written by *this* apply - Check 1 skips citation re-verification for exactly these (see the
     module docstring: an absence citation that justified writing something is guaranteed to
-    mismatch once that write has happened, and Check 1b is the real post-apply check for these)."""
+    mismatch once that write has happened, and Check 1b is the real post-apply check for these).
+    Since the receipt is merge-forward (build spec finding F2), a component/repo_file entry can be
+    present from a prior run without being written this run - written_this_run is what tells the
+    two apart; a carried-forward entry stays fully re-checked by Check 1, same as anything never
+    installed. Missing written_this_run (an old, pre-merge-forward receipt) defaults to True, its
+    prior meaning - every entry in that receipt shape really was written by that one run."""
     if receipt is None:
         return set()
-    keys = {("component", c["name"]) for c in receipt.get("components", [])}
-    keys |= {("repo_file", rf["path"]) for rf in receipt.get("repo_files", [])}
+    keys = {
+        ("component", c["name"]) for c in receipt.get("components", [])
+        if any(f.get("written_this_run", True) for f in c.get("files_written", []))
+    }
+    keys |= {
+        ("repo_file", rf["path"]) for rf in receipt.get("repo_files", [])
+        if rf.get("written_this_run", True)
+    }
     return keys
 
 

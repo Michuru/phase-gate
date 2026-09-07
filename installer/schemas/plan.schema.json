@@ -100,7 +100,7 @@
         "type": "object",
         "required": ["path", "status", "class", "citations"],
         "properties": {
-          "path": { "type": "string", "description": "Where in the adopter's repo this file lands, matching its manifest.json repo_files entry." },
+          "path": { "type": "string", "description": "Where in the adopter's repo this file lands. Identical to the manifest.json repo_files entry's own path, unless that entry carries an optional target_path field (currently only installer/phase-gate-install/SKILL.md does, landing at .claude/skills/phase-gate-install/SKILL.md), in which case this is that target_path instead." },
           "status": {
             "type": "string",
             "enum": ["will_install", "already_present_identical", "already_present_will_update", "skipped_by_adopter"],
