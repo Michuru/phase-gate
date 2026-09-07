@@ -146,16 +146,26 @@
       --gate:#9A4529; --gate-line:#C4653F; --gate-soft:rgba(217,119,87,0.12);
       --delegate:#4A5836; --delegate-line:#6B7D52; --spine:#C4C1B2;
     }
-    @page{ size:Letter; margin:16mm 15mm; }
-    body{background:#FFFFFF;}
+    @page{ size:Letter; margin:14mm 15mm; }
+    body{background:#FFFFFF; line-height:1.35;}
     .wrap{max-width:none; padding:0;}
-    h1{font-size:29pt;}
-    .deck{font-size:11pt; max-width:none;}
-    .idea p, .hook, footer{font-size:10pt;}
+    h1{font-size:26pt; margin-bottom:10px;}
+    .deck{font-size:10.5pt; line-height:1.45; max-width:none;}
+    p.sec-sub[style]{margin-top:12px !important;}
+    figure{margin:16px 0 0; padding:12px 12px 8px;}
+    figcaption{margin-top:10px; font-size:9.5pt; line-height:1.4;}
+    .legend{margin-top:8px; font-size:9.5pt;}
+    .sec-head{margin:18px 0 4px; break-after:avoid;}
+    .sec-sub{margin:0 0 12px;}
+    .ideas{gap:8px;}
+    .idea{padding:8px 0;}
+    .idea h3{font-size:12.5pt; margin:0 0 3px;}
+    .idea p, .hook, footer{font-size:9.5pt; line-height:1.4;}
     .idea, footer{break-inside:avoid;}
     figure.route{break-inside:auto;}
-    figure.route svg{max-width:480px;}
-    .sec-head{break-after:avoid;}
+    figure.route svg{max-width:400px;}
+    .hook{margin:14px 0 0; padding:12px 14px;}
+    footer{margin-top:18px; padding-top:10px;}
   }
 
   @media (max-width:640px){
@@ -167,14 +177,14 @@
 
 <div class="wrap">
   <header>
-    <p class="eyebrow">Applying an AI-native SDLC, solo</p>
+    <p class="eyebrow">An AI-native SDLC, run by one person</p>
     <h1>A Team of One</h1>
   </header>
-  <p class="deck">Anthropic has published its own playbook for how a team should run software
-  development with AI doing much of the work. This process follows that same shape, but reshapes it
-  entirely around one person working alone with an AI assistant instead of a team. The checks a
-  team gets from people in a room, a solo developer gets from a second AI model and a fresh
-  conversation instead, and the whole thing runs itself once it's set up.</p>
+  <p class="deck">Teams that build software with AI doing much of the work have converged on a
+  similar shape: plan it, build it, review it, ship it. This process follows that same shape, but
+  reshapes it entirely around one person working alone with an AI assistant instead of a team. The
+  checks a team gets from people in a room, a solo developer gets from a second AI model and a
+  fresh conversation instead, and the whole thing runs itself once it's set up.</p>
 
   <p class="sec-sub" style="margin-top:28px;">Here's the actual decision tree, six forks in total.
   Two of them end the work with no code written at all, a trivial fix handled on the spot, or a
@@ -183,7 +193,7 @@
   something or work simply moving forward.</p>
 
   <figure class="route">
-    <svg viewBox="0 0 960 1650" role="img" aria-label="A detailed flowchart. A dispatcher box on the upper left sorts and routes incoming work, and also picks up where a prior session left off. Work arrives leads to a tier-check diamond: trivial work branches left to be fixed directly and bypasses everything; anything bigger continues into the Design panel. Inside that panel: assess how big this is and use a stronger model for the highest-stakes calls, draft the plan with no changes made yet, save the plan, run an automatic independent review for the two largest tiers with an opt-out window, then a person decides whether to work on it now. Deciding not now exits right to Backlog it, setting the plan aside without starting work; deciding now continues down into the Build panel. Inside the Build panel, a router decides automatically whether the delivery is complicated enough to route: something simple bypasses to direct implementation, a complicated one goes to an Execution Router; a second diamond asks how many approved designs are ready, one goes to direct implementation, several go to a Parallel Queue of isolated copies. All paths converge into the Check panel, which contains a findings diamond with a fix-and-recheck rework loop, run by a fresh, independent reader. From there the Ship panel syncs the docs, checks whether the work has somewhere to be released, hands off to the right release step if so, then archives and commits and shows what is still open. A dashed arrow loops from Ship back to Work arrives. Below a rule, a separate session track holds Wrap up, Hand off, and Tidy the docs, usable at any point above.">
+    <svg viewBox="0 0 960 1650" role="img" aria-label="A detailed flowchart. A dispatcher box on the upper left sorts and routes incoming work, and also picks up where a prior session left off. Work arrives leads to a tier-check diamond: trivial work branches left to be fixed directly and bypasses everything; anything bigger continues into the Design panel. Inside that panel: assess how big this is and use a stronger model for the highest-stakes calls, draft the plan with no changes made yet, save the plan, run an automatic independent review for the two largest tiers with an opt-out window, then a person decides whether to work on it now. Deciding not now exits right to Backlog it, setting the plan aside without starting work; deciding now continues down into the Build panel. Inside the Build panel, a router decides automatically whether the delivery is complicated enough to route: something simple bypasses to direct implementation, a complicated one goes to an Execution Router; a second diamond asks how many approved designs are ready, one goes to direct implementation, several go to a Parallel Queue of isolated copies. All paths converge into the Check panel, which contains a findings diamond with a fix-and-recheck rework loop, run by a fresh, independent reader. From there the Ship panel syncs the docs, checks whether the work has somewhere to be released, hands off to the right release step if so, then archives and commits and shows what is still open. A dashed arrow loops from Ship back to Work arrives. Below a rule, a separate session track holds End the session, which checks for unfinished work first and then either wraps up on its own or hands off, plus Hand off and Tidy the docs, usable at any point above.">
       <defs>
         <marker id="a1" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
@@ -365,7 +375,7 @@
 
       <g>
         <rect x="32" y="1585" width="168" height="36" rx="18" fill="var(--surface)" stroke="var(--delegate-line)" stroke-width="1.8"/>
-        <text x="116" y="1608" class="s-name" font-size="12.5" text-anchor="middle" fill="var(--delegate)">Wrap up</text>
+        <text x="116" y="1608" class="s-name" font-size="12.5" text-anchor="middle" fill="var(--delegate)">End the session</text>
 
         <rect x="400" y="1585" width="168" height="36" rx="18" fill="var(--surface)" stroke="var(--delegate-line)" stroke-width="1.8"/>
         <text x="484" y="1608" class="s-name" font-size="12.5" text-anchor="middle" fill="var(--delegate)">Hand off</text>
@@ -386,82 +396,83 @@
   </figure>
 
   <div class="sec-head"><h2>Five ideas, in order</h2></div>
-  <p class="sec-sub">Each builds on the one before it, and none of them require knowing any
-  particular tool.</p>
+  <p class="sec-sub">Most AI-assisted work fails one of two ways: either every change gets the same
+  heavy process, or a single design is considered complete without anyone reviewing the work. This
+  is what the process below builds: an AI-centric approach to effective development.</p>
 
   <div class="ideas">
     <div class="idea">
       <span class="idea-n">01</span>
       <div>
-        <h3>The same playbook, run by one person instead of a team</h3>
-        <p>Anthropic has described how a team should run software development with AI doing much of
-        the work: plan it, build it, review it, ship it. That's the same six-phase shape this
-        process uses. What's missing from any team-shaped version is the one piece that only matters
-        when the collaborator is a context window instead of a colleague. The assistant forgets
-        everything once a conversation ends. Picking work back up, handing it to a fresh conversation
-        partway through, and knowing when to actually stop for the day all become their own
-        discipline, the same reason a handoff document exists between two people on a real team.</p>
+        <h3>No one is a reliable judge of their own work — an AI included</h3>
+        <p>That's the risk behind the second failure mode above — calling a design complete before
+        anyone actually reviews it. An AI assistant reviewing its own output uses the same reasoning
+        that produced it in the first place, so it lands on the same answer. That's true for people
+        too. A developer's own code review only counts for something when someone else actually
+        reads it, and this process builds that same independent second look in on purpose. In a
+        fresh conversation with no memory of how the AI produced the work, a second AI model stands
+        in for the second engineer when there's no person around to do it.</p>
       </div>
     </div>
     <div class="idea">
       <span class="idea-n">02</span>
       <div>
-        <h3>Checking your own work is weaker than a second, independent read</h3>
-        <p>An AI assistant reviewing its own output uses the same reasoning that produced it in the
-        first place, so it lands on the same answer. That's true for people too. A developer's own
-        code review only counts for something when someone else actually reads it, and this process
-        builds that same independent second look in on purpose. In a fresh conversation with no
-        memory of how the work was produced, a second AI model stands in for the second engineer
-        when there's no person around to do it.</p>
+        <h3>How much scrutiny a change gets should match how much a mistake would cost</h3>
+        <p>Not every change deserves the same amount of scrutiny. The AI fixes a one-line issue on
+        the spot, and the day moves on. Something with more at stake — a new feature, or anything
+        expensive to get wrong — earns more scrutiny: a short written plan first, which the AI
+        drafts and a person approves before work starts. The size and the risk of the change decide
+        how much scrutiny it gets — a fixed amount for everything either slows down the small stuff
+        or lets the risky stuff through too fast.</p>
       </div>
     </div>
     <div class="idea">
       <span class="idea-n">03</span>
       <div>
-        <h3>How much process a change gets should match how much a mistake would cost</h3>
-        <p>A one-line fix gets fixed and the day moves on. Something with more at stake, a new
-        feature or anything expensive to get wrong, gets a short written plan first, agreed before
-        the work starts. The size and the risk of the change decide the size of the process around
-        it. A fixed process applied to everything either slows down the small stuff or lets the
-        risky stuff through too fast.</p>
+        <h3>That scrutiny happens automatically, at the moments that matter</h3>
+        <p>Deciding how much scrutiny a change deserves only matters if that scrutiny actually
+        happens — automatically, without anyone remembering to ask for it. Four checks make that
+        automatic: a <b>tier check</b>, a <b>design review</b> before the AI builds anything, an
+        <b>execution check</b> confirming the AI is handling the work with the right amount of care,
+        and a <b>QA check</b> that has an independent reader confirm the result against what the
+        plan actually specified once the AI finishes. All four fire on their own.</p>
       </div>
     </div>
     <div class="idea">
       <span class="idea-n">04</span>
       <div>
-        <h3>Four checks happen automatically, at the moments that matter</h3>
-        <p>A <b>tier check</b> decides how much process a piece of work actually earns, and before
-        anything gets built, an independent reader looks over the plan at the <b>design review</b>.
-        The <b>execution check</b>, in turn, confirms the work is being handled with the right
-        amount of care. And once the work is done, a <b>QA check</b> has an independent reader
-        confirm the result against what was actually agreed. Nobody has to remember to ask for any
-        of this. It just fires.</p>
+        <h3>"Verified" means checked against something real</h3>
+        <p>None of those checks are worth much if "verified" just means the AI sounded confident.
+        A test that ran, a log the AI read, a number the AI measured: that's what "checked" means
+        here. The single most common failure this catches is the AI reporting work as done on the
+        strength of a confident explanation alone.</p>
       </div>
     </div>
     <div class="idea">
       <span class="idea-n">05</span>
       <div>
-        <h3>"Verified" means checked against something real</h3>
-        <p>A test that ran, a log that got read, a number that got measured: that's what "checked"
-        means here. The single most common failure this catches is work reported as done on the
-        strength of a confident explanation alone.</p>
+        <h3>The AI forgets everything between conversations — so continuity has to be built in</h3>
+        <p>Everything above assumes a round of work happens in one sitting. In practice it often
+        doesn't. A person on a team can pick a half-finished task back up from memory, or a quick
+        conversation with whoever left it. An AI assistant can't — every new conversation starts
+        from zero. So continuity becomes its own explicit step: writing down exactly where things
+        stand, then handing that off to a fresh conversation the same way one person hands off to
+        another on a real team.</p>
       </div>
     </div>
   </div>
 
   <div class="hook">
-    <b>Workplaces can borrow this too:</b> a team that already has code review and QA can still take
-    pieces of it. Tiering decided by a fixed rule instead of a fresh judgment call each time, checks
-    that fire on their own instead of depending on someone remembering to ask, and a real discipline
-    for picking work back up that doesn't live in one person's memory. What a solo developer had to
-    build from scratch, a workplace can just adopt.
+    <b>The same trade scales however big the team gets.</b> A team buys independent review with a
+    second engineer's time; a team of one buys the same thing with a second AI model and a fresh
+    conversation. Either way, the actual requirement is small — one independent, fresh look before
+    calling something done — which makes it cheap enough to try on the very next thing you build.
   </div>
 
   <footer>
     Distilled from <b>Phase-Gate</b>, the fuller process reference for people actually adopting this
-    day to day, itself one implementation of Anthropic's own published AI-native SDLC ideas, built
-    for solo use. This page explains the idea on its own, for anyone who wants the reasoning without
-    the mechanics.
+    day to day, built for solo use. This page explains the idea — and where else it applies — on its
+    own, for anyone who wants the reasoning without the mechanics.
   </footer>
 </div>
 

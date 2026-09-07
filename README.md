@@ -9,6 +9,11 @@ earns before you start it, then make the expensive parts cheap by handing them t
 subagents instead of doing everything inline. Read [`docs/methodology.md`](docs/methodology.md) for
 the full argument. It's short, and the rest of this repo only makes sense once you've read it.
 
+Want to explain the idea itself — not the mechanics — to someone who isn't going to run these
+commands, like a PM, a BA, QA, or an exec? [`docs/methodology-explainer.pdf`](docs/methodology-explainer.pdf)
+(source: [`docs/methodology-explainer.html`](docs/methodology-explainer.html)) is a short,
+plain-language version built for exactly that.
+
 This repo ships two things, and either one works without the other:
 
 - **`process/`**: the complete method. Fifteen skills, two subagents, a workflow script, and the hooks
