@@ -46,6 +46,12 @@ code or a scope/spec document, that's the adopting-onto-an-existing-project case
 line and hand off to **`/adopt`** instead of running the sort below. Once `/adopt`'s inventory pass
 has run for this project, this branch never fires again for it.
 
+**If no project history exists AND the repo has no real existing code or scope/spec document
+either** (a genuinely blank, brand-new project — no history to inventory and nothing for `/adopt`'s
+scoping pass to do) — say so in one line and name **`/spec`** (the user already has something
+specific in mind to build) or **`/backlog`** (nothing specific yet — start capturing ideas) as the
+next command, rather than running the sort below on nothing and reporting an empty screen.
+
 Otherwise, survey everything from Step 1 and sort every real item (a live primer, a checklist entry,
 an in-flight design doc, an unblocked `BACKLOG.md` item) into exactly one bucket — never stop at the
 first one found, the way a signal ladder would:

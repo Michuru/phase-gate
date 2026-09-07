@@ -58,6 +58,20 @@ it on a much weaker model risks exactly the self-attestation failure Step 7 exis
 
 ## Step 1 — characterize your repo, as discrete checkable claims
 
+**If your repo isn't a git repo yet** (`git rev-parse --show-toplevel` fails), this is a from-scratch
+install onto a genuinely empty or brand-new project — a different case from adopting onto an existing
+repo, and every assumption below (and in later steps — `adopter_repo_root` detection, `git status`,
+staging written files) depends on a repo already existing. Ask before doing anything: confirm this really
+is an empty project you intend to initialize here, not a wrong directory or a repo that hasn't been
+cloned yet. Then ask for the intended default branch name explicitly — **never default to whatever
+`init.defaultBranch` happens to be locally configured to**; a live test found `git branch --show-current`
+succeeds silently on a brand-new unborn branch and reports whatever that local setting is, which may not
+match the branch name the adopter later pushes as default (e.g. GitHub's `main` vs. a machine configured
+for `master`/`trunk`). Once both are confirmed, run `git init -b <confirmed-name>` — the one write this
+installer ever makes outside its normal grounded/citation-verified flow, because nothing about
+"characterize your repo" can happen before a repo exists to characterize. Continue with the rest of this
+step normally once that's done; every later step's assumptions now hold.
+
 Before touching the export catalog, read your own repo: structure, existing docs (does a rules-doc,
 backlog file, design-docs directory already exist under a different name?), stack, single- vs multi-repo,
 any existing `.claude/settings.json`, any existing hooks.
