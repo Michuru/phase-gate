@@ -28,6 +28,31 @@ This repo ships two things, and either one works without the other:
 Neither one is the "real" version. Most people's honest first move is raiding `standalone/` for a
 hook or two. The full method sits there waiting when you want it.
 
+## Where this sits among similar tools
+
+Spec-driven phases — plan, build, review, ship — are common ground now: [spec-kit](https://github.com/github/spec-kit)
+and [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) both run that loop at real scale,
+with review gates of their own. Less common: **automatic, risk-tiered gating** (how much ceremony a
+change earns gets decided once, up front, not re-litigated every time) **paired with an explicit
+session axis** — `/handoff`/`/end-task` treating an AI's total amnesia between conversations as its
+own first-class discipline, not an afterthought. Standalone session-handoff skills exist too
+([Claude-Skill-Session-Handoff](https://github.com/NotThatRob/Claude-Skill-Session-Handoff),
+[claude-handoff](https://github.com/REMvisual/claude-handoff)), just not paired with a tiered-gate
+work loop. That combination is what this repo actually is.
+
+On trust: neither competitor verifies that a template write is actually *true* about the target
+repo — spec-kit's safety layer is download/archive hardening (zip-bomb/path-traversal/SSRF guards),
+BMAD's is structural (schema/semver validation, atomic all-or-nothing writes). Phase-gate's
+citation-verification checks per-file content grounding at finer granularity than spec-kit's
+mode-gated `refresh_managed` or BMAD's shallow TOML-key merge, and re-verifies it deterministically
+*after the fact* for drift — though the don't-overwrite decision itself is model-executed prose, not
+code-enforced the way the competitors' equivalent checks are.
+
+On scale: BMAD-METHOD's ~52,733 stars (roughly 39% of spec-kit's 133,732) accrued mostly under an
+earlier architecture, but a large, actively-maintained project choosing this same skills-based,
+AI-executed pattern in its current rewrite is still a real signal that the approach holds up beyond
+a single small tool.
+
 ## Requirements
 
 This is a capability check, not a plan-tier claim. Claude Code's own plans and feature availability
