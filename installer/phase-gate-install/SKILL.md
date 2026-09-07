@@ -142,13 +142,21 @@ For every component in `<path>/installer/manifest.json`, produce a table row and
   prerequisite by name — e.g. `review-pr` needs `gh` installed and authenticated; `implement-queue` needs
   `Workflow`/worktree support and fails fast per D3, no reduced mode is shipped).
 
-**Every entry in `plan.json`'s `components` array is one row per component named in
-`<path>/installer/dependencies.json` — never a single combined row for a whole shelf.** "Install
-everything in `process/`" is a selection convenience you offer the adopter (matching D5's "install
-everything, or cherry-pick"), not a different row shape: choosing it just sets every `process/`
-component's own row to `will_install`. This is load-bearing, not a style preference — Step 7's check 3
-checks hard dependencies by component name against `dependencies.json`, and a merged shelf row has no
-name that check can match against, silently defeating it.
+**`plan.json`'s `components` array gets one row per component in
+`<path>/installer/manifest.json` — this step's own opening sentence is the authority on the row
+source — and never a single combined row for a whole shelf.** `dependencies.json` supplies the
+*edges* between those rows, not the row list itself: it is built by grepping the skill files for
+cross-references, so by construction it has no entry for a component that only ever appears as a
+dependency target (`code-reviewer`, `docs-writer`, both `periodic-audit-*` agents) or that nothing
+references at all (`process-hooks`). Sourcing rows from it instead would silently drop those five,
+including the two agents `backlog` and `spec` hard-depend on — which then surfaces as a Step 7 check
+3 failure for a severed dependency nobody chose to sever.
+
+**"Install everything in `process/`" is a selection convenience you offer the adopter** (matching D5's
+"install everything, or cherry-pick"), not a different row shape: choosing it just sets every
+`process/` component's own row to `will_install`. This is load-bearing, not a style preference — Step
+7's check 3 reads each row's hard edges by that row's own component name out of `dependencies.json`,
+and a merged shelf row has no name that check can match against, silently defeating it.
 
 A row with an unresolved citation, a missing adopter-side check, or an unlisted dependency is not a
 finished row — do not present it as one.
