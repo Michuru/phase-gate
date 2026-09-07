@@ -1,3 +1,9 @@
+> **CONSUMED 2026-09-07 — item 1 (push) done, `da358bd`/`9385b5e` pushed to origin/main.** Items 2-4
+> (T24a independent-read caveat, T24b's UAT-script decision, the uninstaller idea) are still open but
+> tracked live in `J:\Claude\BACKLOG.md`'s "Sharing this repo's workflow/skills" section, not here.
+> This primer also exposed a real gap: it lives outside `J:\Claude`'s tree, so `/initiate`'s handoff
+> scan never sees it — flagged separately.
+
 # Handoff — T24a README public-review activity
 
 **Written 2026-09-07, session rooted in `meta` (`J:\Claude`) but the actual work is in
