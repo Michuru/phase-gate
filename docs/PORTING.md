@@ -12,7 +12,7 @@ the rulebook says it should.
 
 ## The short version
 
-Fifteen variables, in four kinds:
+Sixteen variables, in four kinds:
 
 | Kind | Meaning | What happens if you ignore it |
 |---|---|---|
@@ -148,7 +148,7 @@ Examples: `src/pricing/calculate.ts:applyDiscount` · `lib/parser.py:parse_heade
 
 ## Behavioral config: read, not substituted
 
-These three aren't find-and-replace targets. They're settings the skills consult.
+These four aren't find-and-replace targets. They're settings the skills consult.
 
 ### `available_models` and `fable_available`
 
@@ -161,16 +161,19 @@ review visibly rather than running a same-family pass and calling it cross-model
 now. The design review always runs, on a fresh context on the most different model you have,
 checked in preference order:
 
-1. **Fable**, when `fable_available` is `true` — the most different priors on offer.
-2. **Another Claude model**, checked against `available_models` (ordered weakest-to-strongest):
-   sonnet- or haiku-drafted designs review on `opus`; opus-drafted designs review on `sonnet`.
+1. **Fable**, when `fable_available` is `true` — the strongest tier, and the furthest from whatever
+   drafted the doc.
+2. **A different Claude model than the one that drafted**, checked against `available_models`
+   (ordered weakest-to-strongest): sonnet- or haiku-drafted designs review on `opus`; opus-drafted
+   designs review on `sonnet`.
 3. **The same model, in a fresh context** — only when neither of the above is reachable at all.
    Weakest, still real, never labeled as more than it is.
 
-**The point was always independence, not a stronger model** — a second family reads with different
-priors and finds a different class of problem than the same model re-checking its own reasoning,
-and that's still true. What changed is what happens when a different family isn't available: the
-old rule treated a same-family pass as worse than no review at all ("worse than a skipped one,
+Every option here is a Claude model, Fable included; it is the top of the ladder, not a different
+vendor. **The point was always independence, not a stronger model** — a different model reading in a
+fresh context finds a different class of problem than the same model re-checking its own reasoning,
+and that's still true. What changed is what happens when no different model is available: the
+old rule treated a same-model pass as worse than no review at all ("worse than a skipped one,
 because it gets counted as a gate that passed"). The new rule treats a *mislabeled* pass as the
 actual problem, not the weaker pass itself — so the heading names the real reviewing model every
 time (`## Design review — Opus, fresh context`, never bare "cross-model review"), and the review
@@ -184,7 +187,7 @@ Default: `code-reviewer: sonnet`, `docs-writer: haiku`
 reasoning, so it defaults higher.
 
 Override per call when a pass warrants it. The clearest case: **code that will run on someone else's
-machine deserves a stronger review, in a different family than whatever wrote it.**
+machine deserves a stronger review, on a different model than whatever wrote it.**
 
 ### `update_check_enabled`
 
