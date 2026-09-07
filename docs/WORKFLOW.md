@@ -88,9 +88,9 @@ another design review pass; switching back to the starting model once the design
 
 Fires the moment the doc is saved — no `AskUserQuestion` deciding *whether* it runs, only an
 announced turn boundary to opt out in before the subagent actually spawns. Target: a fresh context
-on the most different model available, in preference order — **Fable** when available, else
-**another Claude model**, else **the same model in a fresh context** (never labeled as more than it
-is — see `installer/variables.json`'s `available_models`/`fable_available`). The result appends into
+on the most different model from the one that drafted, in preference order — **Fable** when
+available, else **a different Claude model than the drafting one**, else **the same model in a fresh
+context** (never labeled as more than it is; every option here is a Claude model — see `installer/variables.json`'s `available_models`/`fable_available`). The result appends into
 the doc's own `## Design review` section, whose heading names the actual reviewing model every time.
 
 ### 5. `/build` — implementation
