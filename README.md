@@ -2,307 +2,244 @@
   <img src="assets/phase-gate.svg" alt="Phase-Gate: a two-axis diagram. The work axis chains /backlog, /spec, /build, /verify, and /ship left to right, fed by an /initiate dispatcher and looping back from /ship to /backlog for the next item. A session axis below lists /handoff and /end-task, running alongside any phase." width="600">
 </p>
 
-# Phase-Gate
+<h1 align="center">Phase-Gate</h1>
 
-A working method for AI-assisted development **with Claude Code specifically** — this repo installs
-Claude Code skills, agents, and hooks, and won't do anything for you on another tool. The idea is
-simple: decide how much ceremony a change earns before you start it, then make the expensive parts
-cheap by handing them to fresh-context subagents (separate Claude instances, each starting with a
-clean slate and only the specific task at hand — used so a review can't just re-confirm the same
-reasoning that produced the work) instead of doing everything inline. Read
-[`docs/methodology.md`](docs/methodology.md) for the full argument. It's worth reading in full — ten
-short sections — and the rest of this repo only makes sense once you've read it.
+<p align="center">Plan it, build it, review it, ship it — for one person and an AI assistant.</p>
 
-Want to explain the idea itself — not the mechanics — to someone who isn't going to run these
-commands, like a PM, a BA, QA, or an exec? [`docs/methodology-explainer.pdf`](docs/methodology-explainer.pdf)
-(source: [`docs/methodology-explainer.html`](docs/methodology-explainer.html)) is a short,
-plain-language version built for exactly that.
+Teams get independent review from a second engineer. Phase-Gate gives you the same thing from a
+second AI model reading your work in a fresh conversation. It installs as Claude Code commands, so
+**you'll need Claude Code and a git repo to use it.**
 
-**Terms used throughout this README, if you're new to Claude Code:** a **skill** is a reusable prompt
-Claude Code loads when you type a matching slash command; a **subagent** is a separate Claude
-instance with its own context window, spun up for one task and given only what it needs (see above);
-a Claude Code **hook** is a shell command Claude Code itself runs automatically on some event (a
-*different* thing from a **git hook** like `.githooks/pre-push`, which `git` runs — this repo has
-both kinds, and it's always stated which); a **statusline** is the one-line status bar Claude Code
-can show at the bottom of a session. Platform-level terms this repo uses but doesn't define —
-**fresh context**/**turn**, the **`Workflow` tool**, **Plan Mode** — are Claude Code's own features;
-see Claude Code's own docs or `/config` if any of those are unfamiliar. **"This export,"** used in a
-few places in this repo's own docs, means this repository as distributed to you — generalized from the
-author's own working setup, not designed in the abstract. `docs/methodology.md` §9 in particular is
-closer to hard-won operational habits than universal law; read it that way rather than assuming every
-line is load-bearing for you specifically.
+New to this and just deciding whether it's worth adopting? Read
+[`docs/methodology-explainer.pdf`](docs/methodology-explainer.pdf) instead. No commands in it.
 
-This repo ships two things, and either one works without the other:
+## Features
 
-- **`process/`**: the complete method. Fourteen skills, four subagents, a workflow script, and the
-  hooks that enforce it — see [What's in each shelf](#whats-in-each-shelf) below for what each one
-  actually does. Opinionated software: it assumes a backlog file, a tier discipline, and a handful
-  of standing conventions, and its pieces reference each other. A design doc feeds an execution
-  plan, which feeds a work queue. A QA gate delegates to a review agent. Adopt it whole and you get
-  a consistent process instead of one that only happens when someone remembers it.
-- **`standalone/`**: a pick-and-choose catalog. Eight components (five hooks, a statusline, two
-  skills), each working completely on its own. Zero adaptation, zero cross-references. Take exactly
-  the piece you want and skip the rest.
+- **Every change gets sized first**, so a typo fix doesn't get the same process as a rewrite.
+- **The plan is reviewed before code exists**, by a model that didn't write it.
+- **The finished code is checked against that plan**, by another one that didn't build it.
+- **A new conversation starts with no memory of the last one.** In a long session, a hook nudges you
+  once you're past 50% of the context window. A handoff note passes what matters to the next
+  conversation, so it picks up where you left off instead of starting from zero.
+- **Take all of it or one piece.** Eight components work standalone, with nothing to adapt.
 
-Neither one is the "real" version. If you're unsure which to start with: trying one `standalone/`
-hook costs nothing and asks for no commitment — see [What's in each shelf](#whats-in-each-shelf) for
-what's there. The full method sits waiting for whenever you want it.
+## Quick Start
 
-## What a session actually looks like
+Four steps: clone and copy from a terminal, run the installer inside Claude Code, then one more
+terminal command to finish.
 
-Say you ask for a new settings page. With `process/` installed, here's the shape of what actually
-happens, not just the architecture:
+**1. Clone this repo anywhere.** It doesn't need to live near your project. In a terminal:
 
-1. Before writing anything, the agent states the size out loud — *"this touches three files and adds
-   new UI with no existing pattern to mirror, so Tier 2"* — and writes a short design doc.
-2. Saving that doc automatically fires a design review: a fresh context with no memory of writing the
-   doc reads it cold and reports back findings as a numbered list — cited by file and line, not
-   paraphrased. It runs on the most different model you have available, and it names which model that
-   actually was rather than implying more independence than the pass really had.
-3. You get those findings directly, in the conversation, before anything is built — not filed
-   silently into a doc for you to go check.
-4. The agent builds against the reviewed design, then hands off to an independent QA pass: another
-   fresh-context read, checking the actual result against the design doc — not the same context
-   grading its own work.
-5. Only after that QA pass reports clean does the change get committed, with the review's outcome
-   stated plainly either way.
-
-Nothing here is hidden or automatic in the sense of "you don't see it happen" — every review and gate
-announces itself explicitly in the conversation. What's automatic is that you never have to remember
-to ask for one.
-
-## Requirements
-
-This is a capability check — what your Claude Code setup needs to be able to do — not a claim about
-which subscription plan you need. Claude Code's own plans and feature availability shift independently
-of this document, so verify directly instead of trusting a name here.
-
-- **Claude Code CLI**, any version with skills support — that's every current version, so there's no
-  setting to go find. That's it for `standalone/` components individually.
-- **To run the installer** (below): **Sonnet-class reasoning or above** — Claude's mid-tier model
-  (Sonnet) or a stronger one (Opus), not its fastest/cheapest one (Haiku). The grounded, multi-file,
-  citation-checked reading it does is a materially higher bar than casually skimming file contents.
-- **To use `implement-queue`** (part of `process/`): the `Workflow` tool with worktree-isolation
-  support (a git feature: two working directories against one repo at once, used here so parallel
-  agents don't step on each other's files). Confirm dynamic workflows are enabled in your Claude Code
-  settings before relying on this — check `/config` for the current option name rather than trusting a
-  label here, since Claude Code's own settings shift independently of this document. There's no
-  reduced or sequential fallback. This one's a hard requirement, stated up front instead of
-  discovered mid-run.
-- **To use `review-pr`** (part of `process/`): `gh` (the GitHub CLI), installed and authenticated,
-  plus the `code-review`/`security-review` skills that ship with Claude Code itself (assumed
-  present, not installed by this repo).
-- **`git`**, obviously.
-
-**Cost.** None of this is free relative to a plain conversation. Every Tier 1-3 change spawns at
-least one extra fresh-context subagent pass (a design review, a QA pass, or both), and Tier 1 can
-switch the whole session to a stronger, more expensive model for the design pass specifically. There's
-no built-in spend cap — if you're budget-conscious, watch your usage manually, especially in the
-first few sessions after installing, before you have a feel for the actual overhead on your own kind
-of work.
-
-## What installing actually does
-
-**The installer is itself a Claude Code skill — an LLM reading your repo and deciding what to write,
-not a plain script.** A separate, mandatory, deterministic checker re-verifies its citations
-afterward (see Install, below) precisely because the thing proposing changes is a model, not code.
-
-There's no session-only or ad-hoc mode. Running the installer in `apply` mode writes real files into
-your repo, and they persist across every future session. What it can write, in full:
-
-- **The components you selected** — skills under `.claude/skills/`, agents under `.claude/agents/`,
-  hook scripts and their settings fragments, the statusline script.
-- **Merged entries in `.claude/settings.json`** — your existing file is merged into, not replaced.
-- **The rulebook and its reference docs** — `docs/methodology.md` and `docs/PORTING.md`.
-- **Git-level files** — `.githooks/` (`pre-commit`, `pre-push`, `scan-secrets.sh`,
-  `secret-patterns.txt`), `.gitattributes`, `.gitignore`, and `LICENSE`. Setting `core.hooksPath` is
-  what actually activates those git hooks; it's local git config, so it doesn't survive a fresh clone
-  and has to be re-set in each one.
-- **The installer's own copies** — `installer/variables.json`, `installer/merge_settings.py`, the two
-  JSON schemas, and a copy of the installer skill at `.claude/skills/phase-gate-install/SKILL.md`.
-- **Its own bookkeeping** under `.claude/phase-gate-install/`.
-
-Nothing in that list is written in one undifferentiated batch. Every file falls into one of four risk
-classes, and each class is handled on its own terms: **Class 1** inert reference prose (most skills,
-agents, and docs); **Class 2** new adopter-facing files that don't exist in your repo yet, each its own
-line item; **Class 3** executable configuration, meaning anything landing in `.claude/settings.json` —
-treated as a privilege change rather than a breakage risk, since a hook is a shell command that will
-run on your machine in future sessions; and **Class 4** standing-authority and rulebook documents,
-confirmed one at a time and never bundled.
-
-**One Class 4 consequence worth stating plainly rather than as an aside: the rulebook grants a standing
-authorization for the agent to commit locally without asking first**, at three specific triggers
-(`docs/methodology.md` §6 — pushing anywhere still always asks, regardless). The rulebook document is
-what grants it and the `backlog` skill is what acts on it, so both are confirmed individually and
-either can be declined. This is a deliberate override of Claude Code's normal "confirm before
-committing" default, not a side effect you'd otherwise miss.
-
-**If you already have a rules document** at the name the installer resolves for one (`CLAUDE.md` by
-default), it is not merged into or overwritten. The rulebook installs alongside it as
-`docs/methodology.md`, and the installer reads your existing file and surfaces any direct conflict
-against it — a differing commit-without-asking policy, say — for you to reconcile. Two rulebooks that
-disagree is a decision, not a substitution.
-
-Want to see what would apply without committing to any of it, authorization included? Run
-`/phase-gate-install /path/to/phase-gate` and answer **recommend-only** when it asks which mode you
-want (see Install, below). That mode writes exactly two files —
-`.claude/phase-gate-install/variables.json` and `plan.json`, recording what it would propose — and
-nothing else, anywhere. Want to try exactly one `standalone/` piece with zero install ceremony at all?
-Read that piece's file directly instead of running the installer.
-
-## Install
-
-```
+```bash
 git clone <this-repo's-clone-url> /path/to/phase-gate
 ```
 
-Then, **in the repo you actually want phase-gate installed into**:
+**2. Still in a terminal, `cd` into the repo you want Phase-Gate in, then copy the installer there:**
 
-On macOS or Linux:
-
-```
+```bash
+# macOS and Linux
 mkdir -p .claude/skills && cp -r /path/to/phase-gate/installer/phase-gate-install .claude/skills/
 ```
 
-On Windows, in PowerShell:
-
-```
+```powershell
+# Windows
 New-Item -ItemType Directory -Force .claude\skills | Out-Null
 Copy-Item -Recurse C:\path\to\phase-gate\installer\phase-gate-install .claude\skills\
 ```
 
-Two things to get right either way: copy the whole `phase-gate-install` **folder**, not the `SKILL.md`
-inside it; and create the destination directory first, which is why the `mkdir`/`New-Item` comes
-first — a recursive copy into a destination that doesn't exist yet silently nests things in the wrong
-place instead of erroring. Then, **from inside a Claude Code session, with the repo you just copied
-into as your working directory**, run:
+**3. In that same terminal, still in your project repo, start Claude Code:**
+
+```bash
+claude
+```
+
+Then run the installer as a Claude Code command:
 
 ```
 /phase-gate-install /path/to/phase-gate
 ```
 
-This starts the installer skill (`installer/phase-gate-install/SKILL.md`) — it reads your repo,
-proposes a grounded, citation-backed plan of what applies to you, and writes nothing until you
-confirm. It will ask which mode you want: **`recommend-only`** (report only, writing just the two
-bookkeeping files named under "What installing actually does" above) or **`apply`** (real writes, one
-before/after diff at a time, only after you confirm each). Answer `recommend-only` for a completely
-safe first look with zero commitment. See the skill's own file for the full step-by-step: provenance
-check, four risk classes, a mandatory deterministic checker. It's the one file in this repository
-that reads untrusted input and writes to your machine, and it holds itself to that standard.
+It asks which mode you want, then lists every component with a verdict for your repo. In `apply` mode
+it shows one file's before-and-after at a time and waits for a yes on each. Nothing is written until
+you give it.
 
-**You don't need to configure anything before running this.** The installer walks the adopter-side
-variables with you — file names, default branch, test command, and the rest — detecting what it can
-and asking about what it can't, then records the resolved set to
-`.claude/phase-gate-install/variables.json` in your own repo. That file is the live copy: to change a
-value afterwards, edit it there, and the next run reads your edit back rather than re-detecting over
-it. `installer/variables.json` in the clone is only the shipped source of defaults, and
-[`docs/PORTING.md`](docs/PORTING.md) is the human-readable explanation of what each value means and
-which ones bite if you get them wrong.
+**4. Back in a terminal, point git at the hooks it installed.** This one is yours to run; the
+installer doesn't touch your git config.
 
-Starting from scratch? If the target directory isn't a git repo yet, the installer asks for
-confirmation and your intended default branch name, then initializes the repo via `git init -b <name>`.
-The normal case — installing into an existing repo — works as described above.
+```bash
+git config core.hooksPath .githooks
+```
 
-## What's in each shelf
+<details>
+<summary>Trying it without changing anything</summary>
 
-**`process/`** — fourteen skills, each a slash command:
+Still inside Claude Code from step 3, answer **`recommend-only`** at the mode question. It writes two
+files under `.claude/phase-gate-install/` recording what it would propose, and nothing else anywhere.
 
-| Skill | What it does |
+To try a single standalone component instead, open its folder, copy the one file, and paste its
+settings snippet. No installer involved. For example, `block-dangerous-commands`: copy
+`standalone/hooks/block-dangerous-commands/block-dangerous-commands.py` into your repo, then merge
+`settings.fragment.json` from that same folder into your `.claude/settings.json`.
+</details>
+
+## What happens without asking
+
+Not because any of this is risky to run — it's that Phase-Gate acts on your repo in ways worth
+knowing up front rather than discovering later.
+
+Phase-Gate commits without asking you first. This is deliberate, so finished work leaves a clean
+history without you approving each commit, and the installer confirms it separately from everything
+else. You can decline it.
+
+- Commits when a work item is finished and verified, one commit per item.
+- Commits just before a large or risky rewrite, as a checkpoint you can return to.
+- Commits when wrapping up a session, so finished work doesn't sit uncommitted.
+- **Never pushes without asking.** Every push, every time.
+
+Your `CLAUDE.md` is never written to. A `pre-push` hook scans outgoing commits for credentials.
+
+## Usage
+
+You drive this with slash commands, one per stage. Each stage hands the work to the next, and those
+hand-offs are where the reviews happen, because the model receiving the work is never the one that
+did it.
+
+### Starting and ending a session
+
+`/initiate` is where every session begins: it reads where things stand and tells you what to work on.
+
+| Command | What it does |
 |---|---|
-| `backlog` | Track open work items; list, add to, or pick one up |
-| `spec` | Write a short design doc before implementing anything non-trivial |
-| `initiate` | At session start, rank what's actionable across the project and name the next command |
-| `adopt` | One-time inventory pass for adding this method onto a project with existing code but no history yet |
-| `build` | Implement an approved design doc |
-| `execution-gate` | Decide, task by task, how an approved design's work should actually run — direct, delegated, forked, or blocked on you |
-| `verify` | Independent QA pass on a finished implementation, before it ships |
-| `ship` | Publish (if there's a deploy target) and archive a finished work item |
-| `implement-queue` | Build several already-approved designs in parallel, in isolated git worktrees |
-| `consolidate-docs` | Periodic cleanup pass keeping your rules doc lean |
-| `periodic-audit` | Recurring audit of a registered component: gaps in what its tests actually assert, and whether a past bug shape has recurred elsewhere |
-| `end-task` | Session-close checklist — commit, sync docs, or write a handoff, depending what's actually unfinished |
-| `handoff` | Write a briefing so a fresh session can pick up in-progress work with no shared memory |
-| `review-pr` | Independently review a GitHub pull request and post the findings |
+| `/initiate` | Opens a session by reading where things stand, then names what to do next |
+| `/handoff` | Writes down in-progress work; run it again at the start of a fresh session to resume from it |
+| `/end-task` | Closes a session out: commit, sync docs, or write a handoff |
 
-Plus four subagents the gates above delegate to — `code-reviewer` (the independent QA pass),
-`docs-writer` (mechanical documentation sync, once decisions are already made), and
-`periodic-audit-coverage` and `periodic-audit-structural` (the two passes `periodic-audit` runs, each
-invoked only by that skill) — one workflow script, and the hooks that nudge the docs-sync and
-mistakes-log habits `docs/methodology.md` describes. (`wrap-up-session` and `commit` still exist as
-short redirect stubs pointing at `end-task`, for anyone following an older reference to them — treat
-them as aliases, not separate skills.) Read [`docs/WORKFLOW.md`](docs/WORKFLOW.md) to see how the
-pieces chain into two axes.
+### One change, start to finish
 
-**`standalone/`** — eight components. Five hooks:
+This is the order you'd type these in, and it loops: `/ship` closes one item and points back at
+`/backlog` for the next.
 
-| Hook | What it does |
+| Step | Command | What happens |
+|---|---|---|
+| **Track** | `/backlog` | Lists open work. Pick an item, or add a new one |
+| **Design** | `/spec` | Writes a short plan. You approve it before any code exists |
+| **Build** | `/build` | Implements the approved plan, task by task |
+| **Check** | `/verify` | A separate reviewer checks the result against that plan |
+| **Ship** | `/ship` | Commits, archives the item, and lists what's still open |
+
+### How a change gets sized
+
+`/spec` figures out the tier before it starts writing the plan, so both the tier and the plan itself
+can still be refined before any of it reaches `/build`.
+
+| Tier | The change | What it gets |
+|---|---|---|
+| **1** | A new tool, or rewriting how an existing one works | Fuller plan, automatic review from a different model, option of a second |
+| **2** | Several files or new UI, no existing pattern to copy | Short plan, automatic review |
+| **3** | Several files or new UI, copying a pattern already working here | Short plan, no review |
+| **4** | One spot in one file | One-sentence plan |
+
+### Also included
+
+These cover real, common needs: parallel builds, onboarding an existing project, and reviewing
+someone else's pull request.
+
+| Command | What it does |
 |---|---|
-| `block-dangerous-commands` | Hard-blocks a short list of catastrophic Bash commands, regardless of permission mode |
-| `hooks-health-check` | Reports, never blocks, when your git-hooks configuration has drifted |
-| `context-usage-nudge` | Fires as a session's context usage climbs, nudging you to write yourself a handoff or continuation note before it runs out |
-| `update-notification` | Passively checks whether phase-gate has new commits upstream since install. Throttled rather than every session, silent if the check itself can't run, and never fetches or applies anything |
-| `periodic-audit-threshold-check` | Decides whether any registered component is due for a `periodic-audit` pass, by commit count or by growth in its bug ledger |
+| `/execution-gate` | Decide, per task, whether the AI does it directly, delegates it, or needs you |
+| `/implement-queue` | Build several approved plans at once, each in its own copy of the repo |
+| `/adopt` | One-time inventory for adding this to a project that already has code |
+| `/consolidate-docs` | Keep your always-loaded rules file from growing unbounded |
+| `/periodic-audit` | Check whether tests cover a tool's branches, and whether an old bug is back |
+| `/review-pr` | Review a GitHub pull request and post the findings |
 
-Plus a statusline (context-window usage, session cost, session duration) and two skills — `ai-check`
-(forensic AI-text detection) and `humanize` (rewrites text to read less like an AI wrote it). Each
-component ships in its own folder with its own README and settings fragment, so you can copy exactly
-the one you want. Every hook and the statusline need `python3` or `python` on `PATH`; each fails
-silently rather than breaking your session if neither is found.
+Four review agents run behind these commands, each in its own fresh conversation: `code-reviewer`
+(the check in `/verify`), `docs-writer` (mechanical documentation updates), and
+`periodic-audit-coverage`/`periodic-audit-structural` (the two halves of `/periodic-audit`).
 
-**`ai-check` and `humanize` ship under their own `LICENSE`, not this repo's.** They were adopted
-from elsewhere, not authored here. See each folder's own README and LICENSE for attribution. Every
-other component in this repo is under the root [`LICENSE`](LICENSE) (MIT).
+## What it puts in your repo
+
+Phase-Gate keeps its records as four plain markdown files in your own repo, not in a database or a
+service, and you can rename any of them. Open work goes in one file; finished work moves to a second
+once it ships; a folder holds design plans; and a fourth file logs process mistakes — not bugs in your
+code, but times the process itself went wrong, a wrong assumption or a "done" that wasn't actually
+checked, so a future session doesn't have to rediscover it the hard way.
+
+The installer creates whichever of the four don't exist yet, one confirmation at a time. Where your
+`CLAUDE.md` rules and Phase-Gate's disagree, it shows you the conflict and leaves the decision to you.
+
+The complete list of everything the installer can write is in
+[`installer/phase-gate-install/SKILL.md`](installer/phase-gate-install/SKILL.md).
+
+## Standalone components
+
+Each works alone. Copy the one file, paste its settings snippet, done.
+
+| Component | What it does |
+|---|---|
+| `block-dangerous-commands` | Refuses a short list of catastrophic shell commands outright |
+| `hooks-health-check` | Says at session start when your git hooks have come unwired |
+| `context-usage-nudge` | Warns as a conversation fills up, so you can hand off in time |
+| `update-notification` | Mentions when Phase-Gate has new commits. Never fetches or applies anything |
+| `periodic-audit-threshold-check` | Flags when a tool is due for an audit. Needs `/periodic-audit` |
+| `statusline` | Context usage, session cost, and elapsed time in your status bar |
+| `ai-check` | Scores text for signs an AI wrote it |
+| `humanize` | Rewrites text to read less that way |
+
+## Requirements
+
+You need three things installed:
+
+- **Claude Code**
+- **git**
+- **Python 3**
+
+Two commands have their own hard requirement — not optional if you use them, with no fallback if it's
+missing:
+
+- **`/implement-queue`** (builds several approved plans in parallel — skip this if you don't use it)
+  needs Claude Code's `Workflow` tool with worktree support. Check `/config` to confirm it's on —
+  there's no fallback without it.
+- **`/review-pr`** (reviews a GitHub pull request — skip this if you don't use it) needs the `gh`
+  CLI, authenticated. Install it from
+  [cli.github.com](https://cli.github.com), then run `gh auth login`. It also needs Claude Code's own
+  `code-review` and `security-review` skills.
+
+The installer itself is a model reading and reasoning about your repo, not a script, so run
+`/phase-gate-install` with Sonnet-class reasoning or better — check `/model` if you're not sure what
+you're currently on.
+
+Reviews cost real model time. Anything above a one-line fix spends at least one extra agent run, and
+usually two — the design review and the QA check are separate passes, and most changes get both. Tier
+1 can also switch the whole session to a stronger, more expensive model for the design pass. There's
+no spend cap, so watch your usage for the first few sessions.
 
 ## Updating
 
-If you installed the `update-notification` component (it lives in `standalone/`, and selecting it is
-its own choice — a `process/` install doesn't pull it in), you'll get a passive nudge in Claude Code
-when a new commit lands upstream — checked on a
-throttle (not every session), and it fails silently rather than blocking anything if the check itself
-can't run. It never fetches or applies anything itself. See [`CHANGELOG.md`](CHANGELOG.md) for what
-changed, tagged as GitHub releases (this project is still pre-1.0, tagged `0.x.y` — `v1.0.0` is
-reserved for the first release actually considered stable). To actually pick up an update:
+In a terminal, `git pull` the clone. Then, in Claude Code, run `/phase-gate-install /path/to/phase-gate`
+again. It compares against what it wrote last time and shows you a plan. Nothing you've edited is
+overwritten without a diff first.
 
-1. Pull the phase-gate clone (or re-clone it).
-2. Run `/phase-gate-install /path/to/phase-gate` in your repo. Before applying anything, the installer
-   checks whether this clone's current commit differs from the `source_commit` recorded in your prior
-   **receipt** (`.claude/phase-gate-install/receipt.json` — the installer's own record of exactly what
-   it wrote last time, written only by an `apply` run, so it exists if you've applied here before). If
-   the installer's own skill file at `.claude/skills/phase-gate-install/SKILL.md` is itself one of the
-   things that changed, this run refreshes that one file and stops, and tells you to re-invoke — a
-   skill's instructions load once at invocation, so applying the rest under the old ones is exactly
-   the bug that rule exists to prevent. Otherwise, the common case, every proposed update applies in
-   this single run. Review the grounded plan either way.
-3. If step 2 refreshed the installer only, run `/phase-gate-install /path/to/phase-gate` again to
-   apply everything else. Nothing you've locally edited gets silently overwritten.
+Settings live at `.claude/phase-gate-install/variables.json` in your repo. Edit a value there and the
+next run reads your edit instead of asking again. [`docs/PORTING.md`](docs/PORTING.md) explains what
+each one does.
 
-No update-check component installed, or want to check by hand? Just `git log`/`git pull` the clone
-and compare against what you last installed — there's no separate update channel.
+To remove Phase-Gate, `.claude/phase-gate-install/receipt.json` lists every path it ever wrote.
+Delete those, remove its entries from `.claude/settings.json`, and unset `core.hooksPath`.
 
-## Uninstalling
+## Documentation
 
-There's no automated uninstall script — everything installed is plain files plus merged entries in
-`.claude/settings.json`, so removing it is a manual but bounded job. `.claude/phase-gate-install/receipt.json`
-is the exact, authoritative list of everything ever written by this installer, by path, carried
-forward across every `apply` run — start there, not from memory:
+| Document | What it covers |
+|---|---|
+| [`docs/methodology-explainer.pdf`](docs/methodology-explainer.pdf) | The idea in plain language, no commands |
+| [`docs/methodology.md`](docs/methodology.md) | The full process reference |
+| [`docs/WORKFLOW.md`](docs/WORKFLOW.md) | How the commands connect |
+| [`docs/PORTING.md`](docs/PORTING.md) | Every configurable setting |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history. Pre-1.0 |
 
-1. Delete every path listed in the receipt's `components`/`repo_files` arrays (skills under
-   `.claude/skills/`, agents under `.claude/agents/`, hook scripts under `.githooks/`, and any
-   repo-root docs like `docs/methodology.md` you don't want to keep).
-2. Remove the corresponding entries from `.claude/settings.json` — the installer merges these in
-   rather than tagging them, so there's no automatic way to tell which lines came from phase-gate;
-   compare against `.claude/phase-gate-install/plan.json`'s Class 3 rows (executable configuration,
-   per the four classes in "What installing actually does" above), or against the last diff you
-   confirmed at install time, to identify them.
-3. If you set `core.hooksPath` for this install and don't want git hooks anymore, unset it
-   (`git config --unset core.hooksPath`).
+## Licence
 
-Removing `standalone/` pieces you copied in by hand is simpler — just delete the specific file(s) you
-copied and, if you added a settings fragment, remove that entry from `.claude/settings.json`.
-
-## Credits
-
-The `standalone/hooks/` idea, small single-purpose Claude Code hooks distributed individually
-instead of one monolithic config, comes from
+MIT, under [`LICENSE`](LICENSE). `ai-check` and `humanize` came from elsewhere and keep their own
+licence; see their folders. The idea of distributing small single-purpose hooks individually rather
+than as one config comes from
 [`claude-code-templates`](https://github.com/davila7/claude-code-templates) (MIT, Daniel Ávila).
-Nothing here is copied verbatim from that project. This repo's hook *implementations* are its own.
