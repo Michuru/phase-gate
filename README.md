@@ -79,6 +79,10 @@ own file for the full step-by-step: provenance check, two modes, four risk class
 deterministic checker. It's the one file in this export that reads untrusted input and writes to
 your machine, and it holds itself to that standard.
 
+Starting from scratch? If the target directory isn't a git repo yet, the installer asks for
+confirmation and your intended default branch name, then initializes the repo via `git init -b <name>`.
+The normal case — installing into an existing repo — works as described above.
+
 ## What's in each shelf
 
 **`process/`**: `backlog`, `spec`, `initiate`, `adopt`, `build`, `execution-gate`, `verify`, `ship`,
@@ -113,10 +117,13 @@ GitHub releases (this project is still pre-1.0, tagged `0.x.y` — `v1.0.0` is r
 release actually considered stable). To actually pick up an update:
 
 1. Pull the phase-gate clone (or re-clone it).
-2. Re-copy `installer/phase-gate-install/` from the updated clone into your own repo's
-   `.claude/skills/` — the installer skill itself may have changed too.
-3. Re-run `/phase-gate-install /path/to/phase-gate` in your repo and review what's new. It's
-   idempotent: nothing you've locally edited gets silently overwritten.
+2. Run `/phase-gate-install /path/to/phase-gate` in your repo. Before applying anything, the installer
+   checks whether this clone's current commit differs from your prior receipt's recorded `source_commit`
+   (if one exists). If the installer's own file needs updating, this run refreshes only that file and
+   stops — you'll see an instruction to re-invoke. Otherwise — the common case — all proposed updates
+   apply in this single run. Review the grounded plan either way.
+3. If step 2 refreshed the installer only, run `/phase-gate-install /path/to/phase-gate` again to
+   apply everything else. Nothing you've locally edited gets silently overwritten.
 
 No update-check component installed, or want to check by hand? Just `git log`/`git pull` the clone
 and compare against what you last installed — there's no separate update channel.
