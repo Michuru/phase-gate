@@ -4,24 +4,32 @@
 second model and a fresh context.**
 
 This is a two-axis software development lifecycle for people building without a team. The **work
-axis** (`/backlog` → `/spec` → `/build` → `/verify` → `/ship`) is the same six-phase shape any
-AI-native SDLC converges on. What's different is the **session axis** (`/initiate`, `/handoff`,
-`/end-task`): the operator's own context lifecycle, which exists only because the collaborator is a
-context window rather than a person, and that no organizational SDLC has
-any reason to model. Where an organization enforces phase discipline with branch protection, code
-owners, and a change board, a solo developer gets the same four gates — tier check, design review,
-execution, QA — automatically, by pointing a second model at a fresh context instead of a second
-engineer at a meeting. See [WORKFLOW.md](WORKFLOW.md) for the full map of both axes.
+axis** (`/backlog` → `/spec` → `/build` → `/verify` → `/ship`) matches the six-phase shape recent
+AI-native SDLC write-ups describe (Anthropic's own playbook among them) — five commands here, since
+one step below folds two of theirs (requirements and design) into a single design pass. What's
+different is the **session axis** (`/initiate`, `/handoff`, `/end-task`): the operator's own context
+lifecycle, which exists only because the collaborator is a context window rather than a person, and
+that no organizational SDLC has any reason to model. Where an organization enforces phase discipline
+with branch protection, code owners, and a change board, a solo developer gets the same four gates —
+tier check, design review, execution, QA — automatically, by pointing a second model at a fresh
+context instead of a second engineer at a meeting. See [WORKFLOW.md](WORKFLOW.md) for a visual map of
+both axes, if a diagram helps — it states nothing that isn't already covered below.
 
-This is the rulebook. Everything else in this repo (the skills, the agents, the hooks) exists to make
-the rules below happen consistently, instead of only when someone remembers them.
+**This is the rulebook — written as instructions to your AI collaborator, not to you.** "Self-assess
+every request," "ask rather than guessing" below are things the agent does, because the agent is what
+actually executes this moment to moment. Reading it tells you what the agent will do and expects from
+you at each point; it isn't a discipline you have to personally remember to follow. Everything else in
+this repo (the skills, the agents, the hooks) exists to make the rules below happen consistently,
+instead of only when someone remembers them.
 
 Read this once before installing anything. The skills will make sense afterwards, and won't before.
 
 **On the filenames in this document.** `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, `CLAUDE.md`,
-`Design Docs/` are defaults, not requirements. If you use different names, set them in
-`installer/variables.json` and the installer rewrites every reference across the skills and this file to
-match. See [PORTING.md](PORTING.md) for the full list. The *concepts* are load-bearing. The names aren't.
+`Design Docs/` are defaults, not requirements. All four documents (see §7) are written and maintained
+by your AI collaborator as part of normal work — you read and correct them, you don't hand-author them
+yourself. If you use different names, set them in `installer/variables.json` and the installer rewrites
+every reference, **in your own installed copy**, across the skills and this file to match. See
+[PORTING.md](PORTING.md) for the full list. The *concepts* are load-bearing. The names aren't.
 
 ---
 
@@ -58,14 +66,15 @@ not after.
 |---|---|---|---|---|
 | **4**: trivial | Single spot, single file. No new UI, no shared-schema change. | No, but state the plan in one sentence first | No | Only if it touches a flagged surface (§5) |
 | **3**: medium, pattern-following | More than one file, new UI, or a shared data file's schema, and it closely mirrors an already-shipped, already-tested pattern in this codebase | Yes, short | Skipped — the "already-shipped, already-tested pattern" this tier requires is exactly the case a review doesn't add much to | Yes |
-| **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | **Automatic** — fires the moment the doc is saved, no approval question, only an announced turn boundary to opt out in | Yes |
-| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus a further pass is offered as one option before deciding implement-now-vs-backlog | Yes |
+| **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | **Automatic** — fires the moment the doc is saved, no approval question. It's announced as it starts, not asked about first — say no in that same reply if you don't want it, otherwise it proceeds | Yes |
+| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus, before deciding whether to implement now or backlog it, you're offered the option of one further independent review pass on top of the automatic one, if the stakes seem to warrant it | Yes |
 
 **The review always runs when it's due — never silently skipped for lack of a stronger model.**
-Target: a fresh context on the most different model available — Fable first, else another Claude
-model, else the same model in a fresh context (never labeled as more than it is). The heading names
-the actual reviewing model every time. See `installer/variables.json`'s `available_models`/
-`fable_available`.
+Target: a fresh context on the most different model available — **Fable** (a non-Claude model family,
+used specifically so the review isn't graded by anything in Claude's own model family) first, else
+another Claude model, else the same model in a fresh context (never labeled as more than it is). The
+review section's own heading, in the design doc, names the actual reviewing model every time. See
+`installer/variables.json`'s `available_models`/`fable_available`.
 
 **The Tier 2/3 split is the one most worth getting right**, and it reduces to a single question, asked at
 the same moment as the tier call itself:
@@ -84,8 +93,9 @@ being decided or a deliverable already finished, before producing either.
 **Tier 1 gets a model question first.** Real architectural ambiguity is the case where a wrong assumption
 is expensive, which is what a stronger model is for. Ask about it **at the start of the design pass,
 before any exploration or drafting**. Asking after a design is drafted defeats the purpose: the drafting
-itself is the part that needed the judgment. Switch back afterwards. The stronger model is for the design
-reasoning specifically, not a standing change for the whole session.
+itself is the part that needed the judgment. Once the design pass is done, the agent switches its own
+working model back on your go-ahead — nothing you configure yourself. The stronger model is for the
+design reasoning specifically, not a standing change for the whole session.
 
 ---
 
@@ -184,23 +194,26 @@ explicit final step rather than letting it be absorbed into "I verified it, so i
 **Stage specific files. Never `git add -A` or `git add .`** Another agent, session, or person may have
 unrelated work sitting uncommitted, and a broad add silently takes it hostage in your commit.
 
-**Prefer an exact-match edit over a whole-file write on any shared file**: the rulebook, the backlog,
+**Prefer an exact-match edit over a whole-file write on any shared file**: your rules doc, the backlog,
 the mistakes log. An exact-string edit *fails safely* if something else already changed that spot. A
 full-file replacement silently clobbers it instead. If there's any sign a file was touched since you last
 read it, re-read it immediately before editing.
 
-**Review what you actually staged.** After any broad add, check `git status` before committing, and if
-anything looks unexpected (even with an innocuous filename), read the file's contents before it goes
-anywhere.
+**If a broad add ever does happen anyway** (a slip, or something outside your control) — never as a
+routine practice, only as a recovery step — review what actually got staged: check `git status` before
+committing, and if anything looks unexpected (even with an innocuous filename), read the file's
+contents before it goes anywhere.
 
 ### Permission allowlists leak credentials
 
 Claude Code's per-machine allowlist (`.claude/settings.local.json`) accumulates the raw text of approved
 commands across every session, and its redaction of captured values is best-effort rather than enforced.
-This is a real, repeatedly-observed leak vector, not a theoretical one. It is gitignored in this repo's
-`.gitignore` and should be in yours. If it ever gets force-added anyway, read the diff for values that
-aren't redaction placeholders before letting the commit through. `.githooks/pre-push` is the backstop.
-See `.githooks/secret-patterns.txt` for how to give it patterns worth having.
+This project has hit that leak more than once during its own development — a real, not theoretical,
+risk. It is gitignored in this repo's `.gitignore` and should be in yours. If it ever gets force-added
+anyway, read the diff for values that aren't redaction placeholders before letting the commit through.
+`.githooks/pre-push` — installed into *your* repo by this installer, a **git hook** that `git` itself
+runs, distinct from the Claude Code hooks this repo also ships — is the backstop. See
+`.githooks/secret-patterns.txt` for how to give it patterns worth having.
 
 ---
 
@@ -247,8 +260,9 @@ spot-check the diff it produced against the real files before treating its summa
 Ask rather than guessing or silently picking a default: an ambiguous target, an unconfirmed real-world
 fact, a design choice between two reasonable approaches.
 
-**A plan being approved is not a go-ahead to implement it now.** Exiting a planning mode approves the
-*design*. Ask whether to build it immediately or record it for later.
+**A plan being approved is not a go-ahead to implement it now.** Exiting Plan Mode (Claude Code's own
+guided-planning feature, if you use it) approves the *design*. Ask whether to build it immediately or
+record it for later.
 
 **A complimentary remark about a plan is not approval of it.** "This looks great" is a reaction, not a
 decision. Only an explicit yes counts.
@@ -267,6 +281,10 @@ forever.
 
 ## 9. Standing operational rules
 
+**These generalize because each one cost someone real rework the first time it was missed** — not a
+request to trust every word, but patterns worth having on hand regardless of what platform or OS
+you're on.
+
 **Never kill a process by image name when a PID is available.** One almost always is: whatever spawned
 the process reported it. Matching by name matches every instance on the machine, not only the one this
 session started. Clearing one hung headless browser this way can close every browser window the human
@@ -282,14 +300,16 @@ falling back to a manual walkthrough for a later related task.
 
 **When several agents or sessions may be active at once**, the habits in §6 (narrow staging, exact-match
 edits on shared files, re-read before edit) are what make that safe. If you learn another session is
-editing a file you're also editing, message them your exact touch zones and ask for theirs. A status line
-showing a file as modified doesn't say which lines are whose.
+editing a file you're also editing, tell them your exact touch zones and ask for theirs — via whatever
+channel you actually have (a shared chat, a message, a note in the file itself). A status line showing
+a file as modified doesn't say which lines are whose.
 
 ---
 
 ## 10. Nested repositories
 
-If your repo contains other repos as subdirectories, two behaviors are worth knowing because they differ:
+Skip this section unless your repo contains other repos as subdirectories — niche, but worth knowing
+because the two behaviors below differ from each other:
 
 - **The rules doc resolves upward.** A session working in a subdirectory gets the parent's rules doc *in
   addition to* any local one. This is filesystem-based, not git-based. It doesn't care that the
