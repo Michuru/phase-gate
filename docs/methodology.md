@@ -5,9 +5,9 @@ second model and a fresh context.**
 
 This is a two-axis software development lifecycle for people building without a team. The **work
 axis** (`/backlog` → `/spec` → `/build` → `/verify` → `/ship`) matches the six-phase shape recent
-AI-native SDLC write-ups describe (Anthropic's own playbook among them) — five commands here, since
-one step below folds two of theirs (requirements and design) into a single design pass. What's
-different is the **session axis** (`/initiate`, `/handoff`, `/end-task`): the operator's own context
+AI-native SDLC write-ups converge on — five commands here, since one step below folds two of theirs
+(requirements and design) into a single design pass. What's different is the **session axis**
+(`/initiate`, `/handoff`, `/end-task`): the operator's own context
 lifecycle, which exists only because the collaborator is a context window rather than a person, and
 that no organizational SDLC has any reason to model. Where an organization enforces phase discipline
 with branch protection, code owners, and a change board, a solo developer gets the same four gates —
@@ -24,12 +24,14 @@ instead of only when someone remembers them.
 
 Read this once before installing anything. The skills will make sense afterwards, and won't before.
 
-**On the filenames in this document.** `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, `CLAUDE.md`,
-`Design Docs/` are defaults, not requirements. All four documents (see §7) are written and maintained
-by your AI collaborator as part of normal work — you read and correct them, you don't hand-author them
-yourself. If you use different names, set them in `installer/variables.json` and the installer rewrites
-every reference, **in your own installed copy**, across the skills and this file to match. See
-[PORTING.md](PORTING.md) for the full list. The *concepts* are load-bearing. The names aren't.
+**On the filenames in this document.** `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, and
+`MISTAKES.md` are the four documents §7 describes; `Design Docs/` is the directory `/spec` saves design
+documents into. All five names are defaults, not requirements. The four documents are written and
+maintained by your AI collaborator as part of normal work — you read and correct them, you don't
+hand-author them yourself. If you want different names, the installer asks and then rewrites every
+reference across the skills and this file, **in your own installed copy**; to change one afterwards,
+edit `.claude/phase-gate-install/variables.json` in your own repo. See [PORTING.md](PORTING.md) for the
+full list. The *concepts* are load-bearing. The names aren't.
 
 ---
 
@@ -67,14 +69,16 @@ not after.
 | **4**: trivial | Single spot, single file. No new UI, no shared-schema change. | No, but state the plan in one sentence first | No | Only if it touches a flagged surface (§5) |
 | **3**: medium, pattern-following | More than one file, new UI, or a shared data file's schema, and it closely mirrors an already-shipped, already-tested pattern in this codebase | Yes, short | Skipped — the "already-shipped, already-tested pattern" this tier requires is exactly the case a review doesn't add much to | Yes |
 | **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | **Automatic** — fires the moment the doc is saved, no approval question. It's announced as it starts, not asked about first — say no in that same reply if you don't want it, otherwise it proceeds | Yes |
-| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus, before deciding whether to implement now or backlog it, you're offered the option of one further independent review pass on top of the automatic one, if the stakes seem to warrant it | Yes |
+| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus, before deciding whether to implement now or backlog it, you're offered the option of one further independent review pass on top of the automatic one, if the stakes seem to warrant it. Also the one tier that asks about switching models before drafting — see the model note below this table | Yes |
 
 **The review always runs when it's due — never silently skipped for lack of a stronger model.**
-Target: a fresh context on the most different model available — **Fable** (a non-Claude model family,
-used specifically so the review isn't graded by anything in Claude's own model family) first, else
-another Claude model, else the same model in a fresh context (never labeled as more than it is). The
-review section's own heading, in the design doc, names the actual reviewing model every time. See
-`installer/variables.json`'s `available_models`/`fable_available`.
+Target: a fresh context on the most different model from whichever one drafted the doc. In preference
+order — **Fable**, the strongest tier, when you have access to it; else a different Claude model than
+the drafting one (an Opus-drafted design reviewed on Sonnet, a Sonnet- or Haiku-drafted one on Opus);
+else the same model in a fresh context, never labeled as more than it is. What buys the independence
+is the fresh context plus a different model than the author — not a different vendor. Every option
+here is a Claude model. The review section's own heading, in the design doc, names the actual
+reviewing model every time. See `installer/variables.json`'s `available_models`/`fable_available`.
 
 **The Tier 2/3 split is the one most worth getting right**, and it reduces to a single question, asked at
 the same moment as the tier call itself:
@@ -102,7 +106,9 @@ design reasoning specifically, not a standing change for the whole session.
 ## 3. The QA gate
 
 Any Tier 1, 2, or 3 work gets an **independent review pass in fresh context** before it's marked done,
-archived, or committed. So does any Tier 4 fix that touches a flagged surface.
+archived, or given its finishing commit. So does any Tier 4 fix that touches a flagged surface. (§6's
+second trigger — a checkpoint commit before a risky rewrite — is a mid-work safety net, not the
+finishing commit this gate comes before. Checkpointing early doesn't skip the gate.)
 
 Use the bundled `code-reviewer` agent. It matters that this is a separate agent rather than a
 self-review step, for the reason in §1: same context, same conclusion.
@@ -209,11 +215,18 @@ contents before it goes anywhere.
 Claude Code's per-machine allowlist (`.claude/settings.local.json`) accumulates the raw text of approved
 commands across every session, and its redaction of captured values is best-effort rather than enforced.
 This project has hit that leak more than once during its own development — a real, not theoretical,
-risk. It is gitignored in this repo's `.gitignore` and should be in yours. If it ever gets force-added
-anyway, read the diff for values that aren't redaction placeholders before letting the commit through.
-`.githooks/pre-push` — installed into *your* repo by this installer, a **git hook** that `git` itself
-runs, distinct from the Claude Code hooks this repo also ships — is the backstop. See
-`.githooks/secret-patterns.txt` for how to give it patterns worth having.
+risk. The installer proposes a `.gitignore` covering it as its own reviewable line item, so a standard
+install closes this by default — confirm it actually landed if you declined that row or hand-merged
+your own `.gitignore`. If the file ever gets force-added anyway, read the diff for values that aren't
+redaction placeholders before letting the commit through. `.githooks/pre-push` — installed into *your*
+repo by this installer, a **git hook** that `git` itself runs, distinct from the Claude Code hooks this
+repo also ships — is the backstop. See `.githooks/secret-patterns.txt` for how to give it patterns
+worth having.
+
+**One thing to know about those git hooks: `core.hooksPath` is local git config, and it does not
+survive a fresh clone.** Re-set it in every new clone, or the hooks are silently absent. Nothing
+errors. They simply never run. The bundled `hooks-health-check` component reports this at session start
+rather than letting it go unnoticed.
 
 ---
 
@@ -225,6 +238,10 @@ runs, distinct from the Claude Code hooks this repo also ships — is the backst
 | `BACKLOG.md` | **Open and actionable items only.** | When the task plausibly overlaps an existing item |
 | `BACKLOG_ARCHIVE.md` | Resolved history with citations and verification steps. | On demand, never by default |
 | `MISTAKES.md` | Process mistakes: false "verified" claims, wrong assumptions about how something runs. About *how the work was done*, not what's broken in the code. | Before making a "verified" claim resembling a past entry |
+
+Alongside those four, `/spec` saves design documents into a `Design Docs/` directory — one file per
+design. That file is also where the design review's findings, the build record, and the QA result all
+land, so the doc for a piece of work ends up being its whole history rather than just its plan.
 
 Four rules that keep these useful:
 
@@ -320,7 +337,3 @@ because the two behaviors below differ from each other:
 
 Neither behavior extends to `BACKLOG.md` or `MISTAKES.md`. Those are only ever read because something
 points at their exact path.
-
-**`core.hooksPath` is local git config and does not survive a fresh clone.** Re-set it in every new
-clone, or the hooks are silently absent. Nothing errors. They simply never run. The bundled
-`hooks-health-check` component reports this at session start rather than letting it go unnoticed.
