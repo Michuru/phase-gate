@@ -171,7 +171,7 @@
         { "name": "python3 or python on PATH", "degrades": "the two review scripts (voice scan, review-page renderer) cannot run; the cold-read and grounding passes are unaffected, since they don't call either script" },
         { "name": "Claude Code's Artifact tool", "degrades": "--publish and --comments modes are unavailable; the three review passes (--cold, --ground, --voice, and the default full run) work without it" }
       ],
-      "notes": "ai-check/humanize are named once in SKILL.md as optional deeper tools for AI-detection scoring and non-documentation prose registers, never invoked - both edges are absent from depends_on because the skill is stated to be complete on its own for documentation register without them, not degraded."
+      "notes": "SKILL.md does not name ai-check or humanize at all - it refers to 'a detection-scoring skill' and 'a dedicated prose-rewriting skill' generically, a deliberate tightening beyond an earlier draft that named them once each. Both edges are absent from depends_on because the skill is stated to be complete on its own for documentation register without either installed, not degraded."
     },
     "block-dangerous-commands": {
       "shelf": "standalone",
