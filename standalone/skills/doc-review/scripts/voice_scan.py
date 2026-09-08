@@ -256,7 +256,14 @@ class FileScan:
                 pass
         else:
             self.path = source_name or "<string>"
-            raw = text
+            # Strip a leading BOM, matching the path branch above -- without
+            # this, a BOM-prefixed heading line misclassifies as "prose"
+            # (HEADING_RE's anchor no longer matches at position 0), which
+            # wrongly exposes it to vocabulary-list hits. Confirmed live
+            # (code-reviewer QA pass, task 5): a BOM-prefixed "# ... robust
+            # and comprehensive heading" fired 2 vocab hits; without the BOM
+            # it correctly fired 0.
+            raw = text.lstrip(chr(0xFEFF)) if text else text
 
         self.lines = raw.splitlines()
         self.tags = classify_lines(self.lines)
@@ -559,7 +566,11 @@ def scan_text(text, *, source_name="<string>", raw_floor=None,
         vocab_list = load_vocab_list(Path(__file__))
     scan = FileScan(text=text, source_name=source_name)
     return {
-        "file": source_name,
+        # scan.path, not the raw source_name param -- FileScan already
+        # resolves the "<string>" fallback; using source_name directly here
+        # would diverge from it for a falsy-but-not-None source_name (e.g.
+        # "").
+        "file": scan.path,
         "word_count": scan.total_word_count,
         "frequency_hits": scan.word_frequency(threshold, top_n),
         "vocab_hits": scan.vocab_hits(
