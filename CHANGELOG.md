@@ -9,6 +9,16 @@ mark real beta checkpoints along the way and stay in the history once `1.0.0` la
 cleanup planned). See `BACKLOG.md`'s "Sharing this repo's workflow/skills" section for the open item
 tracking when to actually cut `v1.0.0`.
 
+## [Unreleased]
+
+### Added
+- **`doc-review`** (standalone shelf): a three-pass documentation review skill — a
+  fresh-context cold read for clarity, a grounding pass that checks every claim against
+  the files it cites, and a deterministic script that scans for document-level word
+  repetition and machine-register vocabulary. Report-first, gated apply, source-checked
+  before any edit lands. Ships with its own `LICENSE` (partly derived, with notice, from
+  `humanize`'s vocabulary list and hard rules).
+
 ## [0.1.0] - 2026-09-06
 
 ### 2026-09-05/06 — next-command contract, update-notification, two-axis SDLC redesign

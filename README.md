@@ -21,7 +21,7 @@ New to this and just deciding whether it's worth adopting? Read
 - **A new conversation starts with no memory of the last one.** In a long session, a hook nudges you
   once you're past 50% of the context window. A handoff note passes what matters to the next
   conversation, so it picks up where you left off instead of starting from zero.
-- **Take all of it or one piece.** Eight components work standalone, with nothing to adapt.
+- **Take all of it or one piece.** Nine components work standalone, with nothing to adapt.
 
 ## Quick Start
 
@@ -173,7 +173,9 @@ The complete list of everything the installer can write is in
 
 ## Standalone components
 
-Each works alone. Copy the one file, paste its settings snippet, done.
+Each works alone. Most are one file: copy it, paste its settings snippet, done. `doc-review` is a
+skill with its own `references/` and `scripts/` subdirectories and no settings snippet at all — copy
+its whole folder into `.claude/skills/doc-review/` instead.
 
 | Component | What it does |
 |---|---|
@@ -185,6 +187,7 @@ Each works alone. Copy the one file, paste its settings snippet, done.
 | `statusline` | Context usage, session cost, and elapsed time in your status bar |
 | `ai-check` | Scores text for signs an AI wrote it |
 | `humanize` | Rewrites text to read less that way |
+| `doc-review` | Reviews a document for clarity, checks its claims against the files it cites, and scans it for repeated words and machine-sounding phrasing |
 
 ## Requirements
 

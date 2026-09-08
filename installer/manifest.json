@@ -29,6 +29,61 @@
       ]
     },
     {
+      "name": "doc-review",
+      "shelf": "standalone",
+      "description": "Three-pass documentation review: a cold read for clarity, a grounding check against cited sources, and a deterministic scan for document-level repetition and machine-register vocabulary.",
+      "files": [
+        {
+          "path": "standalone/skills/doc-review/SKILL.md",
+          "source_blob": "1ab1bda089abab351e75120bc3408e8ff8b822dc",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/SKILL.md"
+        },
+        {
+          "path": "standalone/skills/doc-review/LICENSE",
+          "source_blob": "b714065a2035d5e85cd89bc89991d5724051795d",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/LICENSE"
+        },
+        {
+          "path": "standalone/skills/doc-review/references/finding-categories.md",
+          "source_blob": "f497a632fb59c3753c8464403adbefc09483e16e",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/references/finding-categories.md"
+        },
+        {
+          "path": "standalone/skills/doc-review/references/voice-tells.md",
+          "source_blob": "abd55ad5a4d10000371a59c49b954adb641fc745",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/references/voice-tells.md"
+        },
+        {
+          "path": "standalone/skills/doc-review/references/publish-and-comments.md",
+          "source_blob": "a5aa37f62897c809f65f1ef9f9546cfd0bef3d6a",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/references/publish-and-comments.md"
+        },
+        {
+          "path": "standalone/skills/doc-review/scripts/render_review_page.py",
+          "source_blob": "dcc913c42f3b4d25e81bfaaff6d43eeb1534324c",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/scripts/render_review_page.py"
+        },
+        {
+          "path": "standalone/skills/doc-review/scripts/voice_scan.py",
+          "source_blob": "00037a6e5016dc71b7bbd58ab18216cd6cd75647",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/skills/doc-review/scripts/voice_scan.py"
+        },
+        {
+          "path": "standalone/skills/doc-review/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
+    },
+    {
       "name": "block-dangerous-commands",
       "shelf": "standalone",
       "description": "PreToolUse hook: hard-blocks a short list of catastrophic Bash commands regardless of permission mode.",
