@@ -31,7 +31,7 @@ try:
 except Exception:
     sys.exit(0)
 
-if data.get("tool_name") != "Bash":
+if data.get("tool_name") not in ("Bash", "PowerShell"):
     sys.exit(0)
 
 command = (data.get("tool_input") or {}).get("command") or ""

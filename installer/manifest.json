@@ -90,7 +90,7 @@
       "files": [
         {
           "path": "standalone/hooks/block-dangerous-commands/block-dangerous-commands.py",
-          "source_blob": "e537afb8f94486aa7b504ca4c911c79254051bbd",
+          "source_blob": "8224b8ebdba21f5dcb69de0c7c64ed78705810cb",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/block-dangerous-commands.py"
         },
@@ -219,7 +219,7 @@
       "files": [
         {
           "path": "process/skills/consolidate-docs/SKILL.md",
-          "source_blob": "3efca820577ec37e64e96394f918275daa61b8fd",
+          "source_blob": "d38dd557efa66a7777282a4f0dc68ddea6cd398b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/consolidate-docs/SKILL.md"
         }
@@ -257,7 +257,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "1b5554ac99b5096aa95d32ebb4f3bb3de8f89b8f",
+          "source_blob": "1defed03f253d9c1e9270d9512107a4331504c34",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         }
@@ -296,7 +296,7 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "36a84b2f6b97ee19791647fd5153f5627b8e35e6",
+          "source_blob": "c61557d3611f936c28329d116bd5fe772896d027",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         }
