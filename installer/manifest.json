@@ -659,6 +659,19 @@
       "source_blob": null,
       "source_hash_type": null,
       "source_path": null
+    },
+    {
+      "path": "installer/uninstall_plan.py",
+      "source_blob": null,
+      "source_hash_type": null,
+      "source_path": null
+    },
+    {
+      "path": "installer/phase-gate-uninstall/SKILL.md",
+      "target_path": ".claude/skills/phase-gate-uninstall/SKILL.md",
+      "source_blob": null,
+      "source_hash_type": null,
+      "source_path": null
     }
   ]
 }

@@ -263,6 +263,10 @@ Every file written falls into exactly one of these. Handle each per its own clas
    logic here. Run it without `--apply` first to get the diff/conflict list, then with `--apply` only after
    the adopter has confirmed. A nonzero exit (1 = real error, 2 = unresolved conflict) means nothing was
    written — surface the script's own message and stop rather than retrying with different arguments.
+   **Always pass `--report-json <tmp-path>` alongside the real `--apply` call** and read that file back
+   afterward — it is the only correct source for Step 5's `hook_entries_written`/`status_line_written`,
+   since only the script itself (never a model transcribing its own text diff) can tell an appended hook
+   tuple from one that was already present.
 4. **Class 4 — standing-authority and rulebook documents.** Any item that grants standing permission to act
    without asking (e.g. `backlog`'s auto-commit authorization) is confirmed individually regardless of
    which class its file otherwise falls into — never bundled into Class 1's batch treatment.
@@ -307,6 +311,24 @@ naturally `written_this_run: true`, so this rule costs nothing on the common cas
 the second run on. `written_this_run` is what lets check 1 (Step 7) skip re-verifying only the entries
 genuinely touched this run, while check 1b re-validates every entry's hash regardless of the flag — the
 mechanism that actually restores full-receipt hash protection after an incremental upgrade.
+
+**Settings-merge tracking, same merge-forward contract, added for `phase-gate-uninstall` (fixes the gap a
+2026-09-07 design review found: without this, an uninstall can only reverse a merge by trusting a model's
+own transcription of a text diff).** If this run's Class 3 step actually invoked `merge_settings.py
+--apply --report-json <tmp-path>`, read that file back and merge its `hook_entries_written` tuples and
+`status_line_written` value forward into the receipt's own `settings_merge` object, using the exact same
+rule as `components`/`repo_files` above: each tuple this run's own report shows gets `written_this_run:
+true`; every tuple already present in a prior receipt's `hook_entries_written` is carried through
+byte-for-byte unchanged with `written_this_run: false`, never dropped because this run's own fragment
+selection didn't happen to touch it. `status_line_written` is simply overwritten with this run's report
+value whenever the report includes one (there is only ever one active `statusLine`, not a merge-forward
+list). Set `settings_merge.hook_entries_complete: true` on a fresh install, or on an upgrade whose prior
+receipt already had `hook_entries_written` present — set it to **`false`** whenever this run's write starts
+from a prior receipt that itself lacks `hook_entries_written` (an upgrade from a receipt written before
+this field existed), since that prior receipt's own hook contributions are permanently unrecoverable and
+this receipt's field can never claim to cover the adopter's complete settings-merge history. If Class 3
+never ran this invocation (no hooks/statusLine component selected), leave `hook_entries_written` untouched
+(carried forward from any prior receipt, same as above) and don't reset `hook_entries_complete`.
 
 Validate the written receipt against `receipt.schema.json` before considering the run complete (see Step 7
 — this is one of the mandatory checks, not optional polish).

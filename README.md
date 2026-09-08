@@ -227,8 +227,16 @@ Settings live at `.claude/phase-gate-install/variables.json` in your repo. Edit 
 next run reads your edit instead of asking again. [`docs/PORTING.md`](docs/PORTING.md) explains what
 each one does.
 
-To remove Phase-Gate, `.claude/phase-gate-install/receipt.json` lists every path it ever wrote.
-Delete those, remove its entries from `.claude/settings.json`, and unset `core.hooksPath`.
+## Uninstalling
+
+Run `/phase-gate-uninstall` inside Claude Code, in the repo you installed into. It reads your own
+install receipt, shows you the full removal plan (skipping anything you've hand-edited since
+install) before touching anything, and never touches `core.hooksPath` automatically — it only
+reports the current value, since phase-gate never set that itself.
+
+If your receipt is gone or predates this skill, `.claude/phase-gate-install/receipt.json` (if it
+still exists) lists every path phase-gate ever wrote — remove those by hand, along with any
+matching entries under `.claude/settings.json`'s `hooks`/`statusLine` keys.
 
 ## Documentation
 

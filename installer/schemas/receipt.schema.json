@@ -108,6 +108,29 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Which settings.fragment.json / settings.hooks.json files were merged in."
+        },
+        "hook_entries_written": {
+          "type": "array",
+          "description": "Every (event, matcher, type, command) hook tuple this export's fragments have ever added to settings.json across this receipt's whole history, merge-forward the same contract as components[].files_written above - each entry's own written_this_run distinguishes what this specific run added from what a prior run already established. Populated only from merge_settings.py's own --report-json output (installer/merge_settings.py's compute_hook_report) - never hand-transcribed from its text diff, since only the script itself can correctly tell an appended tuple from one already present. Required for phase-gate-uninstall to safely reverse a merge without needing the original phase-gate clone; see hook_entries_complete below for what an old-shaped receipt lacking this field means.",
+          "items": {
+            "type": "object",
+            "required": ["event", "matcher", "type", "command", "written_this_run"],
+            "properties": {
+              "event": { "type": "string", "description": "e.g. SessionStart, PreToolUse, PostToolUse." },
+              "matcher": { "description": "The matcher-group's own matcher field, or null if the event doesn't use one." },
+              "type": { "type": "string" },
+              "command": { "type": "string" },
+              "written_this_run": { "type": "boolean", "description": "Same merge-forward contract as components[].files_written.written_this_run - true only if this specific run's merge_settings.py call actually appended this tuple; false means carried forward unchanged from a prior receipt." }
+            }
+          }
+        },
+        "status_line_written": {
+          "description": "The exact statusLine object value this export's own fragment set, present only if merge_settings.py's --report-json reported it with no conflict (absent/null if no fragment in this install ever set statusLine, or if every attempt hit a pre-existing different value). Overwritten wholesale on each run that sets it - unlike hook_entries_written, there is only ever one statusLine value to track, not a merge-forward list.",
+          "type": ["object", "null"]
+        },
+        "hook_entries_complete": {
+          "type": "boolean",
+          "description": "False whenever this run's receipt write starts from a prior receipt that itself lacks hook_entries_written (an upgrade from a receipt predating this field) - true on a fresh install, or an upgrade from a receipt that already had it. Checking hook_entries_written's mere presence is not enough to know it covers the receipt's ENTIRE history rather than only recent runs; phase-gate-uninstall must check this flag, not just field presence, before trusting hook_entries_written/status_line_written as a complete record."
         }
       }
     },
