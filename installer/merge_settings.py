@@ -236,8 +236,16 @@ def unmerge_hooks(existing_hooks: dict, entries: list) -> dict:
     compute_hook_report emits. Returns a new dict (never mutates existing_hooks) with exactly
     those (type, command) pairs removed from their matching matcher-group, dropping a
     matcher-group that ends up with no hooks, and dropping an event that ends up with no groups.
-    matcher absent and null are equal, matching hook_entry_key's own .get()."""
+    matcher absent and null are equal, matching hook_entry_key's own .get().
+
+    Only ever inspects/prunes the specific (event, matcher-group) pairs this call actually
+    targeted - an untouched matcher-group or event, even one that was ALREADY empty before this
+    call, is left completely alone. A prior version pruned every empty group/event across the
+    whole tree regardless of whether this call touched it, which could silently delete an
+    adopter's own unrelated pre-existing empty group (or collapse the entire "hooks" key) that
+    this export never wrote and has no business touching."""
     merged = copy.deepcopy(existing_hooks) if isinstance(existing_hooks, dict) else {}
+    touched = []  # [(event, target_group_dict), ...] - only groups this call actually inspected
     for entry in entries:
         event = entry.get("event")
         groups = merged.get(event)
@@ -255,18 +263,16 @@ def unmerge_hooks(existing_hooks: dict, entries: list) -> dict:
             h for h in hooks_list
             if not (isinstance(h, dict) and hook_command_key(h) == removal_key)
         ]
-    for event in list(merged.keys()):
+        touched.append((event, target))
+
+    for event, target in touched:
         groups = merged.get(event)
         if not isinstance(groups, list):
             continue
-        groups = [
-            g for g in groups
-            if not (isinstance(g, dict) and isinstance(g.get("hooks"), list) and len(g["hooks"]) == 0)
-        ]
-        if groups:
-            merged[event] = groups
-        else:
-            del merged[event]
+        if isinstance(target.get("hooks"), list) and len(target["hooks"]) == 0:
+            groups[:] = [g for g in groups if g is not target]
+        if not groups:
+            merged.pop(event, None)
     return merged
 
 

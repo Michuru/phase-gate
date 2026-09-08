@@ -132,23 +132,41 @@ def build_plan(repo_root: Path, receipt: dict, settings: dict) -> dict:
             "hook_referenced": is_hook_referenced(rel_path, hook_commands),
         })
 
-    # Paths phase-gate writes/copies that are never receipt-tracked (a README-instructed manual
-    # bootstrap copy, or hook-written runtime state) - always surfaced, existence-only, since
-    # there's no recorded hash to classify against.
-    always_include_candidates = [
-        ".claude/skills/phase-gate-install/SKILL.md",
-        ".claude/skills/phase-gate-uninstall/SKILL.md",
-        ".claude/state/context-usage-nudge.json",
-        ".claude/state/update-notification.json",
-    ]
+    # Paths phase-gate writes/copies that are never receipt-tracked - always surfaced, existence-
+    # only, since there's no recorded hash to classify against. Skip any path already covered by
+    # a receipt-tracked components/repo_files entry above, so the plan never lists (and a later
+    # step never tries to process) the same path twice.
+    already_tracked_paths = {f["path"] for c in components_out for f in c["files"]} | {f["path"] for f in repo_files_out}
+
+    # The two README-instructed manual bootstrap copies - fixed paths, never receipt-tracked on a
+    # first install (see phase-gate-install/SKILL.md's own merge-forward rule).
     always_include_out = []
-    for rel_path in always_include_candidates:
+    for rel_path in (".claude/skills/phase-gate-install/SKILL.md", ".claude/skills/phase-gate-uninstall/SKILL.md"):
+        if rel_path in already_tracked_paths:
+            continue
         full = repo_root / rel_path
         always_include_out.append({
             "path": rel_path,
             "status": "present" if full.exists() else "absent",
             "hook_referenced": is_hook_referenced(rel_path, hook_commands),
         })
+
+    # .claude/state/* runtime files (written by hooks like context-usage-nudge/update-notification)
+    # - enumerated from whatever actually exists on disk under that directory, never a hardcoded
+    # filename list, so a future hook writing a new state file isn't silently missed here.
+    state_dir = repo_root / ".claude" / "state"
+    if state_dir.is_dir():
+        for entry in sorted(state_dir.rglob("*")):
+            if not entry.is_file():
+                continue
+            rel_path = entry.relative_to(repo_root).as_posix()
+            if rel_path in already_tracked_paths:
+                continue
+            always_include_out.append({
+                "path": rel_path,
+                "status": "present",
+                "hook_referenced": is_hook_referenced(rel_path, hook_commands),
+            })
 
     sm = receipt.get("settings_merge", {}) or {}
     if not sm.get("wrote_changes", False):

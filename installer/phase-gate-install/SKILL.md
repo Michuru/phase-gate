@@ -174,13 +174,18 @@ be missing) and a `class` (Step 4's four risk classes — `docs/methodology.md` 
 **A manifest `repo_files` entry's own `path` is always its location within the phase-gate clone/export
 layout — the plan/receipt row's `path` is the *adopter-repo destination*, and is only ever different when
 the manifest entry carries an optional `target_path` field, in which case use that instead.** Today this
-applies to exactly one entry: `installer/phase-gate-install/SKILL.md`'s `target_path` is
-`.claude/skills/phase-gate-install/SKILL.md` — the file this installer's own manual bootstrap step
-(README's Install section) copies there, and the only one of this installer's own four files an adopter's
-Claude Code actually loads from a local copy (`verify_citations.py`/`manifest.json`/`dependencies.json`
-are always read live from `<path>` itself, every invocation — no adopter-side copy of those three is ever
-read by anything, so none of them gets a `repo_files` row). Every other existing `repo_files` entry has no
-`target_path`, so its plan/receipt `path` stays identical to the manifest entry's own `path`, unchanged.
+applies to exactly two entries, both skill files a `README.md` manual bootstrap step copies into
+`.claude/skills/`: `installer/phase-gate-install/SKILL.md` (`target_path`:
+`.claude/skills/phase-gate-install/SKILL.md`) and `installer/phase-gate-uninstall/SKILL.md`
+(`target_path`: `.claude/skills/phase-gate-uninstall/SKILL.md`). Both are the only files their own
+installer/uninstaller an adopter's Claude Code actually loads from a local copy — everything else that
+same directory ships (`verify_citations.py`/`manifest.json`/`dependencies.json` for the installer;
+`uninstall_plan.py`/`merge_settings.py` for the uninstaller) is either always read live from `<path>` every
+invocation, or is itself a `repo_files` entry with **no** `target_path`, landing at the same relative path
+in the adopter's repo as it has inside the export (e.g. `installer/merge_settings.py`,
+`installer/uninstall_plan.py` — **not** anywhere under `.claude/skills/`). Every other existing
+`repo_files` entry has no `target_path`, so its plan/receipt `path` stays identical to the manifest entry's
+own `path`, unchanged.
 
 ## Step 3 — pick a mode, then confirm with diffs, not the table again
 

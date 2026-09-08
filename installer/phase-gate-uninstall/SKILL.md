@@ -16,10 +16,14 @@ only want to drop one piece, edit or delete it directly; this skill isn't the to
 
 ## Step 0 — read the receipt, gate on settings-tracking completeness
 
-Run `<installed-skill-dir>/../uninstall_plan.py <repo_root>` (the file lives alongside this skill at
-`.claude/skills/phase-gate-uninstall/`, next to `merge_settings.py` — both are `repo_files`, installed the
-same way this skill file itself was). If it exits nonzero (no receipt found), tell the adopter there's
-nothing to uninstall and stop.
+Run `python <repo_root>/installer/uninstall_plan.py <repo_root>`. **Note where this actually lives**:
+unlike this skill's own `SKILL.md` (which carries a `target_path` and is copied to
+`.claude/skills/phase-gate-uninstall/SKILL.md`), neither `uninstall_plan.py` nor `merge_settings.py` has a
+`target_path` in `installer/manifest.json` — per `phase-gate-install/SKILL.md`'s own stated rule, a
+`repo_files` entry with no `target_path` lands at the *same relative path in the adopter's repo* as it has
+inside the phase-gate export. Both scripts are therefore at `<repo_root>/installer/uninstall_plan.py` and
+`<repo_root>/installer/merge_settings.py` — **not** anywhere under `.claude/skills/`. If it exits nonzero
+(no receipt found), tell the adopter there's nothing to uninstall and stop.
 
 Read the plan's `settings_merge.tracking_status`:
 
@@ -90,7 +94,8 @@ anyway must name it explicitly — never force it in by default.
 1. **If `settings_merge.tracking_status` was `complete`**: write a temp file shaped
    `{"hook_entries_written": [...], "status_line_written": {...}|null}` from the plan's own
    `settings_merge` values, then run
-   `<path-to-merge_settings.py-in-this-repo> .claude/settings.json --unmerge <temp-file> --apply`.
+   `python <repo_root>/installer/merge_settings.py <repo_root>/.claude/settings.json --unmerge <temp-file>
+   --apply` (see Step 0 for why that path, not somewhere under `.claude/skills/`).
    A `statusLine` mismatch prints a warning but still exits 0 — hook removal proceeds regardless; report
    the warning to the adopter, don't treat it as a stop condition.
 2. **Delete every confirmed file** (the batch plus any individually-confirmed generic files) — `git rm` for
