@@ -71,7 +71,7 @@
         },
         {
           "path": "standalone/skills/doc-review/scripts/voice_scan.py",
-          "source_blob": "00037a6e5016dc71b7bbd58ab18216cd6cd75647",
+          "source_blob": "5e1396280fa60e7d95a5cad8a2c7606cb4a57ce8",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/doc-review/scripts/voice_scan.py"
         },

@@ -19,6 +19,13 @@ tracking when to actually cut `v1.0.0`.
   before any edit lands. Ships with its own `LICENSE` (partly derived, with notice, from
   `humanize`'s vocabulary list and hard rules).
 
+### Fixed
+- `doc-review`'s `voice_scan.py`: the vocabulary-list check's raw-occurrence floor
+  (`RAW_FLOOR_WORD = 4`) made it empirically dead on anything under a few hundred words
+  and was unreachable from the CLI. Adds a `scan_text(text, raw_floor=...)` in-memory
+  entry point and a matching `--raw-floor` flag so a caller can lower the floor (e.g. to
+  1) for short documents; default behavior is unchanged for every existing caller.
+
 ## [0.1.0] - 2026-09-06
 
 ### 2026-09-05/06 — next-command contract, update-notification, two-axis SDLC redesign

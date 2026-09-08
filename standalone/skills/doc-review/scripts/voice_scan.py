@@ -12,14 +12,25 @@ The vocabulary list is parsed from voice-tells.md at runtime rather than
 duplicated here, so the two files cannot drift apart.
 
 Usage:
-    python voice_scan.py <path> [<path>...] [--threshold N] [--top N] [--json] [--show-stoplist]
+    python voice_scan.py <path> [<path>...] [--threshold N] [--top N] [--raw-floor N] [--json] [--show-stoplist]
 
 --threshold N   overrides the per-1,000-word rate floor for single-word hits
                 (default 2.0). Does not change the raw-count floor.
 --top N         how many entries the generic frequency scan reports per file
                 (default 20). Vocabulary-list hits are always reported in full.
+--raw-floor N   overrides RAW_FLOOR_WORD/RAW_FLOOR_PHRASE for vocabulary-list
+                hits only (default: the built-in floors, 4 and 3). At the
+                default floor the vocabulary check cannot fire at all on
+                typical review-length prose (~150-300 words) -- confirmed
+                empirically, see perf-review-assistant's design review
+                finding 1. Pass a lower floor (e.g. 1) for short documents.
 --json          machine-readable output instead of the default text report.
 --show-stoplist print the in-script stop-list and exit.
+
+Programmatic use (no file, no path, no tempfile -- for a caller scanning an
+in-memory string, e.g. a not-yet-saved draft):
+    from voice_scan import scan_text
+    result = scan_text(my_text, raw_floor=1)
 """
 
 import argparse
@@ -225,15 +236,28 @@ class FileScan:
     file: raw lines, per-line tags, the prose text used for tells, and the
     running word count."""
 
-    def __init__(self, path):
-        self.path = path
-        raw = path.read_text(encoding="utf-8", errors="replace")
-        # A leading BOM, if present, is invisible after decode with utf-8-sig;
-        # re-read that way so it never shows up as a stray character.
-        try:
-            raw = path.read_text(encoding="utf-8-sig")
-        except UnicodeDecodeError:
-            pass
+    def __init__(self, path=None, *, text=None, source_name=None):
+        """Either `path` (a Path, read from disk) or `text` (a raw string,
+        scanned in memory -- no file touched) must be given, not both.
+        `source_name` labels an in-memory scan in reports; ignored for a
+        path-based scan, which always labels itself with the real path."""
+        if (path is None) == (text is None):
+            raise ValueError("FileScan needs exactly one of path or text")
+
+        if path is not None:
+            self.path = path
+            raw = path.read_text(encoding="utf-8", errors="replace")
+            # A leading BOM, if present, is invisible after decode with
+            # utf-8-sig; re-read that way so it never shows up as a stray
+            # character.
+            try:
+                raw = path.read_text(encoding="utf-8-sig")
+            except UnicodeDecodeError:
+                pass
+        else:
+            self.path = source_name or "<string>"
+            raw = text
+
         self.lines = raw.splitlines()
         self.tags = classify_lines(self.lines)
 
@@ -357,9 +381,17 @@ class FileScan:
         hits.sort(key=lambda h: h["count"], reverse=True)
         return hits[:top_n]
 
-    def vocab_hits(self, vocab_list, threshold):
+    def vocab_hits(self, vocab_list, threshold, raw_floor_word=None, raw_floor_phrase=None):
         """Hits against references/voice-tells.md's Part 1, matched literally
-        (case-folded, no stemming) against prose text only."""
+        (case-folded, no stemming) against prose text only.
+
+        raw_floor_word/raw_floor_phrase override RAW_FLOOR_WORD/
+        RAW_FLOOR_PHRASE for this call only, when given -- see scan_text()'s
+        raw_floor parameter and the module docstring's --raw-floor entry.
+        Defaulting to None (not the constants directly) keeps every existing
+        caller's behavior byte-identical when it doesn't pass these."""
+        floor_word = RAW_FLOOR_WORD if raw_floor_word is None else raw_floor_word
+        floor_phrase = RAW_FLOOR_PHRASE if raw_floor_phrase is None else raw_floor_phrase
         hits = []
         total = max(self.total_word_count, 1)
         for term, substitute in vocab_list:
@@ -380,11 +412,11 @@ class FileScan:
                 continue
 
             if is_multiword:
-                fires = count >= RAW_FLOOR_PHRASE
+                fires = count >= floor_phrase
                 rate = None
             else:
                 rate = count / total * 1000
-                fires = count >= RAW_FLOOR_WORD and rate >= threshold
+                fires = count >= floor_word and rate >= threshold
 
             if fires:
                 hits.append(
@@ -499,6 +531,44 @@ class FileScan:
                 normalized = " ".join(sent.lower().split())
                 records.append((normalized, sent, lineno))
         return records
+
+
+# ---------------------------------------------------------------------------
+# Programmatic entry point -- scan an in-memory string, no file
+# ---------------------------------------------------------------------------
+
+
+def scan_text(text, *, source_name="<string>", raw_floor=None,
+              threshold=DEFAULT_RATE_FLOOR, top_n=20, vocab_list=None):
+    """Scan a raw string directly -- no file, no path, no tempfile. Returns
+    the same per-file result shape main()'s JSON output uses (word_count,
+    frequency_hits, vocab_hits, punctuation, negation_hits, sentence_stats).
+
+    `raw_floor`, when given, overrides both RAW_FLOOR_WORD and
+    RAW_FLOOR_PHRASE for vocabulary-list hits -- at the built-in floors the
+    vocabulary check cannot fire on typical review-length prose (~150-300
+    words; confirmed empirically, perf-review-assistant's design review
+    finding 1). Pass raw_floor=1 for that case. Leaving it None reproduces
+    the CLI's existing default behavior exactly.
+
+    `vocab_list` lets a caller pass an already-loaded list (e.g. loaded once
+    per process rather than re-read from references/voice-tells.md on every
+    call); defaults to loading it fresh, same as the CLI does per file.
+    """
+    if vocab_list is None:
+        vocab_list = load_vocab_list(Path(__file__))
+    scan = FileScan(text=text, source_name=source_name)
+    return {
+        "file": source_name,
+        "word_count": scan.total_word_count,
+        "frequency_hits": scan.word_frequency(threshold, top_n),
+        "vocab_hits": scan.vocab_hits(
+            vocab_list, threshold, raw_floor_word=raw_floor, raw_floor_phrase=raw_floor
+        ),
+        "punctuation": scan.punctuation_density(),
+        "negation_hits": scan.negation_hits(),
+        "sentence_stats": scan.sentence_stats(),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -641,6 +711,13 @@ def main(argv=None):
         default=20,
         help="how many generic frequency hits to report per file (default 20)",
     )
+    parser.add_argument(
+        "--raw-floor",
+        type=int,
+        default=None,
+        help="override RAW_FLOOR_WORD/RAW_FLOOR_PHRASE for vocabulary-list hits "
+        "only (default: the built-in floors, 4 and 3)",
+    )
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     parser.add_argument(
         "--show-stoplist",
@@ -678,7 +755,10 @@ def main(argv=None):
                 "file": str(scan.path),
                 "word_count": scan.total_word_count,
                 "frequency_hits": scan.word_frequency(args.threshold, args.top),
-                "vocab_hits": scan.vocab_hits(vocab_list, args.threshold),
+                "vocab_hits": scan.vocab_hits(
+                    vocab_list, args.threshold,
+                    raw_floor_word=args.raw_floor, raw_floor_phrase=args.raw_floor,
+                ),
                 "punctuation": scan.punctuation_density(),
                 "negation_hits": scan.negation_hits(),
                 "sentence_stats": scan.sentence_stats(),
