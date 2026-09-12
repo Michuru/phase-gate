@@ -90,6 +90,11 @@ mid-session isn't reliably usable in that same session (tested directly, not ass
 running the installer always happens in a second, genuinely fresh session, the same way the
 terminal path below reaches it after its own copy step.
 
+Worth knowing before you paste it: unlike typing the clone command yourself, here the URL comes
+from this README, not from you choosing it. That's not a new risk — the installer's own Step 0
+still asks you to confirm the remote it actually cloned before reading anything further — but it's
+a real difference worth naming rather than pretending the two paths are identical.
+
 **Prefer the terminal?** Four steps: clone and copy from a terminal, run the installer inside
 Claude Code, then one more terminal command to finish.
 
@@ -138,7 +143,7 @@ git config core.hooksPath .githooks
 **Confirm it worked.** `.claude/phase-gate-install/receipt.json` lists every file the installer
 actually wrote — open it to see exactly what landed. To confirm Claude Code picked the skills up,
 start a fresh session in your project and run `/initiate` (the same fresh session either path above
-already had you start): if it reads your new `BACKLOG.md` and names what to work on next, rather
+already had you start in): if it reads your new `BACKLOG.md` and names what to work on next, rather
 than giving a generic reply, the install is live.
 
 <details>
