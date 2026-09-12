@@ -156,7 +156,7 @@ include:
    output is "run these tasks this way," and that number shouldn't go unstated here either.
 4. **A plain-prose model recommendation, only when one is genuinely warranted.** If a Bucket A task or a
    QA-gate `code-reviewer` pass would clearly benefit from a non-default model (real design judgment calling
-   for a stronger model, a different-family review calling for a different one), say so directly in the
+   for a stronger model, a maximally differentiated review calling for a different one), say so directly in the
    report — the same pattern `spec` Step 1 already uses for its model-switch offer (an
    `AskUserQuestion`, not a fixed field). Most tasks need no model call-out at all; don't manufacture one.
    This is deliberately **not** a third scrutiny field alongside Step 5's `stakes`/`approval` — see the
@@ -187,7 +187,7 @@ QA-burst escalation (a `spec`-scoped feature) is also outside `execution-gate`'s
   records the older open question, rather than silently erasing the prior position. This skill
   remains directly invocable standalone outside `/build` too, e.g. to preview cost before deciding.
 - **No per-task model field, by design.** A per-project model plan (drafting on one model, reviewing on
-  another, an occasional different-family pass) is usually resolved by hand without real friction — not
+  another, an occasional maximally-differentiated pass) is usually resolved by hand without real friction — not
   enough evidence to justify a new fixed-vocabulary field alongside Step 5's `stakes`/`approval`, and
   `stakes` doesn't cleanly imply a model choice anyway (an irreversible git push needs a human confirm,
   not a stronger model). Step 8's point 4 above (plain-prose recommendation, only when genuinely

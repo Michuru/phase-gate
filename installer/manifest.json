@@ -193,7 +193,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "52875f30e060eaf47e29eef781ecf5e891987335",
+          "source_blob": "6ba856a57b20c8c8a26b4ea2406d100e14cb4d23",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }
@@ -257,7 +257,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "38364586f6c78a8c1a40062d08839a6966434de9",
+          "source_blob": "74101ed7a886fe5ee70c1ebd7255101fa149620d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         }
@@ -283,7 +283,7 @@
       "files": [
         {
           "path": "process/skills/execution-gate/SKILL.md",
-          "source_blob": "15c946cc5404fe69b88cedbac5b7ce27e237285a",
+          "source_blob": "f3a89841fc12050ffff21d4f7acd878619401196",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/execution-gate/SKILL.md"
         }
@@ -510,7 +510,7 @@
       "files": [
         {
           "path": "process/skills/periodic-audit/SKILL.md",
-          "source_blob": "927b93781fff04df926ee59d1cfb95c189c10b22",
+          "source_blob": "25f69db655e503a17fe98f9a41e8ea0844b8095e",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/periodic-audit/SKILL.md"
         }

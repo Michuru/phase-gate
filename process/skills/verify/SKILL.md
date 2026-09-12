@@ -31,10 +31,10 @@ available that isn't the one already reviewing** (check your own recorded model-
 configuration — resolved upward from the current repo if this session is in a nested sub-repo,
 same rule `initiate/SKILL.md` Step 1.2 uses). **Always start with a single escalated pass** — don't
 jump straight to multiple models. If that pass *also* doesn't resolve the same finding, that's a
-new, separate decision point for whether to add a third pass **on Fable, when available, for a
-genuinely different-family read** — never assumed upfront, and no more than one further pass is
-proposed without stopping to reassess whether escalating models is even the right fix at that
-point. State the cost each time ("this is a second/third `code-reviewer` pass, N total"),
+new, separate decision point for whether to add a third pass **on Fable, when available, as the
+most differentiated model in the ladder** — never assumed upfront, and no more than one further
+pass is proposed without stopping to reassess whether escalating models is even the right fix at
+that point. State the cost each time ("this is a second/third `code-reviewer` pass, N total"),
 mirroring `execution-gate` Step 8's own cost-line requirement.
 
 ## Step 3: Record the result

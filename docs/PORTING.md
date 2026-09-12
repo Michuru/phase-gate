@@ -158,26 +158,37 @@ Default: `available_models: ["haiku", "sonnet", "opus"]`, `fable_available: true
 `review_model_families` variable, whose rule was different in a way worth stating plainly rather
 than silently editing over: the old rule said *"if only one family is available to you, skip the
 review visibly rather than running a same-family pass and calling it cross-model."* That's reversed
-now. The design review always runs, on a fresh context on the most different model you have,
-checked in preference order:
+now. The design review always runs; target selection is **tier-conditioned, not uniform** (revised
+again 2026-09-09 after a uniform Fable-first default was found to collapse the cost ladder to one
+rung — Tier 2 fires just as automatically as Tier 1's rarer case, and Tier 2 is the common one):
 
-1. **Fable**, when `fable_available` is `true` — the strongest tier, and the furthest from whatever
-   drafted the doc.
-2. **A different Claude model than the one that drafted**, checked against `available_models`
-   (ordered weakest-to-strongest): sonnet- or haiku-drafted designs review on `opus`; opus-drafted
-   designs review on `sonnet`.
-3. **The same model, in a fresh context** — only when neither of the above is reachable at all.
-   Weakest, still real, never labeled as more than it is.
+**Tier 1** — preference order (1) **Fable**, when `fable_available` is `true` and the draft wasn't
+itself written on Fable (a Fable-drafted design falls straight to option 2 — reviewing it with
+Fable again would be a same-model pass at the top of a ladder meant to avoid exactly that); (2) **a
+different Claude model than the one that drafted**, checked against `available_models` (ordered
+weakest-to-strongest): sonnet- or haiku-drafted designs review on `opus`; opus-drafted designs
+review on `sonnet`; Fable-drafted designs review on `opus` (the strongest `available_models` entry
+— falling to the *strongest* Claude-mainline model, not just *a different* one, since a
+Fable-drafted design already used the most differentiated option available); (3) **the same model,
+in a fresh context** — only when nothing else is reachable at all.
 
-Every option here is a Claude model, Fable included; it is the top of the ladder, not a different
-vendor. **The point was always independence, not a stronger model** — a different model reading in a
-fresh context finds a different class of problem than the same model re-checking its own reasoning,
-and that's still true. What changed is what happens when no different model is available: the
-old rule treated a same-model pass as worse than no review at all ("worse than a skipped one,
-because it gets counted as a gate that passed"). The new rule treats a *mislabeled* pass as the
-actual problem, not the weaker pass itself — so the heading names the real reviewing model every
-time (`## Design review — Opus, fresh context`, never bare "cross-model review"), and the review
-simply never gets skipped for lack of a stronger option.
+**Tier 2** — preference order (1) a different Claude model than the one that drafted, same mapping
+as above; (2) the same model, in a fresh context, only when no other Claude model is available.
+Fable is **not** part of Tier 2's automatic default — it stays reachable as an explicit further
+pass if wanted, same as any other "one more look."
+
+Weakest option in either ladder is still real, never labeled as more than it is.
+
+Every option here is a Claude model, Fable included; what buys the independence is the fresh
+context plus a different model than the author, not a different vendor. **The point was always
+independence, not a stronger model** — a more differentiated model reading in a fresh context finds
+a different class of problem than the same model (or a closely-related one) re-checking its own
+reasoning, and that's still true. What changed from the old rule is what happens when no different
+model is available: the old rule treated a same-model pass as worse than no review at all ("worse
+than a skipped one, because it gets counted as a gate that passed"). The new rule treats a
+*mislabeled* pass as the actual problem, not the weaker pass itself — so the heading names the real
+reviewing model every time (`## Design review — Opus, fresh context`, never bare "cross-model
+review"), and the review simply never gets skipped for lack of a stronger option.
 
 ### `subagent_models`
 

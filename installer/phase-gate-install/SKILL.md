@@ -142,15 +142,15 @@ For every component in `<path>/installer/manifest.json`, produce a table row and
   prerequisite by name — e.g. `review-pr` needs `gh` installed and authenticated; `implement-queue` needs
   `Workflow`/worktree support and fails fast per D3, no reduced mode is shipped).
 
-**`plan.json`'s `components` array gets one row per component in
-`<path>/installer/manifest.json` — this step's own opening sentence is the authority on the row
-source — and never a single combined row for a whole shelf.** `dependencies.json` supplies the
-*edges* between those rows, not the row list itself: it is built by grepping the skill files for
+**`plan.json`'s `components` array gets one row per component in `<path>/installer/manifest.json`,
+and never a single combined row for a whole shelf.** `dependencies.json` supplies the *edges*
+between those rows, not the row list itself: it is built by grepping the skill files for
 cross-references, so by construction it has no entry for a component that only ever appears as a
 dependency target (`code-reviewer`, `docs-writer`, both `periodic-audit-*` agents) or that nothing
 references at all (`process-hooks`). Sourcing rows from it instead would silently drop those five,
-including the two agents `backlog` and `spec` hard-depend on — which then surfaces as a Step 7 check
-3 failure for a severed dependency nobody chose to sever.
+including `docs-writer` (which both `backlog` and `spec` hard-depend on) and `code-reviewer` (which
+`backlog` alone hard-depends on) — which then surfaces as a Step 7 check 3 failure for a severed
+dependency nobody chose to sever.
 
 **"Install everything in `process/`" is a selection convenience you offer the adopter** (matching D5's
 "install everything, or cherry-pick"), not a different row shape: choosing it just sets every

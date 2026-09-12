@@ -69,16 +69,29 @@ not after.
 | **4**: trivial | Single spot, single file. No new UI, no shared-schema change. | No, but state the plan in one sentence first | No | Only if it touches a flagged surface (§5) |
 | **3**: medium, pattern-following | More than one file, new UI, or a shared data file's schema, and it closely mirrors an already-shipped, already-tested pattern in this codebase | Yes, short | Skipped — the "already-shipped, already-tested pattern" this tier requires is exactly the case a review doesn't add much to | Yes |
 | **2**: medium, real design judgment | Same shape as Tier 3, but **no clean existing pattern to mirror** | Yes, short | **Automatic** — fires the moment the doc is saved, no approval question. It's announced as it starts, not asked about first — say no in that same reply if you don't want it, otherwise it proceeds | Yes |
-| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus, before deciding whether to implement now or backlog it, you're offered the option of one further independent review pass on top of the automatic one, if the stakes seem to warrant it. Also the one tier that asks about switching models before drafting — see the model note below this table | Yes |
+| **1**: new component or major rewrite | A new tool from scratch, or rewriting/consolidating an existing one's architecture | Yes, fuller | **Automatic**, same as Tier 2 — plus, before deciding whether to implement now or backlog it, you're offered the option of one further independent review pass on top of the automatic one, if the stakes seem to warrant it. Also the one tier that asks about switching models before drafting — see "Tier 1 gets a model question first" further below | Yes |
 
 **The review always runs when it's due — never silently skipped for lack of a stronger model.**
-Target: a fresh context on the most different model from whichever one drafted the doc. In preference
-order — **Fable**, the strongest tier, when you have access to it; else a different Claude model than
-the drafting one (an Opus-drafted design reviewed on Sonnet, a Sonnet- or Haiku-drafted one on Opus);
-else the same model in a fresh context, never labeled as more than it is. What buys the independence
-is the fresh context plus a different model than the author — not a different vendor. Every option
-here is a Claude model. The review section's own heading, in the design doc, names the actual
-reviewing model every time. See `installer/variables.json`'s `available_models`/`fable_available`.
+Target selection is **tier-conditioned, not uniform** — a uniform Fable-first default was found to
+collapse the cost ladder to one rung, since Tier 2 fires just as automatically as Tier 1's rarer
+case, and Tier 2 is the common one:
+
+- **Tier 1** — preference order: **Fable**, the most differentiated model, when you have access to
+  it and the draft wasn't itself written on Fable (a Fable-drafted design falls to the next option
+  instead, to avoid a same-model pass at the top of the ladder); else a different Claude model than
+  the drafting one (a Sonnet- or Haiku-drafted design reviewed on Opus; an Opus-drafted one reviewed
+  on Sonnet; a Fable-drafted one reviewed on Opus — the strongest entry, since a Fable draft already
+  used the most differentiated option); else the same model in a fresh context.
+- **Tier 2** — preference order: a different Claude model than the drafting one (an Opus-drafted
+  design reviewed on Sonnet, a Sonnet- or Haiku-drafted one on Opus); else the same model in a fresh
+  context. Fable is **not** automatic here — it stays reachable as an explicit further pass if
+  wanted, same as any other "one more look."
+
+Weakest option in either ladder is still real, never labeled as more than it is. What buys the
+independence is the fresh context plus a different model than the author — not a different vendor.
+Every option here is a Claude model, Fable included. The review section's own heading, in the
+design doc, names the actual reviewing model every time. See your own `.claude/phase-gate-install/
+variables.json`'s `available_models`/`fable_available`.
 
 **The Tier 2/3 split is the one most worth getting right**, and it reduces to a single question, asked at
 the same moment as the tier call itself:
@@ -166,7 +179,8 @@ history of subtle bugs. Its only purpose is to escalate: a change that would oth
 the full QA gate anyway if it touches one.
 
 **This list ships empty.** It has to. It's a property of your code, not of this methodology. Set it in
-`installer/variables.json` (`flagged_surfaces`), and grow it the same way it's meant to be grown:
+your own `.claude/phase-gate-install/variables.json` (`flagged_surfaces`), and grow it the same way
+it's meant to be grown:
 
 > When a bug turns out to have been subtle, and it was in the same place as a previous subtle bug, add
 > that place to the list.

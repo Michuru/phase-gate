@@ -96,7 +96,8 @@ else. You can decline it.
 - Commits when wrapping up a session, so finished work doesn't sit uncommitted.
 - **Never pushes without asking.** Every push, every time.
 
-Your `CLAUDE.md` is never written to. A `pre-push` hook scans outgoing commits for credentials.
+**The installer itself** never writes to your `CLAUDE.md` — day-to-day work does, constantly (see
+"What it puts in your repo" below). A `pre-push` hook scans outgoing commits for credentials.
 
 ## Usage
 
@@ -153,20 +154,30 @@ someone else's pull request.
 | `/periodic-audit` | Check whether tests cover a tool's branches, and whether an old bug is back |
 | `/review-pr` | Review a GitHub pull request and post the findings |
 
-Four review agents run behind these commands, each in its own fresh conversation: `code-reviewer`
-(the check in `/verify`), `docs-writer` (mechanical documentation updates), and
-`periodic-audit-coverage`/`periodic-audit-structural` (the two halves of `/periodic-audit`).
+Two more skills ship but aren't listed above because they're not commands you run directly:
+`/commit` and `/wrap-up-session` are internal redirects to `/end-task`'s own depth modes, kept for
+backward compatibility (see [`docs/WORKFLOW.md`](docs/WORKFLOW.md)).
+
+Four subagents run behind these commands, each in its own fresh conversation: `code-reviewer` (the
+independent check in `/verify`) and `periodic-audit-coverage`/`periodic-audit-structural` (the two
+halves of `/periodic-audit`) do review work; `docs-writer` (mechanical documentation updates) doesn't
+review anything, it transcribes.
 
 ## What it puts in your repo
 
 Phase-Gate keeps its records as four plain markdown files in your own repo, not in a database or a
-service, and you can rename any of them. Open work goes in one file; finished work moves to a second
-once it ships; a folder holds design plans; and a fourth file logs process mistakes — not bugs in your
-code, but times the process itself went wrong, a wrong assumption or a "done" that wasn't actually
-checked, so a future session doesn't have to rediscover it the hard way.
+service, and you can rename any of them: your `CLAUDE.md` rules doc (which the installer merges into
+rather than overwrites, and which day-to-day work keeps current — see below); open work in one file;
+finished work in a second, once it ships; and a fourth file that logs process mistakes — not bugs in
+your code, but times the process itself went wrong, a wrong assumption or a "done" that wasn't
+actually checked, so a future session doesn't have to rediscover it the hard way. A fifth thing, a
+folder rather than a file, holds design plans.
 
-The installer creates whichever of the four don't exist yet, one confirmation at a time. Where your
-`CLAUDE.md` rules and Phase-Gate's disagree, it shows you the conflict and leaves the decision to you.
+The installer creates whichever of these don't exist yet, one confirmation at a time. Where your
+`CLAUDE.md` rules and Phase-Gate's disagree, it shows you the conflict and leaves the decision to
+you. After that, the installer itself never touches `CLAUDE.md` again — normal work does, constantly:
+a durable lesson gets written into it, a stale rule gets pruned, a design's task list gets recorded.
+That's how the rules doc and mistakes log stay current, not a one-time install-day write.
 
 The complete list of everything the installer can write is in
 [`installer/phase-gate-install/SKILL.md`](installer/phase-gate-install/SKILL.md).
