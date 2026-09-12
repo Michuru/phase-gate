@@ -19,6 +19,10 @@ way and stay in the history once `1.0.0` lands (no retroactive cleanup planned).
   before any edit lands. Ships with its own `LICENSE` (partly derived, with notice, from
   `humanize`'s vocabulary list and hard rules).
 
+### Changed
+- `README.md`'s Quick Start now offers a copy-paste onboarding prompt alongside the existing
+  terminal steps, so an adopter can start from Claude Code instead of a terminal first.
+
 ### Fixed
 - `doc-review`'s `voice_scan.py`: the vocabulary-list check's raw-occurrence floor
   (`RAW_FLOOR_WORD = 4`) made it empirically dead on anything under a few hundred words

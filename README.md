@@ -56,8 +56,42 @@ no spend cap, so watch your usage for the first few sessions.
 
 ## Quick Start
 
-Four steps: clone and copy from a terminal, run the installer inside Claude Code, then one more
-terminal command to finish.
+Two ways in — paste one message, or type a few terminal commands yourself. Either one ends at the
+same installer.
+
+**Prefer not to open a terminal first?** Start Claude Code in the repo you want Phase-Gate in, and
+paste this:
+
+```text
+I want to install Phase-Gate (https://github.com/Michuru/phase-gate) into this project without
+typing terminal commands myself first. Please do the following, stopping to confirm with me at
+each checkpoint — don't skip ahead:
+
+1. Confirm you're running on Sonnet-class reasoning or better (check /model if unsure). If not,
+   tell me and stop here.
+2. Tell me the resolved root of the project you're about to act in, and confirm this is where I
+   want Phase-Gate installed.
+3. Show me the exact clone URL (https://github.com/Michuru/phase-gate.git) and a destination
+   folder outside this project — a sibling directory next to this project, never a temp folder
+   that gets cleaned up — and wait for my yes before cloning.
+4. Clone it there and confirm it succeeded.
+5. Show me the exact folder you're about to copy (the clone's installer/phase-gate-install folder,
+   into this project's .claude/skills/phase-gate-install) and wait for my yes before copying.
+6. Copy it in, then stop.
+7. Tell me the installer skill is ready, that a skill copied mid-session isn't reliably usable in
+   that same session, and that I need to start a brand-new Claude Code session in this repo and
+   run /phase-gate-install <the path you cloned to> myself there — don't run it yourself. Also
+   remind me that once the installer has actually written .githooks/ (only if I picked apply mode
+   with hooks selected), I still need to run `git config core.hooksPath .githooks` myself.
+```
+
+This clones the repo and copies the installer skill in for you, then hands off — a skill copied
+mid-session isn't reliably usable in that same session (tested directly, not assumed), so actually
+running the installer always happens in a second, genuinely fresh session, the same way the
+terminal path below reaches it after its own copy step.
+
+**Prefer the terminal?** Four steps: clone and copy from a terminal, run the installer inside
+Claude Code, then one more terminal command to finish.
 
 **1. Clone this repo anywhere.** It doesn't need to live near your project. In a terminal:
 
@@ -103,14 +137,16 @@ git config core.hooksPath .githooks
 
 **Confirm it worked.** `.claude/phase-gate-install/receipt.json` lists every file the installer
 actually wrote — open it to see exactly what landed. To confirm Claude Code picked the skills up,
-start a fresh session in your project and run `/initiate`: if it reads your new `BACKLOG.md` and
-names what to work on next, rather than giving a generic reply, the install is live.
+start a fresh session in your project and run `/initiate` (the same fresh session either path above
+already had you start): if it reads your new `BACKLOG.md` and names what to work on next, rather
+than giving a generic reply, the install is live.
 
 <details>
 <summary>Trying it without changing anything</summary>
 
-Still inside Claude Code from step 3, answer **`recommend-only`** at the mode question. It writes two
-files under `.claude/phase-gate-install/` recording what it would propose, and nothing else anywhere.
+Once you're running `/phase-gate-install` — step 3 above, or your own fresh session after the
+paste path — answer **`recommend-only`** at the mode question. It writes two files under
+`.claude/phase-gate-install/` recording what it would propose, and nothing else anywhere.
 
 To try a single standalone component instead, open its folder, copy the one file, and paste its
 settings snippet. No installer involved. For example, `block-dangerous-commands`: copy
