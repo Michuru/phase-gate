@@ -53,7 +53,7 @@
         },
         {
           "path": "standalone/skills/doc-review/references/voice-tells.md",
-          "source_blob": "abd55ad5a4d10000371a59c49b954adb641fc745",
+          "source_blob": "ed9ea40af35581d07cef21ac16a0ba556582453b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/doc-review/references/voice-tells.md"
         },
@@ -71,7 +71,7 @@
         },
         {
           "path": "standalone/skills/doc-review/scripts/voice_scan.py",
-          "source_blob": "58b12e6a53ca10ea9353a43c52655c17d5e6ab70",
+          "source_blob": "0464c92449bf273e5f63a36eb2b9f0794b8c7452",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/doc-review/scripts/voice_scan.py"
         },
@@ -296,7 +296,7 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "c61557d3611f936c28329d116bd5fe772896d027",
+          "source_blob": "5df68bee1885585c34996399d1082e352b09fb65",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         }
@@ -625,6 +625,12 @@
     },
     {
       "path": "docs/methodology.md",
+      "source_blob": null,
+      "source_hash_type": null,
+      "source_path": null
+    },
+    {
+      "path": "docs/WORKFLOW.md",
       "source_blob": null,
       "source_hash_type": null,
       "source_path": null

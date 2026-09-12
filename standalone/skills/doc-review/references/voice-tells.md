@@ -24,35 +24,84 @@ they sound precise while hiding the actual mechanism.
 - `silent` -> name what was not shown, or "with no message" / "without warning"
 - `silently` -> same as `silent`, or delete the adverb and state the fact plainly
 - `quietly` -> same as `silent`, or delete it outright ("it deletes the file" instead of "it quietly deletes the file")
+- `supersede` -> replace
 - `supersedes` -> replaces
+- `superseded` -> replaced
+- `superseding` -> replacing
 - `delve` -> look at, go into
+- `delves` -> looks at, goes into
+- `delved` -> looked at, went into
+- `delving` -> looking at, going into
 
 ### Corporate and AI register
 
 - `leverage` (verb) -> use
+- `leverages` -> uses
+- `leveraged` -> used
+- `leveraging` -> using
 - `utilize` -> use
+- `utilizes` -> uses
+- `utilized` -> used
+- `utilizing` -> using
 - `robust` -> reliable, or name what it handles correctly
+- `robustness` -> reliability, or name what it handles correctly
 - `comprehensive` -> complete, thorough
+- `comprehensively` -> completely, thoroughly
 - `streamline` -> simplify
+- `streamlines` -> simplifies
+- `streamlined` -> simplified
+- `streamlining` -> simplifying
 - `foster` -> encourage, support
+- `fosters` -> encourages, supports
+- `fostered` -> encouraged, supported
+- `fostering` -> encouraging, supporting
 - `facilitate` -> help, let, enable
+- `facilitates` -> helps, lets, enables
+- `facilitated` -> helped, let, enabled
+- `facilitating` -> helping, letting, enabling
 - `pivotal` -> key, central, or name why it matters
 - `nuanced` -> detailed, specific
+- `nuance` -> detail, specific point
+- `nuances` -> details, specific points
 - `multifaceted` -> has several parts, complex
 - `crucial` (when overused) -> important, or state why it matters
+- `crucially` -> importantly, or state why it matters
 - `enduring` -> lasting, long-standing
+- `endures` -> lasts
+- `endured` -> lasted
 - `garner` -> get, earn
+- `garners` -> gets, earns
+- `garnered` -> got, earned
+- `garnering` -> getting, earning
 - `vibrant` -> active, busy
+- `vibrancy` -> activity, energy
 - `tapestry` (figurative) -> mix, combination
+- `tapestries` (figurative) -> mixes, combinations
 - `testament` (figurative) -> proof, evidence
+- `testaments` (figurative) -> proofs, evidence
 - `interplay` -> interaction, relationship
 - `intricate` -> detailed, complex
+- `intricately` -> in detail
 - `intricacies` -> details
+- `intricacy` -> detail
 - `landscape` (abstract noun) -> name the actual field or area
+- `landscapes` (abstract noun) -> name the actual fields or areas
 - `showcase` (verb) -> show, display
+- `showcases` -> shows, displays
+- `showcased` -> shown, displayed
+- `showcasing` -> showing, displaying
 - `highlight` (standalone verb) -> point out, show
+- `highlights` (standalone verb) -> points out, shows
+- `highlighted` (standalone verb) -> pointed out, shown
+- `highlighting` (standalone verb) -> pointing out, showing
 - `underscore` (standalone verb) -> confirm, show
+- `underscores` (standalone verb) -> confirms, shows
+- `underscored` (standalone verb) -> confirmed, shown
+- `underscoring` (standalone verb) -> confirming, showing
 - `align with` -> match, follow
+- `aligns with` -> matches, follows
+- `aligned with` -> matched, followed
+- `aligning with` -> matching, following
 - `additionally` (as an opener) -> also, and
 
 ### Hedge and softener clusters

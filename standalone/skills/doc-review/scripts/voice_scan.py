@@ -114,7 +114,12 @@ NEGATION_PATTERNS = [
 # Vocabulary-list parsing (from references/voice-tells.md)
 # ---------------------------------------------------------------------------
 
-VOCAB_ENTRY_RE = re.compile(r"^-\s*`([^`]+)`\s*->\s*(.+?)\s*$")
+# The optional non-capturing group tolerates a human-readable qualifier
+# between the term and the arrow, e.g. "`leverage` (verb) -> use" -- without
+# it, every entry carrying one of these silently fails to match and is
+# dropped from the scanned vocabulary list entirely (confirmed: 12 of 94
+# entries, including `leverage`, `highlight`, `landscape`, `additionally`).
+VOCAB_ENTRY_RE = re.compile(r"^-\s*`([^`]+)`(?:\s*\([^)]*\))?\s*->\s*(.+?)\s*$")
 
 
 def load_vocab_list(script_path):
