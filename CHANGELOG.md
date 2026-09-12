@@ -3,13 +3,15 @@
 Notable changes, tagged as GitHub releases when they land. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver-ish, not strictly enforced.
 
-**Pre-1.0, tagged `0.x.y`.** `v1.0.0` is reserved for the first release considered genuinely
-stable, not just "the first one we happened to cut" — `0.x` tags mark real checkpoints along the
-way and stay in the history once `1.0.0` lands (no retroactive cleanup planned). See `BACKLOG.md`'s
-"Sharing this repo's workflow/skills" section for the open item tracking when to actually cut
-`v1.0.0`.
+**`v1.0.0` (2026-09-12) is the first release considered genuinely stable** — it also coincides with
+this repo going public. `0.x` tags mark the real checkpoints on the way there and stay in the
+history (no retroactive cleanup).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-09-12
+
+First stable release, cut alongside the repo's private→public flip.
 
 ### Added
 - **`doc-review`** (standalone shelf): a three-pass documentation review skill — a
