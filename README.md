@@ -6,6 +6,9 @@
 
 <p align="center">Plan it, build it, review it, ship it — for one person and an AI assistant.</p>
 
+<p align="center"><strong>v0.1.0 — pre-1.0, in real-world use.</strong> Interfaces and file layout can
+still change between releases; see <a href="CHANGELOG.md">CHANGELOG.md</a>.</p>
+
 Teams get independent review from a second engineer. Phase-Gate gives you the same thing from a
 second AI model reading your work in a fresh conversation. It installs as Claude Code commands, so
 **you'll need Claude Code and a git repo to use it.**
@@ -22,6 +25,34 @@ New to this and just deciding whether it's worth adopting? Read
   once you're past 50% of the context window. A handoff note passes what matters to the next
   conversation, so it picks up where you left off instead of starting from zero.
 - **Take all of it or one piece.** Nine components work standalone, with nothing to adapt.
+
+## Requirements
+
+You need three things installed:
+
+- **Claude Code**
+- **git**
+- **Python 3**
+
+Two commands have their own hard requirement — not optional if you use them, with no fallback if it's
+missing:
+
+- **`/implement-queue`** (builds several approved plans in parallel — skip this if you don't use it)
+  needs Claude Code's `Workflow` tool with worktree support. Check `/config` to confirm it's on —
+  there's no fallback without it.
+- **`/review-pr`** (reviews a GitHub pull request — skip this if you don't use it) needs the `gh`
+  CLI, authenticated. Install it from
+  [cli.github.com](https://cli.github.com), then run `gh auth login`. It also needs Claude Code's own
+  `code-review` and `security-review` skills.
+
+The installer itself is a model reading and reasoning about your repo, not a script, so run
+`/phase-gate-install` with Sonnet-class reasoning or better — check `/model` if you're not sure what
+you're currently on.
+
+Reviews cost real model time. Anything above a one-line fix spends at least one extra agent run, and
+usually two — the design review and the QA check are separate passes, and most changes get both. Tier
+1 can also switch the whole session to a stronger, more expensive model for the design pass. There's
+no spend cap, so watch your usage for the first few sessions.
 
 ## Quick Start
 
@@ -69,6 +100,11 @@ installer doesn't touch your git config.
 ```bash
 git config core.hooksPath .githooks
 ```
+
+**Confirm it worked.** `.claude/phase-gate-install/receipt.json` lists every file the installer
+actually wrote — open it to see exactly what landed. To confirm Claude Code picked the skills up,
+start a fresh session in your project and run `/initiate`: if it reads your new `BACKLOG.md` and
+names what to work on next, rather than giving a generic reply, the install is live.
 
 <details>
 <summary>Trying it without changing anything</summary>
@@ -180,7 +216,33 @@ a durable lesson gets written into it, a stale rule gets pruned, a design's task
 That's how the rules doc and mistakes log stay current, not a one-time install-day write.
 
 The complete list of everything the installer can write is in
-[`installer/phase-gate-install/SKILL.md`](installer/phase-gate-install/SKILL.md).
+[`installer/phase-gate-install/SKILL.md`](installer/phase-gate-install/SKILL.md). A full install
+(everything, not a cherry-picked subset) looks roughly like this in your repo — a selective install
+only gets the pieces you chose:
+
+```text
+your-project/
+├── CLAUDE.md                       ← merged into, never overwritten
+├── BACKLOG.md
+├── BACKLOG_ARCHIVE.md
+├── MISTAKES.md
+├── Design Docs/
+├── .githooks/                      ← pre-commit, pre-push, secret scanning
+├── .claude/
+│   ├── settings.json                ← hooks/statusLine merged in
+│   ├── skills/                      ← one folder per command you chose
+│   │   ├── initiate/
+│   │   ├── backlog/
+│   │   ├── spec/
+│   │   └── ...
+│   └── phase-gate-install/
+│       ├── variables.json           ← your settings; edit and re-run to apply
+│       └── receipt.json             ← every file this installer actually wrote
+└── docs/                            ← Phase-Gate's own reference docs, copied in
+    ├── methodology.md
+    ├── WORKFLOW.md
+    └── PORTING.md
+```
 
 ## Standalone components
 
@@ -199,34 +261,6 @@ its whole folder into `.claude/skills/doc-review/` instead.
 | `ai-check` | Scores text for signs an AI wrote it |
 | `humanize` | Rewrites text to read less that way |
 | `doc-review` | Reviews a document for clarity, checks its claims against the files it cites, and scans it for repeated words and machine-sounding phrasing |
-
-## Requirements
-
-You need three things installed:
-
-- **Claude Code**
-- **git**
-- **Python 3**
-
-Two commands have their own hard requirement — not optional if you use them, with no fallback if it's
-missing:
-
-- **`/implement-queue`** (builds several approved plans in parallel — skip this if you don't use it)
-  needs Claude Code's `Workflow` tool with worktree support. Check `/config` to confirm it's on —
-  there's no fallback without it.
-- **`/review-pr`** (reviews a GitHub pull request — skip this if you don't use it) needs the `gh`
-  CLI, authenticated. Install it from
-  [cli.github.com](https://cli.github.com), then run `gh auth login`. It also needs Claude Code's own
-  `code-review` and `security-review` skills.
-
-The installer itself is a model reading and reasoning about your repo, not a script, so run
-`/phase-gate-install` with Sonnet-class reasoning or better — check `/model` if you're not sure what
-you're currently on.
-
-Reviews cost real model time. Anything above a one-line fix spends at least one extra agent run, and
-usually two — the design review and the QA check are separate passes, and most changes get both. Tier
-1 can also switch the whole session to a stronger, more expensive model for the design pass. There's
-no spend cap, so watch your usage for the first few sessions.
 
 ## Updating
 
