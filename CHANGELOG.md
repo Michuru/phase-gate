@@ -25,6 +25,12 @@ way and stay in the history once `1.0.0` lands (no retroactive cleanup planned).
   and was unreachable from the CLI. Adds a `scan_text(text, raw_floor=...)` in-memory
   entry point and a matching `--raw-floor` flag so a caller can lower the floor (e.g. to
   1) for short documents; default behavior is unchanged for every existing caller.
+- `handoff`'s multi-candidate resume path (Step 0) deferred its "is this thread already
+  closed" check to whichever primer the user picked, leaving every other candidate in the
+  list unchecked and presented as equally live. The check now runs on every candidate
+  before the list is shown, and now also greps the primer's own named repo for commits
+  that plausibly completed the work, since an explicit Status/`BACKLOG_ARCHIVE.md` marker
+  isn't the only way a thread can actually be closed.
 
 ## [0.1.0] - 2026-09-06
 
