@@ -257,7 +257,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "74101ed7a886fe5ee70c1ebd7255101fa149620d",
+          "source_blob": "bc1affc3849d6831d32a4468ebd799db9bc7d5af",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         }
