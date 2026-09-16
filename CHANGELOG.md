@@ -13,11 +13,14 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   per-adopter value). Every adopter's reviewer previously reported "no automated tests were run"
   regardless of what test command was actually configured.
 - Re-ported 7 of 10 components that had drifted from their source since the 2026-09-06 export:
-  `docs-writer`, `periodic-audit`, `adopt`, `verify`, `handoff`, `end-task` (content already
-  current or citation-only; hash records updated), `implement-queue` (new repo-root-resolution
-  step, untracked-file harvest fix, dev-server-lock guidance). `execution-gate` got one stale
-  cross-reference fix. `build`, `spec`, and the remainder of `execution-gate`'s drift is
-  local-delegate feature content, deliberately deferred pending that feature's own design settling
+  `periodic-audit`, `adopt`, `verify`, `handoff`, `end-task` (content already current or
+  citation-only; hash records updated), `docs-writer` (its "invoking session re-checks fabricated
+  references" section was re-generalized from the source's current wording; an initial pass
+  wrongly re-added stale content instead and was caught and corrected by the QA gate), `implement-queue`
+  (new repo-root-resolution step, untracked-file harvest fix, dev-server-lock guidance).
+  `execution-gate` got one stale cross-reference fix. `build`, `spec`, and the remainder of
+  `execution-gate`'s drift is local-delegate feature content, deliberately deferred pending that
+  feature's own design settling
   — tracked as a follow-up, not included here.
 
 ## [1.0.0] - 2026-09-12
