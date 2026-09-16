@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-15
+
 ### Fixed
 - `code-reviewer` agent's `test_command` citation retargeted from `installer/variables.json` (the
   shipped-defaults copy, always empty) to `.claude/phase-gate-install/variables.json` (the resolved
@@ -16,12 +18,11 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   `periodic-audit`, `adopt`, `verify`, `handoff`, `end-task` (content already current or
   citation-only; hash records updated), `docs-writer` (its "invoking session re-checks fabricated
   references" section was re-generalized from the source's current wording; an initial pass
-  wrongly re-added stale content instead and was caught and corrected by the QA gate), `implement-queue`
-  (new repo-root-resolution step, untracked-file harvest fix, dev-server-lock guidance).
-  `execution-gate` got one stale cross-reference fix. `build`, `spec`, and the remainder of
-  `execution-gate`'s drift is local-delegate feature content, deliberately deferred pending that
-  feature's own design settling
-  — tracked as a follow-up, not included here.
+  wrongly re-added stale content instead and was caught and corrected by the QA gate),
+  `implement-queue` (new repo-root-resolution step, untracked-file harvest fix, dev-server-lock
+  guidance). `execution-gate` got one stale cross-reference fix. `build`, `spec`, and the remainder
+  of `execution-gate`'s drift is local-delegate feature content, deliberately deferred pending that
+  feature's own design settling — tracked as a follow-up, not included here.
 
 ## [1.0.0] - 2026-09-12
 
