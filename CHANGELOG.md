@@ -7,6 +7,19 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `code-reviewer` agent's `test_command` citation retargeted from `installer/variables.json` (the
+  shipped-defaults copy, always empty) to `.claude/phase-gate-install/variables.json` (the resolved
+  per-adopter value). Every adopter's reviewer previously reported "no automated tests were run"
+  regardless of what test command was actually configured.
+- Re-ported 7 of 10 components that had drifted from their source since the 2026-09-06 export:
+  `docs-writer`, `periodic-audit`, `adopt`, `verify`, `handoff`, `end-task` (content already
+  current or citation-only; hash records updated), `implement-queue` (new repo-root-resolution
+  step, untracked-file harvest fix, dev-server-lock guidance). `execution-gate` got one stale
+  cross-reference fix. `build`, `spec`, and the remainder of `execution-gate`'s drift is
+  local-delegate feature content, deliberately deferred pending that feature's own design settling
+  — tracked as a follow-up, not included here.
+
 ## [1.0.0] - 2026-09-12
 
 First release, cut alongside the repo's private→public flip.

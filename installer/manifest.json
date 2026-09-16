@@ -154,7 +154,7 @@
       "files": [
         {
           "path": "process/skills/adopt/SKILL.md",
-          "source_blob": "ebcb56d3dc4e0f08a14658c3cccaf2a368be1630",
+          "source_blob": "31b230a6e21ca3a1fe28f89d61c5a6883a42abc7",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/adopt/SKILL.md"
         }
@@ -167,7 +167,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "6e000c7831fe9cb173c11bf5c996565bad5f25ff",
+          "source_blob": "bd3af6826a05dd4feea81264457a782f5450cb9c",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         }
@@ -193,7 +193,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "6ba856a57b20c8c8a26b4ea2406d100e14cb4d23",
+          "source_blob": "91dc290e7e3da05a3fe4ef3780db9d3c31e70d3f",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }
@@ -270,7 +270,7 @@
       "files": [
         {
           "path": "process/agents/docs-writer.md",
-          "source_blob": "5be3418893e92c6b234dd07e5ca500c51853f56f5695ada8835680c4e1380fe2",
+          "source_blob": "3783bc2d55e53d301b24aa02b6aa40e351da26d2fdb88baf56bab4c6604b3a4c",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/docs-writer.md"
         }
@@ -296,7 +296,7 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "5df68bee1885585c34996399d1082e352b09fb65",
+          "source_blob": "9223b872324a6c7a7c21b1e0c4c8ca4899d5b8db",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         }
@@ -390,7 +390,7 @@
       "files": [
         {
           "path": "process/skills/implement-queue/SKILL.md",
-          "source_blob": "414891acdf77564ab2a7ad743123c5ae15432a6e",
+          "source_blob": "4ee67571c07b05277e3fd5fa800093c2443e8a65",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/implement-queue/SKILL.md"
         },
@@ -510,7 +510,7 @@
       "files": [
         {
           "path": "process/skills/periodic-audit/SKILL.md",
-          "source_blob": "25f69db655e503a17fe98f9a41e8ea0844b8095e",
+          "source_blob": "e360af3b66aab8f6b55114e98079a6722995b8e0",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/periodic-audit/SKILL.md"
         }

@@ -40,7 +40,7 @@ disqualifier looks like a repo-restructure precedent: a strict task-to-task sequ
 rewrites history/state the rest depend on — a dependency chain, not a concurrency hazard.
 
 **Run a second, independent check here too: whole-design `/implement-queue` eligibility — not just Bucket
-E's parallel-worthiness.** `implement-queue`'s Step 5 anomaly check treats any touched path under
+E's parallel-worthiness.** `implement-queue`'s Step 6 anomaly check treats any touched path under
 `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, or anything under `.claude/` (skills,
 workflows, settings, hooks) as tainted — those are the forbidden paths `GIT_BOUNDARY` reserves to the
 harvest step alone, so a queued run of such a design would flag nearly every item as tainted and harvest
