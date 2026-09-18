@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-18
+
 ### Added
 - New standalone component `schedule-wakeup-guard`: a `PreToolUse` hook that blocks
   `ScheduleWakeup` unless the session's own transcript shows a genuinely live `/loop` invocation,
