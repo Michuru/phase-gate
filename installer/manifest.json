@@ -167,7 +167,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "bd3af6826a05dd4feea81264457a782f5450cb9c",
+          "source_blob": "90c73a84995bf1dad4bfbce1535436fc24b587b2",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         }
@@ -509,7 +509,7 @@
       "files": [
         {
           "path": "process/skills/backlog/SKILL.md",
-          "source_blob": "4cb6227b37d0b4b51d9ca021a65dd5e82174235b",
+          "source_blob": "45a5a3ba3ff12aa079a85fad2d64b92aa5a15e0d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/backlog/SKILL.md"
         }

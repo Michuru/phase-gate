@@ -144,6 +144,10 @@ roster didn't change this session.
 **Close-out summary** — one message covering: commits made (hash + one-line description each,
 labeled by repo), which docs were touched and how, whether any cheat-sheet artifact was refreshed,
 and what's still open across `BACKLOG.md` — so the user can pick up next time without re-asking.
+**Presentation for the still-open part, same convention as `backlog`'s own still-open display step
+(if you have that skill installed)**: a short numbered list, one line per item, with any item
+resolved this session shown struck through (`~~text~~`) in place rather than dropped — don't
+re-expand full investigation detail for any item here.
 
 ## Notes
 
