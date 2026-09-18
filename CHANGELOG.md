@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-18
+
 ### Fixed
 - `spec` Step 3.4's automatic design review now uses a real `AskUserQuestion` stop to offer
   skipping it, instead of a plain-text announcement followed by ending the turn to wait for a
