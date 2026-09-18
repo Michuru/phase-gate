@@ -5,8 +5,8 @@ This file maps two independent axes, not one linear pipeline. See
 
 **Work axis** — a work item's own lifecycle: `/backlog` → `/spec` → `/build` → `/verify` → `/ship`
 → back to `/backlog`. Four gates fire automatically between these phases — tier check, design
-review, execution, QA — never asked about except the design review's own announced opt-out
-window.
+review, execution, QA — never asked about except the design review's own `AskUserQuestion` stop
+right before it spawns.
 
 **Session axis** — the operator's own context lifecycle, orthogonal to the work axis: `/initiate`
 at the start (handing off to `/adopt` once per project, if there's no process history yet),
@@ -86,8 +86,8 @@ another design review pass; switching back to the starting model once the design
 
 ### 4. Design review (automatic gate, Tier 1/2 only, inside `/spec`)
 
-Fires the moment the doc is saved — no `AskUserQuestion` deciding *whether* it runs, only an
-announced turn boundary to opt out in before the subagent actually spawns. Target: a fresh context
+Fires the moment the doc is saved — no discretion over *whether* it runs, only an `AskUserQuestion`
+stop to opt out at right before the subagent actually spawns. Target: a fresh context
 on the most different model from the one that drafted, in preference order — **Fable** when
 available, else **a different Claude model than the drafting one**, else **the same model in a fresh
 context** (never labeled as more than it is; every option here is a Claude model — see `installer/variables.json`'s `available_models`/`fable_available`). The result appends into

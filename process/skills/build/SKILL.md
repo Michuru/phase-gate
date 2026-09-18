@@ -27,8 +27,8 @@ against the design's own task breakdown as this skill's opening step, unconditio
 whether to run it first. State the cost per `execution-gate` Step 8's existing requirement (task
 count, projected `docs-writer`/fork/`code-reviewer` calls) so the spend is visible, but don't wait
 for a go-ahead before running it — announcing and running happen in the same step, unlike `spec`
-Step 3.4's design-review announcement, which gets a real turn boundary to decline in (see Notes for
-why the two are treated differently).
+Step 3.4's design review, which gets a real `AskUserQuestion` stop to decline at (see Notes for why
+the two are treated differently).
 
 **"No approval question" means whether the gate runs at all — not its own report.** Deliver
 `execution-gate` Step 8's full report as that skill already specifies, including its point 4
@@ -92,7 +92,7 @@ reimplement any of that here; this step is a handoff, not a second copy.
   blocked on the user, an unresolved decision): fix the blocker and resume, or write `## Build —
   blocked-on-user: <what>` into the doc and stop there rather than forcing `/verify` on an
   incomplete implementation.
-- **Why the design review gets an opt-out turn boundary and this gate doesn't.** `spec` Step 3.4
+- **Why the design review gets an `AskUserQuestion` stop and this gate doesn't.** `spec` Step 3.4
   spawns a differently-priced subagent pass on a design that hasn't been touched yet — a real,
   reversible-only-by-not-spending decision worth a pause. This gate is a main-session analysis pass
   over a design already approved for implementation, and it stops itself on trivial designs per its

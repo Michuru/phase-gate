@@ -7,6 +7,14 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `spec` Step 3.4's automatic design review now uses a real `AskUserQuestion` stop to offer
+  skipping it, instead of a plain-text announcement followed by ending the turn to wait for a
+  reply — brought in line with every other genuine decision point in this file, which already
+  used `AskUserQuestion`. Updated `WORKFLOW.md`'s and `build/SKILL.md`'s cross-references to the
+  old mechanism for consistency. (`build`/`spec`'s remaining drift is still the deferred
+  local-delegate feature content — not touched here.)
+
 ## [1.1.0] - 2026-09-18
 
 ### Added

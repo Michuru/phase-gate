@@ -97,7 +97,7 @@ Apply this test to any future section name.
 
 ## Step 3.4: Automatic design-phase review (Tier 1/2 only)
 
-For every Tier 1/2 design — never Tier 3, already excluded per its own "closely mirrors an already-shipped pattern" definition, which is exactly the case a review doesn't add much to — this step fires automatically. There is no `AskUserQuestion` gate deciding *whether* it happens; only the announced opt-out window below can stop it.
+For every Tier 1/2 design — never Tier 3, already excluded per its own "closely mirrors an already-shipped pattern" definition, which is exactly the case a review doesn't add much to — this step fires automatically. There is no discretion over *whether* it happens; the only thing that can stop it is the `AskUserQuestion` stop right before spawning, below.
 
 **Target selection is tier-conditioned — a fresh context on a different model than the one that drafted, but which model differs by tier** (revised after a uniform Fable-first default was found to collapse the cost ladder to a single rung, since Tier 2 fires just as automatically as Tier 1's rarer case, and Tier 2 is the common one):
 
@@ -108,9 +108,9 @@ Weakest option in either ladder is still real, never labeled as more than it is.
 
 **Mechanism**: spawn a plain `Agent` call — **not** `code-reviewer`, which has no `Edit`/`Write` tools and is instruction-tuned to review an implementation's diff against a design doc, not to review the design doc itself — with the target model override, instructed to read `Design Docs/<slug>.md` (plus whatever it cites) cold and return a structured review as its final answer. The main session then appends that returned report into the `## Design review` section already opened `pending` at draft time (Step 3): a relayed report, not something the subagent writes into the doc itself.
 
-**Announce before spawning, not just report after — and actually stop for a response, don't just narrate then proceed in the same turn.** State plainly that the automatic review is about to fire and which model it targets — name the actual cost, never a vague "comparable" cost — then **end the turn there and wait for the user's next message before calling `Agent`.** Stating the announcement and spawning the subagent inside the same uninterruptible turn makes the opt-out window fictional — the user needs a real turn boundary to actually respond in, the same way Step 3.5's `AskUserQuestion` gives one. This is the only point where declining is physically reachable; finding out after the subagent already ran was never really a choice.
+**Use `AskUserQuestion` to ask before spawning — not a plain-text announcement.** Name the actual cost in the question itself, never a vague "comparable" cost, with options to run it now (recommended) or skip it for this design. A real, visible, structured stop — the same mechanism every other genuine decision point in this file already uses (Step 0's tier-ambiguity check, Step 3's model-switch offer, Step 3.5's implement/backlog/review choice) — not a sentence that can blend into the rest of the response and get missed. This is the only point where declining is actually reachable; finding out after the subagent already ran was never really a choice.
 
-**Opt-out**: if the user responds to that announcement saying not to run it for this design, skip it and record the decline (below) the same way a completed review is recorded. **Failure**: if the spawned subagent errors or times out, report that plainly — never silently treat it as if it ran clean — and fall through the same way.
+**Opt-out**: if the user picks "skip," skip it and record the decline (below) the same way a completed review is recorded. **Failure**: if the spawned subagent errors or times out, report that plainly — never silently treat it as if it ran clean — and fall through the same way.
 
 **In both the opted-out and the failed cases, Step 3.5's option (c) reverts to meaning a *first* review, not "another" one** — no review actually happened here, so (c)'s later "request an additional pass" meaning doesn't apply.
 
