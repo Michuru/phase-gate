@@ -132,15 +132,31 @@ inspect the worktree directly before deciding anything.
    those paths, commit with a message drafted from the design doc and its `BACKLOG.md` entry. **Never
    `git merge`, `git rebase`, fast-forward, or otherwise bring the worktree's own branch/commits into
    the default branch wholesale** — always this scoped patch, never the branch itself.
-4. **If this design's tool has a deploy target (a `publish-*` skill exists for it), invoke `/ship`
-   instead** — it now owns the archive-and-commit step for anything it publishes, per
-   `ship/SKILL.md` Step 2. Otherwise, move the item's `BACKLOG.md` entry (both its checklist line
-   and its full tool-section entry) to `BACKLOG_ARCHIVE.md`, per `backlog`'s existing cut-and-paste
-   convention, **and write `## Shipped — done` into this item's `Design Docs/<slug>.md` file first**
-   (same write-on-entry instruction `ship/SKILL.md` Step 2 uses for the deploy-target case) — this
-   design doc always exists here (this checklist only ever holds items that went through `spec`),
-   so this write is never skippable in this branch the way it can be for a plain `BACKLOG.md`-only
-   item elsewhere.
+4. **Decide how this item actually reaches its users — a `publish-*` skill isn't the only
+   deploy-target shape:**
+   - **A `publish-*` skill exists for this tool** → invoke `/ship` instead of the rest of this
+     step — it now owns the archive-and-commit step for anything it publishes, per
+     `ship/SKILL.md` Step 2.
+   - **The tool ships by manually republishing to an already-existing hosted page instead of a
+     git push** (a Claude Artifact, a wiki page — no `publish-*` skill, no deploy repo, no
+     git-based deploy target at all) → **don't archive this item in this step.** Republishing is
+     a real, visible-to-others action this unattended batch harvest shouldn't take on its own —
+     commit the harvested patch (sub-steps 3, 5, 6 below still apply as normal) but mark this
+     item's status as **`pending-publish`** (a distinct status from `blocked`, since
+     implementation is already done and committed — there is nothing left to resume) and carry
+     the harvested commit hash plus wherever this item's own doc records the existing page to
+     republish to into Step 7, which surfaces both `blocked` and `pending-publish` items the same
+     way. Archive to `BACKLOG_ARCHIVE.md` only once the user (or a later manual republish)
+     actually ships it. **This closes a real gap**: without this branch, a tool shaped this way
+     would fall into "otherwise" below and be silently archived as done with no actual republish
+     ever happening.
+   - **Otherwise** → move the item's `BACKLOG.md` entry (both its checklist line and its full
+     tool-section entry) to `BACKLOG_ARCHIVE.md`, per `backlog`'s existing cut-and-paste
+     convention, **and write `## Shipped — done` into this item's `Design Docs/<slug>.md` file
+     first** (same write-on-entry instruction `ship/SKILL.md` Step 2 uses for the deploy-target
+     case) — this design doc always exists here (this checklist only ever holds items that went
+     through `spec`), so this write is never skippable in this branch the way it can be for a
+     plain `BACKLOG.md`-only item elsewhere.
 5. Report the commit hash.
 6. Check whether the worktree needs explicit removal after a changed-then-harvested state (undocumented
    by the workflow tool for this case) — remove it if so. **If `git worktree remove` fails with a
@@ -152,15 +168,24 @@ inspect the worktree directly before deciding anything.
 **If neither check finds an anomaly and the item's status is `blocked`**, don't touch its files or
 `BACKLOG.md` entry yet — collect it for Step 7 as an ordinary blocked question.
 
-## Step 7: Blocked-item questions, batched
+## Step 7: Blocked-item and pending-publish questions, batched
 
-If any items in the batch are `blocked`, present all of them together via `AskUserQuestion` (chunk into
-groups of ≤4 if there are more). Once answered, either resume via
+If any items in the batch are `blocked` **or `pending-publish`**, present all of them together via
+`AskUserQuestion` (chunk into groups of ≤4 if there are more) — this trigger is on either status, not
+`blocked` alone, precisely so a `pending-publish` item (Step 6 point 4) still gets surfaced even when
+nothing else in the batch is blocked. The two statuses ask different questions, though: a `blocked`
+item's question is about how to resolve what's stopping implementation; a `pending-publish` item's
+question is a republish confirmation (its own implementation is already committed) — asking whether
+to republish it now or leave it queued for later.
+
+**Resuming only ever applies to `blocked` items.** Once a `blocked` item is answered, either resume via
 `Workflow({ name: 'implement-queue', resumeFromRunId })` (same saved-workflow invocation as the
 initial call in Step 5, not a raw `scriptPath`) with the **same full
 batch array**, the answer folded into that item's `designDocPath`/prompt context (never a filtered
 array — that invalidates every downstream cache entry), or, if it's a single simple item, just finish
-it directly in the main session instead of spinning up a resume run.
+it directly in the main session instead of spinning up a resume run. A `pending-publish` item never
+goes through this resume mechanism — its answer either triggers an immediate manual republish (then
+archive per Step 6 point 4) or leaves it exactly as-is for a later session.
 
 ## Step 8: Between-batch checkpoint
 
@@ -170,6 +195,8 @@ auto-continue.
 
 ## Step 9: Final summary
 
-Once the confirmed batches are done (or the user stops early): commits made (hash + one-liner each),
-anything still blocked and awaiting an answer, and what's still open across `BACKLOG.md`/`Design Docs/`
-— same "show what's open" convention every other backlog-touching skill in this repo ends with.
+Once the confirmed batches are done (or the user stops early): commits made (hash + one-liner each —
+flag any still `pending-publish`, i.e. committed but deliberately not yet archived because their
+republish hasn't happened, so this doesn't read as ordinary residual backlog noise), anything
+still `blocked` and awaiting an answer, and what's still open across `BACKLOG.md`/`Design Docs/` —
+same "show what's open" convention every other backlog-touching skill in this repo ends with.

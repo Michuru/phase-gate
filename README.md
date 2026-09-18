@@ -295,6 +295,7 @@ its whole folder into `.claude/skills/doc-review/` instead.
 |---|---|
 | `block-dangerous-commands` | Refuses a short list of catastrophic shell commands outright |
 | `hooks-health-check` | Says at session start when your git hooks have come unwired |
+| `schedule-wakeup-guard` | Blocks `ScheduleWakeup` unless a real `/loop` is actually live |
 | `context-usage-nudge` | Warns as a conversation fills up, so you can hand off in time |
 | `update-notification` | Mentions when Phase-Gate has new commits. Never fetches or applies anything |
 | `periodic-audit-threshold-check` | Flags when a tool is due for an audit. Needs `/periodic-audit` |

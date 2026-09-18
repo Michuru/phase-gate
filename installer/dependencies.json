@@ -1,13 +1,17 @@
 {
   "$comment": "Static transitive dependency manifest. Built by grepping the actual generalized skill files for real cross-references (process/skills/*/SKILL.md), not from memory of the source repo. 'hard' means the skill's own documented steps invoke the target and have no stated fallback; 'soft' means the skill explicitly states a fallback ('if X isn't installed, do Y yourself') or the reference is a pipeline-stage pointer to a genuinely optional next step. All hard skill-to-agent edges are satisfied automatically for any adopter who installs process/ as the integrated shelf intends, since code-reviewer and docs-writer ship as part of that same shelf - they only matter if a component is cherry-picked out of process/ on its own.",
   "schema_version": 1,
-
   "components": {
     "backlog": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["ship"]
+        "hard": [
+          "code-reviewer",
+          "docs-writer"
+        ],
+        "soft": [
+          "ship"
+        ]
       },
       "external_prerequisites": [],
       "notes": "ship is a conditional pipeline pointer: Step 7 dispatches archive-and-commit to /ship instead, but only for a tool with its own deploy target - most BACKLOG.md items have none, so backlog's own archive-and-commit path stays fully functional without ship installed."
@@ -15,8 +19,16 @@
     "spec": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["docs-writer"],
-        "soft": ["initiate", "adopt", "build", "implement-queue", "backlog"]
+        "hard": [
+          "docs-writer"
+        ],
+        "soft": [
+          "initiate",
+          "adopt",
+          "build",
+          "implement-queue",
+          "backlog"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself."
@@ -24,8 +36,15 @@
     "initiate": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["handoff", "backlog"],
-        "soft": ["adopt", "spec", "implement-queue"]
+        "hard": [
+          "handoff",
+          "backlog"
+        ],
+        "soft": [
+          "adopt",
+          "spec",
+          "implement-queue"
+        ]
       },
       "external_prerequisites": [],
       "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - bucket A's last rank is an unblocked BACKLOG.md item, handed off to backlog List mode, and the report's own closing line always names backlog as the alternative regardless of which bucket-A item ranks first. adopt/spec/implement-queue are soft: offered conditionally (the no-process-history case hands off to adopt entirely, per the 2026-09-06 next-command-contract redesign that moved the scoping-inventory body out of this skill; a queued design goes to spec; a non-empty checklist to implement-queue), never invoked unconditionally."
@@ -34,7 +53,10 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["spec", "backlog"]
+        "soft": [
+          "spec",
+          "backlog"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Added 2026-09-06 (next-command-contract redesign), split out of initiate's former Step 3. Step 2 names /spec as the recommendation for the freshly-scoped area and /backlog as the named alternative if nothing's ready to design yet - both pipeline-stage pointers, never invoked directly by this skill itself."
@@ -42,8 +64,14 @@
     "end-task": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["docs-writer"],
-        "soft": ["handoff", "backlog", "consolidate-docs"]
+        "hard": [
+          "docs-writer"
+        ],
+        "soft": [
+          "handoff",
+          "backlog",
+          "consolidate-docs"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Added 2026-09-06 (next-command-contract redesign), absorbing commit and wrap-up-session as internal depth modes - one implementation of the shared git-survey logic instead of three cross-referencing copies. docs-writer is hard for the same reason wrap-up-session's own entry had it: Step 6's docs pass delegates substantial NOTES.md/rules-doc writes to it. handoff is soft: Step 4's routing table names it in every row as the alternative (or the recommendation, when work is unfinished), but never invokes it unconditionally - the whole point of the rewrite is surfacing that fork rather than silently picking it. backlog is soft, same conditional catch-all role wrap-up-session's own entry described. consolidate-docs is soft: Step 6's rules-doc-size check recommends running it once a threshold's crossed, conditionally."
@@ -51,8 +79,13 @@
     "build": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["execution-gate", "verify"],
-        "soft": ["implement-queue"]
+        "hard": [
+          "execution-gate",
+          "verify"
+        ],
+        "soft": [
+          "implement-queue"
+        ]
       },
       "external_prerequisites": [],
       "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. implement-queue is soft: batch mode is one of two mutually-exclusive entry paths (Step 0), and single-design mode - the common case - needs it not at all."
@@ -60,8 +93,12 @@
     "verify": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer"],
-        "soft": ["ship"]
+        "hard": [
+          "code-reviewer"
+        ],
+        "soft": [
+          "ship"
+        ]
       },
       "external_prerequisites": [],
       "notes": "code-reviewer is hard: Step 1 invokes it unconditionally, no fallback. ship is a soft pipeline-stage pointer to the natural next phase once QA passes - verify's own job ends at the QA gate record."
@@ -78,8 +115,15 @@
     "execution-gate": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer", "docs-writer"],
-        "soft": ["spec", "implement-queue", "backlog"]
+        "hard": [
+          "code-reviewer",
+          "docs-writer"
+        ],
+        "soft": [
+          "spec",
+          "implement-queue",
+          "backlog"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to. Invoked automatically by build now (see build's own entry) rather than being invoked by spec at all."
@@ -87,8 +131,16 @@
     "implement-queue": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["code-reviewer", "docs-writer", "spec", "backlog"],
-        "soft": ["execution-gate", "ship"]
+        "hard": [
+          "code-reviewer",
+          "docs-writer",
+          "spec",
+          "backlog"
+        ],
+        "soft": [
+          "execution-gate",
+          "ship"
+        ]
       },
       "external_prerequisites": [
         {
@@ -102,7 +154,9 @@
     "consolidate-docs": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["docs-writer"],
+        "hard": [
+          "docs-writer"
+        ],
         "soft": []
       },
       "external_prerequisites": []
@@ -111,7 +165,9 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["end-task"]
+        "soft": [
+          "end-task"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its full-sync depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
@@ -120,7 +176,9 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["end-task"]
+        "soft": [
+          "end-task"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its narrow-commit depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
@@ -129,7 +187,10 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["context-usage-nudge", "end-task"]
+        "soft": [
+          "context-usage-nudge",
+          "end-task"
+        ]
       },
       "external_prerequisites": [],
       "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption."
@@ -138,7 +199,9 @@
       "shelf": "process",
       "depends_on": {
         "hard": [],
-        "soft": ["backlog"]
+        "soft": [
+          "backlog"
+        ]
       },
       "external_prerequisites": [
         {
@@ -156,79 +219,162 @@
     },
     "ai-check": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": []
     },
     "humanize": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": []
     },
     "doc-review": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "the two review scripts (voice scan, review-page renderer) cannot run; the cold-read and grounding passes are unaffected, since they don't call either script" },
-        { "name": "Claude Code's Artifact tool", "degrades": "--publish and --comments modes are unavailable; the three review passes (--cold, --ground, --voice, and the default full run) work without it" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "the two review scripts (voice scan, review-page renderer) cannot run; the cold-read and grounding passes are unaffected, since they don't call either script"
+        },
+        {
+          "name": "Claude Code's Artifact tool",
+          "degrades": "--publish and --comments modes are unavailable; the three review passes (--cold, --ground, --voice, and the default full run) work without it"
+        }
       ],
       "notes": "SKILL.md does not name ai-check or humanize at all - it refers to 'a detection-scoring skill' and 'a dedicated prose-rewriting skill' generically, a deliberate tightening beyond an earlier draft that named them once each. Both edges are absent from depends_on because the skill is stated to be complete on its own for documentation register without either installed, not degraded."
     },
     "block-dangerous-commands": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found", "note": "Runtime python3-with-fallback pattern in the settings fragment - not a hard install-time check." }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found",
+          "note": "Runtime python3-with-fallback pattern in the settings fragment - not a hard install-time check."
+        }
       ]
     },
     "hooks-health-check": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
-        { "name": "git", "degrades": "reports nothing if the cwd isn't a git repo (by design, not an error)" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        },
+        {
+          "name": "git",
+          "degrades": "reports nothing if the cwd isn't a git repo (by design, not an error)"
+        }
       ]
     },
     "update-notification": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
-        { "name": "git", "degrades": "silent on any failure - auth prompt suppressed, network/DNS unreachable, malformed remote URL, or git missing entirely - a bare 'git ls-remote' against source_origin, never dependent on the adopter's cwd being a git repo at all - never a hang or error, just no notification" },
-        { "name": "network reachability to the recorded source_origin", "degrades": "silent - the throttle window still advances so it doesn't retry every session" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        },
+        {
+          "name": "git",
+          "degrades": "silent on any failure - auth prompt suppressed, network/DNS unreachable, malformed remote URL, or git missing entirely - a bare 'git ls-remote' against source_origin, never dependent on the adopter's cwd being a git repo at all - never a hang or error, just no notification"
+        },
+        {
+          "name": "network reachability to the recorded source_origin",
+          "degrades": "silent - the throttle window still advances so it doesn't retry every session"
+        }
       ],
       "notes": "Deliberately zero hard/soft dependencies on other components - reads only its own installed receipt.json, never another component's state."
     },
     "context-usage-nudge": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        }
       ]
     },
     "statusline": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "statusLine silently renders nothing if neither is found" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "statusLine silently renders nothing if neither is found"
+        }
       ]
     },
     "periodic-audit": {
       "shelf": "process",
       "depends_on": {
-        "hard": ["periodic-audit-coverage", "periodic-audit-structural"],
-        "soft": ["docs-writer", "backlog"]
+        "hard": [
+          "periodic-audit-coverage",
+          "periodic-audit-structural"
+        ],
+        "soft": [
+          "docs-writer",
+          "backlog"
+        ]
       },
       "external_prerequisites": [],
       "notes": "Step 3 spawns both agent definitions unconditionally once their gates clear - hard edges, no stated fallback (a diff-scoped generic code-review agent is explicitly called out as the wrong shape for either pass). docs-writer is soft: Step 4's clean-result record delegates to it, but a real finding instead routes to backlog (also soft - a pipeline-stage pointer, not invoked directly by this skill)."
     },
     "periodic-audit-threshold-check": {
       "shelf": "standalone",
-      "depends_on": { "hard": [], "soft": [] },
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
       "external_prerequisites": [
-        { "name": "python3 or python on PATH", "degrades": "hook silently never fires if neither is found" },
-        { "name": "git", "degrades": "reports nothing for a repo where the cwd isn't a git repo (by design, not an error)" }
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        },
+        {
+          "name": "git",
+          "degrades": "reports nothing for a repo where the cwd isn't a git repo (by design, not an error)"
+        }
       ],
       "notes": "One-way nudge relationship, not a dependency edge: this hook decides whether the periodic-audit skill is due and reports via systemMessage, but neither component invokes the other directly, and the skill works fine invoked directly with no hook installed at all."
+    },
+    "schedule-wakeup-guard": {
+      "shelf": "standalone",
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
+      "external_prerequisites": [
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        }
+      ]
     }
   }
 }

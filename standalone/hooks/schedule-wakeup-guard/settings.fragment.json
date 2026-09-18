@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "ScheduleWakeup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/schedule-wakeup-guard.py\" || python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/schedule-wakeup-guard.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

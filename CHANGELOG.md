@@ -7,6 +7,17 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Added
+- New standalone component `schedule-wakeup-guard`: a `PreToolUse` hook that blocks
+  `ScheduleWakeup` unless the session's own transcript shows a genuinely live `/loop` invocation,
+  rather than a general "check back on this later" use it wasn't meant for.
+
+### Fixed
+- `implement-queue` Step 6.4's ship branch had no case for a tool that ships by manually
+  republishing to an already-existing hosted page (a Claude Artifact, a wiki page) instead of a
+  git push — such an item would have been silently archived as done with no actual republish.
+  Added a `pending-publish` status, distinct from `blocked`, surfaced the same way through Step 7.
+
 ## [1.0.1] - 2026-09-15
 
 ### Fixed

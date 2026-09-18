@@ -328,6 +328,31 @@
       ]
     },
     {
+      "name": "schedule-wakeup-guard",
+      "shelf": "standalone",
+      "description": "PreToolUse hook: blocks ScheduleWakeup unless the session transcript shows a genuinely live /loop invocation.",
+      "files": [
+        {
+          "path": "standalone/hooks/schedule-wakeup-guard/schedule-wakeup-guard.py",
+          "source_blob": "72ff16a61a0080c7a6a10e7c728caceca0b2f7f2",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/schedule-wakeup-guard.py"
+        },
+        {
+          "path": "standalone/hooks/schedule-wakeup-guard/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        },
+        {
+          "path": "standalone/hooks/schedule-wakeup-guard/settings.fragment.json",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
+    },
+    {
       "name": "update-notification",
       "shelf": "standalone",
       "description": "SessionStart hook: passively checks whether phase-gate has new commits upstream since install, throttled and fail-open. Never fetches or applies anything itself.",
@@ -390,7 +415,7 @@
       "files": [
         {
           "path": "process/skills/implement-queue/SKILL.md",
-          "source_blob": "4ee67571c07b05277e3fd5fa800093c2443e8a65",
+          "source_blob": "7f3cdb5361dcd7bc97c24b3a3101e58aecac5730",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/implement-queue/SKILL.md"
         },
