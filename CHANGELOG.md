@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-09-18
+
 ### Changed
 - `backlog` and `end-task` skills now spec a consistent presentation for the "still open" list
   shown after resolving an item or closing out a session: a short numbered list, one line per
