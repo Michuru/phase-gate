@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-09-20
+
 ### Added
 - `verify` Step 2 now offers a `handoff`-style primer as an alternative to a third escalated
   `code-reviewer` pass, once two prior escalated passes have already failed to converge on the same
