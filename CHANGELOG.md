@@ -7,6 +7,12 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Added
+- `verify` Step 2 now offers a `handoff`-style primer as an alternative to a third escalated
+  `code-reviewer` pass, once two prior escalated passes have already failed to converge on the same
+  finding — trades a subagent pass's zero-friction convenience for genuine live interactivity on the
+  stronger model.
+
 ## [1.1.2] - 2026-09-18
 
 ### Changed
