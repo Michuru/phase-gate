@@ -193,7 +193,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "91dc290e7e3da05a3fe4ef3780db9d3c31e70d3f",
+          "source_blob": "97961b07f991e269146525d0b8e1add4ba9e4b4c",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }

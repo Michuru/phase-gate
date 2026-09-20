@@ -37,6 +37,18 @@ pass is proposed without stopping to reassess whether escalating models is even 
 that point. State the cost each time ("this is a second/third `code-reviewer` pass, N total"),
 mirroring `execution-gate` Step 8's own cost-line requirement.
 
+**If two escalated `code-reviewer` passes still haven't resolved the same finding, that's real
+evidence this needs a human interrogating it live, not another automated pass** — offer a
+`handoff`-style primer as an alternative to a third pass. Unlike a `code-reviewer` pass (read-only,
+single-shot, no back-and-forth), this lets the user open a fresh session on the stronger model and
+actually dig into the finding interactively — worth the cost only once two automated passes have
+already failed to converge, since it costs the user real window-swap friction a third subagent pass
+wouldn't. Write the primer the same way `handoff/SKILL.md` Step 3 does: the finding itself, both
+prior passes' reasoning (why each thought it was/wasn't real), the exact file/line, and the design
+doc pointer — no recache cost either way, but this path trades the subagent's "no friction" for
+genuine interactivity, so only offer it once the cheaper repeated-pass path has already been tried
+and failed.
+
 ## Step 3: Record the result
 
 Write `## QA gate — done` (or `blocked: <what>` if escalation is still unresolved) into the design
