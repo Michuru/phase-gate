@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-09-21
+
 ### Fixed
 - `end-task`, `build`, `consolidate-docs`, `spec`, `execution-gate`, and `handoff` skills
   re-synced against their source repo after real drift accumulated since the last export pass
