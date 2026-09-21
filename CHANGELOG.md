@@ -13,9 +13,10 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 - `end-task`, `build`, `consolidate-docs`, `spec`, `execution-gate`, and `handoff` skills
   re-synced against their source repo after real drift accumulated since the last export pass
   (up to ~480 changed lines on `end-task`). The local-delegate feature content in `spec`/`build`/
-  `execution-gate` remains deliberately deferred — its supporting infrastructure (a runner script,
-  a delegation-prompt-construction skill, a config field) still isn't part of this export, per the
-  precedent already recorded in `[1.0.1]` below.
+  `execution-gate` (a runner script, a delegation-prompt-construction skill, a config field) is
+  **not part of this export and won't be** — a permanent decision, not a "pending design settling"
+  placeholder as `[1.0.1]` below originally described it. It's tied to the source repo's own local
+  Ollama install and test suites; there's no standalone-shaped version of it to ship.
 - `handoff`'s "Consuming a primer" step now explicitly warns that re-reading a moved file back is
   **not** sufficient to confirm a `CONSUMED` marker actually landed in a commit — only checking the
   commit itself does. A plain re-read shows current on-disk content, which can silently differ from
