@@ -7,6 +7,19 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `end-task`, `build`, `consolidate-docs`, `spec`, `execution-gate`, and `handoff` skills
+  re-synced against their source repo after real drift accumulated since the last export pass
+  (up to ~480 changed lines on `end-task`). The local-delegate feature content in `spec`/`build`/
+  `execution-gate` remains deliberately deferred — its supporting infrastructure (a runner script,
+  a delegation-prompt-construction skill, a config field) still isn't part of this export, per the
+  precedent already recorded in `[1.0.1]` below.
+- `handoff`'s "Consuming a primer" step now explicitly warns that re-reading a moved file back is
+  **not** sufficient to confirm a `CONSUMED` marker actually landed in a commit — only checking the
+  commit itself does. A plain re-read shows current on-disk content, which can silently differ from
+  what a `git mv` immediately following an uncommitted edit actually committed; this substitution
+  error caused several real, otherwise-silent failures before being called out explicitly.
+
 ## [1.1.3] - 2026-09-20
 
 ### Added

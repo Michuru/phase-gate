@@ -69,8 +69,9 @@ own §3 table was written to close.
 
 ## Step 3: Everything Step 3.5's old machinery still owns
 
-Three things that used to live inside `spec` Step 3.5, still apply and still live there, unchanged
-by this skill's existence — `build` doesn't own backlogging, only implementing:
+Three things that used to live inside `spec` Step 3.5, alongside the now-retired
+execution-gate-consideration question, still apply and still live there, unchanged by this skill's
+existence — `build` doesn't own backlogging, only implementing:
 - The forbidden-path test and the "Ready to implement" checklist add/skip.
 - Auto-commit-on-(b) when a design is backlogged instead of implemented now.
 - `implement-queue` Step 1's own prerequisite rule (a pending cross-model review satisfied once
@@ -87,11 +88,11 @@ reimplement any of that here; this step is a handoff, not a second copy.
 
 ## Notes
 
-- **Next command, if your setup uses a next-command contract**: Step 4 above already names it —
-  **`/verify`** once every task is done. Named alternative if execution genuinely stalls (a task
-  blocked on the user, an unresolved decision): fix the blocker and resume, or write `## Build —
-  blocked-on-user: <what>` into the doc and stop there rather than forcing `/verify` on an
-  incomplete implementation.
+- **Next command, per the next-command contract (rule 5, `WORKFLOW.md`)**: Step 4 above already
+  names it — **`/verify`** once every task is done. Named alternative if execution genuinely
+  stalls (a Bucket D task blocked on the user, an unresolved decision): fix the blocker and resume,
+  or write `## Build — blocked-on-user: <what>` into the doc and stop there rather than forcing
+  `/verify` on an incomplete implementation.
 - **Why the design review gets an `AskUserQuestion` stop and this gate doesn't.** `spec` Step 3.4
   spawns a differently-priced subagent pass on a design that hasn't been touched yet — a real,
   reversible-only-by-not-spending decision worth a pause. This gate is a main-session analysis pass
@@ -104,5 +105,8 @@ reimplement any of that here; this step is a handoff, not a second copy.
   user made this call directly rather than because some prior evidence bar was cleared — record
   that as **waived by direct user decision**, not as if the original precondition was satisfied,
   if your own `execution-gate` doc still records the older open question.
+- **`## Execution-gate consideration` is retired.** It never had any real content beyond "should
+  this run" — now moot since it always runs. `spec` no longer writes this heading; see that
+  skill's Step 3.5.
 - Local-model fit: not applicable — this skill is dispatch/orchestration over an already-decided
   design and an already-scored task breakdown, not a generation task.

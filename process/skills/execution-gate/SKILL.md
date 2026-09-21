@@ -193,6 +193,13 @@ QA-burst escalation (a `spec`-scoped feature) is also outside `execution-gate`'s
   not a stronger model). Step 8's point 4 above (plain-prose recommendation, only when genuinely
   warranted) is the whole fix. Revisit only if a recurring, structured need shows up that this doesn't
   cover.
+- **Local-model fit: not applicable.** Bucket classification requires judging irreversibility, stakes, and
+  dependencies from context — open-ended judgment with no deterministic gate to check the output against.
+  `spec/SKILL.md`'s own Local-model-fit note (Step 2) states the general principle this falls under: a
+  local model is a plausible fit for the generation half of a propose → deterministic-gate → act
+  pipeline, never for open-ended judgment/QA work with no deterministic gate — bucket, stakes, and
+  approval classification is exactly that kind of work, so it stays on a full model regardless of how
+  tempting a free local pass looks.
 - For the full pipeline this skill fits into — from a problem arising through `backlog`/`spec`
   and on to `implement-queue` and the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
   at the repo root.

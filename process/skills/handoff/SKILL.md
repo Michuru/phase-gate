@@ -107,11 +107,15 @@ done, whether superseded by a new primer or found already closed:
    record of why/when/what closed it, for anyone who opens the archive later.
 2. Move the file from `.claude/handoffs/<name>.md` to `.claude/handoffs/archive/<name>.md` in that same
    repo (create `archive/` if it doesn't exist yet) — **as its own separate move-and-commit, not folded
-   into a later multi-file commit.** A move run in the same breath as a preceding edit can stage the
-   *pre-edit* content, so the marker never actually lands in the commit, with no error anywhere in the
-   chain (confirmed the hard way). Before treating this as done, re-read the moved file (or check the
-   commit itself) and confirm the `CONSUMED` marker is actually present in what got committed — don't just
-   trust that the edit and the move both reporting success means the content carried through.
+   into a later multi-file commit.** A move immediately following an uncommitted edit can silently stage
+   the *pre-edit* content — even across separate tool-call turns, not just "in the same breath" — so the
+   marker never actually lands in the commit, with no error anywhere in the chain (confirmed the hard
+   way, more than once). **Before treating this as done, check what the commit itself actually recorded
+   — re-reading the moved file back is NOT sufficient and does not satisfy this check.** A plain re-read
+   shows current on-disk content, which can silently differ from what the commit actually captured — that
+   gap is exactly what this bug produces, and mistaking a re-read for a real commit check has already
+   caused repeat silent failures of this exact kind. Don't just trust that the edit and the move both
+   reporting success means the content carried through.
 
 **Both steps matter — the marker alone isn't enough.** Step 0's live-candidate scan is a plain directory
 listing of each `.claude/handoffs/` top level (see Step 0) with no per-file marker check, specifically so

@@ -47,12 +47,16 @@ moment (a design doc saved but not yet built, for instance).
 
 ## Step 3: If nothing unfinished, run the docs-sync signal check
 
-Five yes/no questions:
+Eight yes/no questions:
 
 1. **Your rules doc** (any repo) — new tool/skill/structural fact/changed behavior from this session
    not yet documented?
-2. **Tool `NOTES.md`** — dated narrative history (a fix, an investigation, a verification) from this
-   session not yet written?
+2. **Tool `NOTES.md`** — did this session change an ongoing architecture fact, live caveat, or
+   schema a future session needs to know, not yet recorded there? **Not** a dated fix/investigation
+   narrative — if your rules doc draws a distinction between "current-state fact" (belongs in
+   `NOTES.md`) and "dated history of a specific fix" (belongs in `BACKLOG_ARCHIVE.md`/the commit
+   message), follow it — writing narrative into `NOTES.md` here is exactly what recreates the
+   duplication that distinction exists to prevent.
 3. **`BACKLOG.md`/`BACKLOG_ARCHIVE.md`** — an item resolved this session but not yet archived?
 4. **`MISTAKES.md`** — a process/methodology mistake surfaced this session, not yet logged?
 5. **A cheat-sheet artifact** (a command-reference doc or short daily-driver list, if you maintain
@@ -60,6 +64,26 @@ Five yes/no questions:
    isn't reflected there yet**? (Check the file directly rather than assuming — a session that
    already did its own sync as part of the same work answers "no" here. Skip entirely if you don't
    maintain anything like this.)
+6. **A downstream export of your own — uncommon; skip this and question 7 entirely unless you
+   actually maintain one** (a generalized copy of your own customized skills/hooks/config that you
+   periodically publish or copy into a separate project, the way this methodology itself gets
+   published from wherever you actually customize it). If you do maintain one, and this session
+   added a wholly new skill, agent, or hook (not merely edited one already in your export), has
+   whether to port it there actually been decided — a real yes/no recorded somewhere (this session's
+   own response, a `BACKLOG.md` entry, a design doc) — rather than never coming up at all? Not-yet-
+   decided is a "yes" here. This is deliberately distinct from question 7 below: a brand-new
+   component has no existing record for a drift check to compare against, so a drift check alone can
+   never catch it.
+7. **Drift on an already-exported component** (same "uncommon — skip if it doesn't apply" scope as
+   question 6). Did this session **edit** (not add) any skill/agent/hook file your own export already
+   tracks as a ported component? If so, has whatever mechanism you use to re-check for drift (a
+   script, or just a side-by-side diff) actually been run and come back clean since? Not-yet-checked
+   is a "yes" here.
+8. **File-size thresholds — mechanical, not a judgment call, unlike questions 1-7 above.** If you
+   have a hook (or just a habit) that flags your rules doc, mistakes log, or a `NOTES.md`/
+   `*.NOTES.md` file once it grows past some size, is any such file touched this session now sitting
+   past that threshold? Check the actual file size directly — past-threshold is an automatic "yes,"
+   no interpretation needed. Skip this question if you don't track file size at all.
 
 Answer each concretely, not by vague impression — e.g. #3 is answerable by checking whether a
 `BACKLOG.md` item discussed this session still has an open checkbox; #1/#2 are answerable by
@@ -101,6 +125,15 @@ already committed earlier without asking), proactively ask whether to push now, 
 passively until the user brings it up. Still needs an explicit yes before pushing — this only
 changes who raises the question first, and consolidates it to one ask instead of several.
 
+**If a repo you maintain publishes versioned releases (a `CHANGELOG.md` plus git tags, or similar)
+and this session just pushed to it, also check whether a release should be cut** — a real gap worth
+naming: nothing forces this question to get asked on its own, so real fixes can sit merged with an
+"Unreleased" section sitting non-empty and no tag ever cut, indefinitely, until someone happens to
+notice and ask directly. Check that file's unreleased section: if it has real content after this
+push, ask whether to cut a release now or hold off. Not every push needs a release — this is a
+judgment call the user makes, not an automatic trigger — but the question itself should never go
+unasked. Skip entirely if you don't publish versioned releases from any repo touched this session.
+
 **Report**: commit hash + one-line description, per repo, for anything actually committed, plus an
 explicit call-out of anything deliberately left uncommitted and why (mid-investigation, not yet
 verified) — silence here would look identical to "nothing was left outstanding," which is exactly
@@ -117,12 +150,13 @@ yet; this is a judgment call, not a mechanical sweep — skip anything already c
   structure/behavior → that repo's own file). Use `Edit`, never `Write`, on any of them. A one-line
   pointer/fact fix goes directly; anything more substantial (a new NOTES.md section) delegates to the
   `docs-writer` subagent — announce the delegation explicitly.
-- **Tool `NOTES.md`** — did this session add dated narrative history (a fix, an investigation, a
-  verification) to a tool that has its own `NOTES.md`? If so and it's not written yet, delegate to
-  `docs-writer`.
+- **Tool `NOTES.md`** — did this session change an ongoing architecture fact, live caveat, or schema
+  for a tool that has its own `NOTES.md`, not yet recorded there? If so, delegate to `docs-writer`.
+  **Not** dated fix/investigation narrative — that belongs in `BACKLOG_ARCHIVE.md`/the commit
+  message, if your rules doc draws that same distinction (see question 2 above).
 - **`BACKLOG.md` / `BACKLOG_ARCHIVE.md`** — any item resolved and verified this session that hasn't
-  been archived yet? Normally `backlog`'s own step 7 already handles this; this is only a catch for
-  anything that slipped through.
+  been archived yet? Normally `backlog`'s own still-open display step already handles this; this is
+  only a catch for anything that slipped through.
 - **`MISTAKES.md`** — any process/methodology mistake surfaced this session, not yet logged?
   Usually already logged same-turn per standing habit; this is a last-chance catch, not a
   re-investigation.
@@ -130,6 +164,10 @@ yet; this is a judgment call, not a mechanical sweep — skip anything already c
   configured, will typically have already flagged this on any edit to that file), either run
   `/consolidate-docs` now or tell the user it's pending — don't silently ignore an already-fired
   nudge.
+- **`MISTAKES.md` / `NOTES.md` size** — same check, same "don't silently ignore an already-fired
+  nudge" rule (if you have one), for the mistakes log and any tool's `NOTES.md`/`*.NOTES.md` file
+  past its own threshold — run `/consolidate-docs`'s pruning mode for that file if it covers this
+  doc type, prune it directly, or tell the user it's pending.
 
 **Commit pass** — same mechanics as Step 5's narrow-commit depth, for every verified complete
 change identified in the docs pass above plus anything Step 1's survey found; same
@@ -140,6 +178,20 @@ added, removed, or renamed a skill, or materially changed what an existing one d
 tweak). Update it directly and, if it's a published artifact, republish it to its **existing** URL
 (never create a new one for this). Skip entirely if you don't maintain anything like this, or if the
 roster didn't change this session.
+
+**Downstream-export drift check (conditional)** — triggered by Step 3's question 7, and only
+relevant if you maintain a downstream export as described there (uncommon — most adopters don't). If
+this session edited a skill/agent/hook file your export already tracks as a ported component, run
+whatever drift-check mechanism you use for it and re-generalize whatever it flags (patch the
+exported file, update your own tracking record, re-run to confirm clean). Skip entirely if you don't
+maintain such an export, or if none of its tracked files were touched this session.
+
+**Downstream-export new-component consideration (conditional)** — only if Step 3's question 6 came
+back "yes": surface it explicitly rather than letting the session end without ever raising it. Ask
+the user whether the new skill/agent/hook should be ported now (if so, do it — generalize it, add it
+to your export's own tracking, confirm it's clean) or explicitly declined (say so plainly, and note
+the decision somewhere findable — a one-line `BACKLOG.md`/design-doc note is enough) so a future
+session doesn't have to re-ask the same question with no record of the answer.
 
 **Close-out summary** — one message covering: commits made (hash + one-line description each,
 labeled by repo), which docs were touched and how, whether any cheat-sheet artifact was refreshed,
