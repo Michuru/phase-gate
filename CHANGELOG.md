@@ -7,6 +7,13 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `consolidate-docs` re-synced against source-repo drift: a third `MISTAKES.md` pruning shape
+  (single-occurrence entries age out at 90 days with zero recurrence) and an optional
+  growth-ratchet-baseline record step after each trim, generalized (no specific tool/hook name
+  assumed — the exported `rules-doc-size` hook doesn't implement a growth ratchet yet, so that step
+  is phrased as conditional).
+
 ## [1.1.4] - 2026-09-21
 
 ### Fixed
