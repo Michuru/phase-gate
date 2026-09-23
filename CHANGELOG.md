@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-09-22
+
 ### Fixed
 - `consolidate-docs` re-synced against source-repo drift: a third `MISTAKES.md` pruning shape
   (single-occurrence entries age out at 90 days with zero recurrence) and an optional
