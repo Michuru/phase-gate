@@ -1,6 +1,6 @@
 ---
 name: consolidate-docs
-description: Periodic maintenance pass covering three related but distinct targets — keeps CLAUDE.md lean (sweeps sections that have grown into dated, narrative bug-fix history into companion NOTES.md files, plus a staleness pass that deletes rules no longer true), prunes MISTAKES.md by archiving entries already promoted into CLAUDE.md or fully superseded, and prunes an overgrown tool NOTES.md by archiving closed investigations no longer needed to understand current behavior. Use when CLAUDE.md/MISTAKES.md/a tool's NOTES.md feels like it's grown noticeably since the last pass, the user asks to clean up/consolidate/trim the docs, or a doc-size threshold hook has fired.
+description: Periodic maintenance pass covering three related but distinct targets — keeps CLAUDE.md lean (sweeps sections that have grown into dated, narrative bug-fix history into companion NOTES.md files, plus a staleness pass that deletes rules no longer true), prunes MISTAKES.md by archiving entries already promoted into CLAUDE.md, fully superseded, or aged out with zero recurrence, and prunes an overgrown tool NOTES.md by archiving closed investigations no longer needed to understand current behavior. Use when CLAUDE.md/MISTAKES.md/a tool's NOTES.md feels like it's grown noticeably since the last pass, the user asks to clean up/consolidate/trim the docs, or a doc-size threshold hook has fired.
 ---
 
 # Consolidate project docs
@@ -30,24 +30,27 @@ Two distinct problems, checked separately — don't conflate them:
 4. For candidate content that's a *procedure* (a repeatable "how to do X" workflow) rather than tool-specific history, check whether a skill already covers it before writing a new one — prefer extending an existing skill's Notes section over duplicating. If none exists and the procedure is genuinely repeated (not a one-off), propose a new skill to the user rather than just leaving the prose in `CLAUDE.md`. This judgment call stays in the main session, not `docs-writer`.
 5. Re-read the trimmed `CLAUDE.md` end to end afterward to confirm every remaining pointer resolves to a real file/skill and nothing load-bearing got cut — this check also stays in the main session, since it's a judgment call about what matters, not transcription.
 6. Commit the pass as its own commit (per `methodology.md` §6's commit trigger 2 — before/around a large rewrite) with a message describing which sections moved where and which rules were deleted as stale.
+7. **If your doc-size hook tracks a growth-ratchet baseline** (recording each trim's post-size so a future nudge scales off it instead of a fixed threshold — see the `rules-doc-size` standalone hook, if you've extended it this way) **record the new post-trim size now.** Skip this if the file wasn't actually reduced in size (a staleness-only pass with no narrative-bloat relocation, for instance).
 
 ## Pruning MISTAKES.md
 
 If your project nests other repos as subdirectories (see `methodology.md` §10), each one may maintain its own independent `MISTAKES.md`, addressed by its own explicit path rather than resolved automatically — this section applies to whichever repo's copy triggered the pass (per-repo scoping: "that repo's own `CLAUDE.md`" below always means the copy in the same repo as the `MISTAKES.md` being pruned). Most projects have just the one, in which case this scoping note is moot.
 
-Unlike `CLAUDE.md`'s narrative-bloat problem, `MISTAKES.md`'s entries aren't candidates just for being old or long — the file's whole purpose is to be a dated incident log. Two specific candidate shapes only:
+Unlike `CLAUDE.md`'s narrative-bloat problem, `MISTAKES.md`'s entries aren't candidates just for being old or long — the file's whole purpose is to be a dated incident log. Three specific candidate shapes only:
 
 - **Already promoted into `CLAUDE.md`.** An entry may already end with a note like "(promoted the same day into CLAUDE.md directly...)" — that's a starting signal, but **verify it directly** by reading the named `CLAUDE.md` section and confirming the durable rule really is there, rather than trusting the entry's own claim (verify before consolidating, the same discipline this skill applies everywhere else).
 - **Fully superseded.** The entry's underlying tool/mechanism/file no longer exists in the repo (verify via Grep/Glob, not assumption), making recurrence structurally impossible.
+- **Single-occurrence, aged out.** An entry that never recurred (its shape never showed up again in a later entry, per a direct grep or a search over your own archived docs if you have one wired up) and is now **90+ days old with zero recurrence in that time** ages out on a timer, independent of the two shapes above — it was never going to get promoted, and the live file shouldn't hold it open-endedly waiting for a recurrence that may never come. Check its date against today directly before treating it as eligible; don't estimate.
 
 **Explicit, stated distinction from `CLAUDE.md`'s own staleness step above**: `CLAUDE.md` deletes stale rules outright, because they're live guidance that's no longer true. `MISTAKES.md` entries are historical record, not live guidance — they are **archived, never deleted**, the same philosophy `BACKLOG_ARCHIVE.md` already applies to resolved `BACKLOG.md` items.
 
 ### Steps
 
-1. Read `MISTAKES.md` in full and identify candidates against the two shapes above. Verify each one directly (read the named `CLAUDE.md` section; Grep/Glob for the claimed-gone tool) before treating it as confirmed. Judgment call — stays in the main session, not `docs-writer`.
-2. Delegate the mechanical move to **`docs-writer`**, announced explicitly: create `MISTAKES_ARCHIVE.md` if it doesn't exist yet (header modeled on `BACKLOG_ARCHIVE.md`'s own opening paragraph — purpose, "not read by default" framing, an ongoing-convention note), move each confirmed entry's full `##`-headed text verbatim into it in date order, and leave a one-line pointer behind in `MISTAKES.md` at the original heading location: `## YYYY-MM-DD — <original title> — MOVED`, one sentence saying why (promoted into `CLAUDE.md`'s `<section>`, or superseded because `<tool>` no longer exists), and "Full record: `MISTAKES_ARCHIVE.md`."
-3. Re-read the trimmed `MISTAKES.md` afterward to confirm nothing load-bearing (an entry not actually promoted/superseded) got moved by mistake.
+1. Read `MISTAKES.md` in full and identify candidates against the three shapes above — for the age-out shape, check each entry's own date against today directly (don't estimate) and confirm its shape genuinely never recurred. Verify each one directly (read the named `CLAUDE.md` section; Grep/Glob for the claimed-gone tool) before treating it as confirmed. Judgment call — stays in the main session, not `docs-writer`.
+2. Delegate the mechanical move to **`docs-writer`**, announced explicitly: create `MISTAKES_ARCHIVE.md` if it doesn't exist yet (header modeled on `BACKLOG_ARCHIVE.md`'s own opening paragraph — purpose, "not read by default" framing, an ongoing-convention note), move each confirmed entry's full `##`-headed text verbatim into it in date order, and leave a one-line pointer behind in `MISTAKES.md` at the original heading location: `## YYYY-MM-DD — <original title> — MOVED`, one sentence saying why (promoted into `CLAUDE.md`'s `<section>`, superseded because `<tool>` no longer exists, or `(single, aged-out YYYY-MM-DD)` for the age-out shape), and "Full record: `MISTAKES_ARCHIVE.md`." A recurrence check against an aged-out entry still searches the archive exactly as it would the live file — moving it never removes it from the promotion-recurrence check.
+3. Re-read the trimmed `MISTAKES.md` afterward to confirm nothing load-bearing (an entry not actually promoted/superseded/genuinely-unrecurred) got moved by mistake.
 4. Commit as its own commit.
+5. If your doc-size hook tracks a growth-ratchet baseline (see step 7 above), record the new post-trim size for `MISTAKES.md` now.
 
 `MISTAKES_ARCHIVE.md` is not created empty ahead of time — it's born the first time this pass actually finds a real candidate, the same way `BACKLOG_ARCHIVE.md` itself was born from an actual archiving action rather than a preemptive scaffold.
 
@@ -76,6 +79,7 @@ carry, named in one clause.>
    - For confirmed **archive** candidates: create the archive file if it doesn't exist yet — `<Tool>.NOTES.ARCHIVE.md` for a root-level tool, `<Folder>/NOTES.ARCHIVE.md` for a per-folder tool, matching whichever of the two naming shapes the source `NOTES.md` itself uses — header modeled on `BACKLOG_ARCHIVE.md`'s. Move each confirmed section verbatim in date order, leave a one-line pointer behind at its original location, same shape as the `MISTAKES.md` pointer above.
 3. Re-read the trimmed `NOTES.md` afterward to confirm nothing a `CLAUDE.md` pointer still says to "read before touching X" got moved or stubbed by mistake, and that every stub carries a real body sentence (not a bare heading).
 4. Commit as its own commit.
+5. If your doc-size hook tracks a growth-ratchet baseline (see step 7 of "Pruning CLAUDE.md" above), record the new post-trim size for this `NOTES.md` now.
 
 Same non-preemptive-scaffold rule as `MISTAKES_ARCHIVE.md` above — the archive file is born on first real use.
 
@@ -85,3 +89,4 @@ Same non-preemptive-scaffold rule as `MISTAKES_ARCHIVE.md` above — the archive
 - Don't run this reflexively every session — it's a periodic pass, triggered by noticeable growth, an explicit ask, or a doc-size threshold hook nudging (if you have one wired up — see the `rules-doc-size` standalone hook — extended to cover `MISTAKES.md`/a tool's `NOTES.md` the same way), not a per-turn habit.
 - Delegating the sweep itself to `docs-writer` keeps this mechanical, high-volume relocation work off the more expensive main-session model — see `methodology.md`'s tiered-work section for the reasoning. This applies to all three targets above, not just `CLAUDE.md`'s.
 - If you keep a design-doc history, the full reasoning behind your own `MISTAKES.md`/`NOTES.md` size thresholds and archive destinations belongs there, not repeated in this file.
+- **If your doc-size hook supports a growth-ratchet baseline, always record the post-trim size for whichever file(s) this pass actually shrank** — this is what lets the nudge fire at some multiple of that size instead of the original fixed threshold, so a file trimmed once doesn't have to regrow all the way back to the same absolute number before the next nudge. Skip it for a pass that found nothing to cut.
