@@ -13,6 +13,9 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   content (the `local_delegate_runner.py implement` wiring and its real-world track-record logging),
   which stays permanently excluded per `[1.1.4]`'s decision. No export content change needed;
   `installer/manifest.json`'s recorded hash updated to match current source.
+- `consolidate-docs` re-synced against source-repo drift: a mechanize-before-prose reminder added to
+  both its Pruning-MISTAKES.md and Pruning-CLAUDE.md steps, generalized (no specific script name
+  assumed — an adopter without an equivalent script builds their own, per the step's own suggestion).
 
 ## [1.1.5] - 2026-09-22
 
