@@ -7,6 +7,13 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `build` component's manifest hash was stale, flagging false drift — diffed directly against the
+  source repo and confirmed the only changes since the last sync are more local-delegate feature
+  content (the `local_delegate_runner.py implement` wiring and its real-world track-record logging),
+  which stays permanently excluded per `[1.1.4]`'s decision. No export content change needed;
+  `installer/manifest.json`'s recorded hash updated to match current source.
+
 ## [1.1.5] - 2026-09-22
 
 ### Fixed
