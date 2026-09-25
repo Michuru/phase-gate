@@ -428,6 +428,25 @@
       ]
     },
     {
+      "name": "local-delegate",
+      "shelf": "process",
+      "description": "Optional local-model delegation gate for /build's implement mode: a free local-model draft, gated by your own visible tests, before spending a turn on it.",
+      "files": [
+        {
+          "path": "process/local-delegate/local_delegate_runner.py",
+          "source_blob": "69173d4a4ea2f56d6ab045ab6455ab5326dc0160",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/local_delegate_runner.py"
+        },
+        {
+          "path": "process/local-delegate/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
+    },
+    {
       "name": "process-hooks",
       "shelf": "process",
       "description": "Docs-sync nudges (backlog/mistakes/rules-doc-size) and a session-end uncommitted-changes reminder.",

@@ -12,7 +12,7 @@ the rulebook says it should.
 
 ## The short version
 
-Sixteen variables, in four kinds:
+Seventeen variables, in four kinds:
 
 | Kind | Meaning | What happens if you ignore it |
 |---|---|---|
@@ -143,6 +143,24 @@ it's meant to be grown:
 escalates nothing. Its whole value is being short enough to mean something.
 
 Examples: `src/pricing/calculate.ts:applyDiscount` · `lib/parser.py:parse_header`
+
+### `local_delegate`
+
+Enables the [local-delegate component](../process/local-delegate/README.md)'s free local-model draft
+before `/build` spends a turn on an eligible task. Unlike the other variables in this section, it's
+**read live at call time**, not substituted into any file — the runner script reads it straight from
+your resolved `.claude/phase-gate-install/variables.json`.
+
+**Ships as an empty object, `{}`, and is not prompted at install.** With nothing configured, `/build`
+behaves exactly as if this component weren't installed at all — every task runs on your main model.
+Most adopters will never touch this, and that's the fully-supported default path.
+
+Populated shape: `{"implement": "<your-model-name>"}`. Requires a local model runtime (e.g.
+[Ollama](https://ollama.com)) serving an HTTP chat API on `localhost:11434`, with your chosen model
+already pulled — see the component's own README for the full mechanism, prerequisites, and known
+limitations before configuring this.
+
+Examples: `{"implement": "qwen3-coder:30b"}` · `{"implement": "gemma3:27b"}`
 
 ---
 

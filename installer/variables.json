@@ -112,6 +112,16 @@
       "description": "Specific functions, files, or modules in YOUR codebase with a documented history of subtle bugs. A change that would otherwise be Tier 4 gets the full QA gate if it touches one. Ships empty because this is a property of your code. Grow it reactively: add a place when a subtle bug turns out to be in the same place as a previous subtle bug. Keep it short — a list of twenty escalates everything and therefore escalates nothing.",
       "examples": ["src/pricing/calculate.ts:applyDiscount", "lib/parser.py:parse_header"]
     },
+    "local_delegate": {
+      "kind": "optional",
+      "value": {},
+      "substitution": false,
+      "description": "Enables the local-delegate component's free local-model draft before /build spends a turn on an eligible task. Not prompted at install and not embedded via template substitution — the local-delegate runner script reads this key live from your resolved .claude/phase-gate-install/variables.json at call time. Populated shape: {\"implement\": \"<your-model-name>\"}. A missing key for a given mode means that mode is off; the shipped empty object means the whole feature is off. Requires a local model runtime (e.g. Ollama) serving an HTTP chat API on localhost:11434 — see the local-delegate component's own README for the full mechanism, prerequisites, and limitations.",
+      "examples": [
+        "{\"implement\": \"qwen3-coder:30b\"}",
+        "{\"implement\": \"gemma3:27b\"}"
+      ]
+    },
 
     "available_models": {
       "kind": "default",

@@ -86,6 +86,36 @@ executed the task, never a peer a task lands in *instead of* one of those. Flag 
 `code-reviewer` pass when your rules doc's flagged-surface rule applies, the action is irreversible, or the
 standing Tier 1/2/3 QA-gate rule requires it regardless.
 
+## Step 3.5: Layer the local-delegate flag on top (Bucket A only, optional component)
+
+Only applies if you've installed and configured the optional `local-delegate` component — skip this
+step entirely if you haven't. Same pattern as Step 3's QA-gate flag: an independent flag stacked on a
+task already classified Bucket A, never a peer bucket and never the per-task model field this skill's
+own Notes section already declined (that question was "which model runs this Bucket A task"; this is
+"try a free local pass before Bucket A at all" — a different question that doesn't reopen the earlier
+one).
+
+Set `local-delegate: implement | no` for every Bucket A task. `implement` requires **all four**: the
+design's own task text carries `spec`'s `(local-delegate: implement)` marker; your own recorded
+configuration (`.claude/phase-gate-install/variables.json`, resolved upward the same way Step 1's own
+model-availability check already reads it) names a model for that mode; this task's own contract and
+visible-test-file requirement actually check out against the design or the tree — trust the condition,
+never the marker alone; and **the task's own target file does not already exist in the tree**
+(implement mode is a whole-module generator, and marking a task against an existing file risks a
+passing draft silently overwriting real content; check this the same way the other conditions are
+checked, directly against the tree, not by trusting the design doc's own claim). With no configuration
+recorded, the flag is `no` for every task in the design, and Step 8's report says so once
+("local-delegate: not configured") rather than silently omitting it. Full mechanism: the
+`local-delegate` component's own README.
+
+**When `implement` is set and the task's own text names scoping information** (`Target functions:
+...` / `Test classes or selectors: ...`, per `spec/SKILL.md`'s marker convention — needed whenever the
+visible test file also covers other tasks' functions), **record those names as real columns in the
+Step 6 strategy table**, at class/module granularity rather than individual test-function names — test
+files can gain new assertions between when this gate runs and when `build` actually executes the task,
+and class/module-level identifiers survive that churn while function-level ones may not. `build` reads
+these columns directly rather than re-parsing the task's prose at execution time.
+
 ## Step 4: Check for a genuinely-independent parallel subset (Bucket E) — rare
 
 Only if Step 1 didn't already disqualify the whole design: check whether a genuinely-independent
@@ -132,6 +162,17 @@ never destined for the checklist at all. This is a distinct line from Bucket E's
 Bucket E is about an independent *subset* running its own scoped `Workflow`, this verdict is about whether
 the *whole design* may ever appear on `BACKLOG.md`'s "Ready to implement" checklist as a single queue item.
 
+**If you've configured the optional `local-delegate` component, include Step 3.5's `local-delegate`
+value as its own column** in the same table as the bucket/stakes/approval fields — never folded
+silently into the bucket letter, and never omitted when the value is `no` for every task (that's a
+real, checkable fact about this design, not an absence of one). **When a task's `local-delegate`
+value is `implement` and its own text names scoping information** (`Target functions:` / `Test
+classes or selectors:`, per `spec/SKILL.md`'s marker convention), **include those names as their own
+columns in this same table too**, at class/module granularity — this table is the strategy's single
+source of truth, so scoping information that only ever lived in Step 3.5's own prose and never
+reached this table would leave `build` with nothing durable to read. Omit these columns entirely (not
+blank cells) if you haven't configured the component or no task carries this scoping information.
+
 ## Step 7: Note Bucket E's recommendation in the same section
 
 If Step 4 fired (rare), note the recommended scoped-`Workflow` approach inside the same Execution-strategy
@@ -153,7 +194,10 @@ include:
 3. **The projected cost of the recommended strategy** — how many `docs-writer` calls, forks,
    `code-reviewer` passes, and (if Bucket E fired) `Workflow` agents it implies. `implement-queue` already
    states agent count and rough spend before running so the user's yes is informed; this skill's entire
-   output is "run these tasks this way," and that number shouldn't go unstated here either.
+   output is "run these tasks this way," and that number shouldn't go unstated here either. **If you've
+   configured the `local-delegate` component, also state how many tasks carry `local-delegate:
+   implement`** and which model would run them, per your own recorded configuration — the one line of
+   this report that can turn into a real (if free) local-model call once `build` executes.
 4. **A plain-prose model recommendation, only when one is genuinely warranted.** If a Bucket A task or a
    QA-gate `code-reviewer` pass would clearly benefit from a non-default model (real design judgment calling
    for a stronger model, a maximally differentiated review calling for a different one), say so directly in the

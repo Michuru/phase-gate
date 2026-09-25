@@ -240,6 +240,12 @@ independent check in `/verify`) and `periodic-audit-coverage`/`periodic-audit-st
 halves of `/periodic-audit`) do review work; `docs-writer` (mechanical documentation updates) doesn't
 review anything, it transcribes.
 
+One more piece is opt-in and invisible unless you configure it: `local-delegate` lets `/build` try a
+free local-model draft (via a local model runtime such as [Ollama](https://ollama.com)) on an
+eligible task before spending a turn on your main model, gated by your own already-written tests.
+Ships off — see [`process/local-delegate/README.md`](process/local-delegate/README.md) if you want
+to turn it on.
+
 ## What it puts in your repo
 
 Phase-Gate keeps its records as four plain markdown files in your own repo, not in a database or a

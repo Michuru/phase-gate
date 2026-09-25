@@ -7,12 +7,19 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Added
+- **New optional `local-delegate` component**: a free local-model draft for `/build`'s implement
+  mode, gated by your own visible tests, before spending a turn on your main model. Off by default
+  (ships with the new `local_delegate` variable empty) and safe to leave off — see
+  `process/local-delegate/README.md` for the full mechanism, prerequisites, and limitations.
+  Reverses `[1.1.4]`'s "deliberately deferred" decision now that the source repo's own design for
+  this feature has fully settled (build and QA gate both done there, no open questions left).
+  Ported and generalized into `spec` (the `(local-delegate: implement)` task marker and its
+  eligibility rules), `build` (the Bucket A execution path and outcome logging), and
+  `execution-gate` (the new Step 3.5 flag and its Step 6/8 reporting columns) — all three now say
+  so explicitly rather than silently omitting the feature.
+
 ### Fixed
-- `build` component's manifest hash was stale, flagging false drift — diffed directly against the
-  source repo and confirmed the only changes since the last sync are more local-delegate feature
-  content (the `local_delegate_runner.py implement` wiring and its real-world track-record logging),
-  which stays permanently excluded per `[1.1.4]`'s decision. No export content change needed;
-  `installer/manifest.json`'s recorded hash updated to match current source.
 - `consolidate-docs` re-synced against source-repo drift: a mechanize-before-prose reminder added to
   both its Pruning-MISTAKES.md and Pruning-CLAUDE.md steps, generalized (no specific script name
   assumed — an adopter without an equivalent script builds their own, per the step's own suggestion).

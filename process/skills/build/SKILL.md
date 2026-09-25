@@ -53,7 +53,25 @@ Reference the specific task/section from `Design Docs/<slug>.md` for each implem
 the same way `backlog` anchors fixes to a `BACKLOG.md` entry (mirrors `spec`'s former Step 4).
 Route each task per `execution-gate`'s own bucket assignment from Step 1 above:
 
-- **Bucket A (direct)** — executed in the main session, at the stated scrutiny level.
+- **Bucket A (direct)** — executed in the main session, at the stated scrutiny level. **If
+  `execution-gate` set `local-delegate: implement` on this task**, call the `local-delegate`
+  component's own runner script before writing anything yourself, passing
+  `--target-tests`/`--held-out-tests`/`--target-functions` straight from `execution-gate`'s own
+  recorded strategy-table columns when it set them — never re-parsed from the design's task prose
+  at this point, since the strategy table is the single source of truth per
+  `execution-gate/SKILL.md` Step 6. `--contract-file` should be the task's own contract text,
+  written verbatim at spec time. A gate pass means copying the runner's scratch draft into the real
+  tree — one deliberate step you take, not something the script does. **Before copying, confirm the
+  target file still doesn't exist** — a backstop independent of the runner's own precondition,
+  since this is the one genuinely destructive step in the whole mechanism; if it now exists (e.g. a
+  peer session created it since `execution-gate` ran), treat this the same as a `wiring_error`
+  result below rather than overwriting. The task still gets its normal QA-gate flag and `/verify`
+  pass exactly as if you had written it yourself; this only ever substitutes for the *drafting*
+  turn, never for review. A gate failure, timeout, or `wiring_error` result (a mistyped selector,
+  an unmet precondition — distinct from a genuine draft failure) means executing the task yourself
+  from the design's own contract, exactly as if the flag had never been set — you're handed the
+  runner's diagnostics (which test failed, why, or which wiring condition failed), never the
+  discarded draft itself. Full mechanism: the `local-delegate` component's own README.
 - **Bucket B (`docs-writer`)** — delegated to that subagent.
 - **Bucket C (fork)** — forked off for context hygiene.
 - **Bucket D (user-executed)** — wait on the user; never attempt it yourself.
@@ -65,7 +83,10 @@ Route each task per `execution-gate`'s own bucket assignment from Step 1 above:
 per `spec/SKILL.md` Step 3.1), and update it to `## Build — done` (or `blocked: <what, on whom>`
 if execution stalls) once every task above is finished. This is the phase record `/initiate`
 Step 1.4 reads to tell "mid-build" apart from "never started" — the exact gap `spec/SKILL.md`'s
-own §3 table was written to close.
+own §3 table was written to close. **For a task flagged `local-delegate: implement`, log the
+outcome per task**: `local-delegate: implement, attempted, pass` / `attempted, fail — escalated
+(<diagnostic summary>)` / `not attempted, <reason>`, plus draft and gate wall-clock — real evidence
+toward your own break-even numbers for this feature, not just a pass/fail note.
 
 ## Step 3: Everything Step 3.5's old machinery still owns
 

@@ -84,11 +84,12 @@
           "verify"
         ],
         "soft": [
-          "implement-queue"
+          "implement-queue",
+          "local-delegate"
         ]
       },
       "external_prerequisites": [],
-      "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. implement-queue is soft: batch mode is one of two mutually-exclusive entry paths (Step 0), and single-design mode - the common case - needs it not at all."
+      "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. implement-queue is soft: batch mode is one of two mutually-exclusive entry paths (Step 0), and single-design mode - the common case - needs it not at all. local-delegate is soft: a Bucket A task flagged (local-delegate: implement) calls its runner script before drafting, but build is fully functional with the flag unset (the shipped default) or the component not installed at all - it just never fires."
     },
     "verify": {
       "shelf": "process",
@@ -160,6 +161,31 @@
         "soft": []
       },
       "external_prerequisites": []
+    },
+    "local-delegate": {
+      "shelf": "process",
+      "depends_on": {
+        "hard": [],
+        "soft": []
+      },
+      "external_prerequisites": [
+        {
+          "name": "A local model runtime (e.g. Ollama) serving an HTTP chat API, with the configured model pulled",
+          "degrades": "the local_delegate configuration flag stays unset/unmet, so the runner's own configuration check reports 'not attempted' - plain Bucket A behavior, no error, no prompt to the user",
+          "note": "This is the whole feature's real precondition - everything else degrades gracefully specifically so this one missing piece never becomes a hard failure."
+        },
+        {
+          "name": "Python 'requests' package",
+          "degrades": "the runner's own import fails, caught explicitly and reported as 'not attempted' rather than a crash",
+          "note": ""
+        },
+        {
+          "name": "nvidia-smi on PATH",
+          "degrades": "the GPU pre-check treats a missing/erroring/timing-out nvidia-smi as busy, so no attempt is made - permanently true on non-NVIDIA hardware, a deliberate accepted tradeoff for a silent, safe-by-default feature",
+          "note": ""
+        }
+      ],
+      "notes": "No hard dependency on any other component - a standalone script + README that build calls into conditionally. build gains a soft edge to this component (see build's own entry); no other skill references it."
     },
     "wrap-up-session": {
       "shelf": "process",
