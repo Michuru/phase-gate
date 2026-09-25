@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-24
+
 ### Added
 - **New optional `local-delegate` component**: a free local-model draft for `/build`'s implement
   mode, gated by your own visible tests, before spending a turn on your main model. Off by default
