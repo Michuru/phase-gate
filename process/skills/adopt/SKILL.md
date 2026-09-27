@@ -51,6 +51,8 @@ it instead, if none of the remaining areas are ready to design yet.
   detection for this case rather than folding this body back into its own hot path — this
   once-per-project cost stays off `initiate`'s critical path; this skill just gives it a proper name
   and a next-command line of its own.
-- **Local-model fit: not applicable.** Reconciling a scope doc against real code is open-ended
-  judgment (what's actually built vs. claimed) — not a good fit for a deterministic check or a small
-  local model.
+- **Local-model fit: an open question, not a settled "not applicable."** Reconciling a scope doc
+  against real code does have a real spec in hand, unlike a cold code review with no reference —
+  but at whole-project inventory grain, producing an inventory artifact rather than a pass/fail
+  check against one specific design doc. Worth a real evaluation before assuming either way; not
+  yet tested.
