@@ -7,6 +7,15 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Added
+- `spec` Step 3.4's design-review question now offers "run it, then a second pass" when a
+  genuinely different third model exists. The second reviewer gets the first pass's report, and a
+  two-pass review is recorded under one `## Design review` heading with a sub-section per pass.
+- `spec` Step 3.5 option (b) ("backlog it") now closes with an explicit session-close line:
+  `/end-task` if this session's changes are uncommitted, otherwise safe to `/clear`, with
+  `/handoff` as the named alternative. `docs/WORKFLOW.md` rule 5 states the same for any next
+  command that belongs to a future session.
+
 ### Changed
 - Manifest hash records updated for `spec` and `context-usage-nudge` after a drift review, with no
   content change. `spec`'s one new source line only points at a source-repo design doc that is not

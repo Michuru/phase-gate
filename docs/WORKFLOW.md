@@ -32,7 +32,10 @@ Every command closes the loop instead of stopping and leaving the operator to re
 3. **Collapse what the operator can't act on to a single line.** Never a table.
 4. **Separate "waiting on someone else" from "waiting on your decision."** The second is actionable.
 5. **Close by naming the next command** — one recommendation, one named alternative. Never a full
-   stop, never an open menu.
+   stop, never an open menu. **When the next command belongs to a future session** (work is filed,
+   nothing more is owed now), the closing line also says whether this session is safe to `/clear`
+   or needs `/end-task` first, and names `/handoff` as the alternative — naming only the next
+   *work* step leaves the operator guessing about the session itself.
 
 **Rules 1-4 bind only the two parent-level ranker/router commands** — `/initiate` and `/end-task` —
 the only commands whose whole job is presenting a menu of options; they don't constrain `/verify`'s
