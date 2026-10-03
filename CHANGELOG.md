@@ -17,6 +17,10 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   command that belongs to a future session.
 
 ### Changed
+- Manifest hash record for `statusline` updated with no content change. The source repo's copy gained a
+  rate-limit sampler that appends the account-wide 5h/7d percentages to a state file for its own `ops-audit`
+  tool. That tool is not exported, so the sampler is deliberately not ported: it would add silent file
+  writes to every adopter's status line with nothing reading them.
 - Manifest hash records updated for `spec` and `context-usage-nudge` after a drift review, with no
   content change. `spec`'s one new source line only points at a source-repo design doc that is not
   exported. `context-usage-nudge` already resolves point-release model names through its own

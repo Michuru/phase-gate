@@ -503,7 +503,7 @@
       "files": [
         {
           "path": "standalone/statusline/statusline.py",
-          "source_blob": "2ae40e8f7d744027d8a4927bfd615b4c9fe2a239",
+          "source_blob": "11d0a9d200421d7ae4782ef805166df63dba641c",
           "source_hash_type": "git-blob",
           "source_path": ".claude/statusline.py"
         },
