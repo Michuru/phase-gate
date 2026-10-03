@@ -232,7 +232,7 @@
       "files": [
         {
           "path": "standalone/hooks/context-usage-nudge/context-usage-nudge.py",
-          "source_blob": "1c836df907615d0fc73c2c1a626b441cac511d98",
+          "source_blob": "a00884a4e1cdba2c0e3f4685ce9b4f87e9c36d39",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/context-usage-check.py"
         },
@@ -257,7 +257,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "a443c473ae14d662a36a482eb7e5ee717dffa2ac",
+          "source_blob": "e4575e695630d6ac8d0f75638a61d0839903ec86",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         }

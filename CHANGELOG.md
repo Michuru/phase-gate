@@ -7,6 +7,13 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Changed
+- Manifest hash records updated for `spec` and `context-usage-nudge` after a drift review, with no
+  content change. `spec`'s one new source line only points at a source-repo design doc that is not
+  exported. `context-usage-nudge` already resolves point-release model names through its own
+  family fallback, which was checked against `claude-sonnet-5-5`, `claude-opus-5-5` and
+  `claude-fable-5-1`. `verify` remains the one deliberately deferred drift (its local-review step).
+
 ## [1.2.0] - 2026-09-24
 
 ### Added
