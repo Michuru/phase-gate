@@ -51,7 +51,21 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   # A review pass once caught exactly this: the guard was skipping the very
   # file it existed to protect, with no error to indicate it. If your repo has
   # no spaces in any path today, it will eventually.
-  objects=$(git rev-list --objects "$range" 2>/dev/null | awk '{print $1}')
+  # A failed rev-list (usually the remote's old sha is not present locally, e.g. a force-push without a
+  # fetch) must NOT read as "nothing new to scan": that let a planted secret through with exit 0 (found by
+  # the Medium 13 QA pass, 2026-10-08; fixed 2026-10-09). Fall back to everything reachable from the pushed
+  # tip; if that fails too, block. The listing is captured on its own so its exit status is not hidden by awk.
+  listing=$(git rev-list --objects "$range" 2>/dev/null)
+  if [ "$?" != "0" ]; then
+    echo "[pre-push] cannot compute the new objects for $local_ref ($range); scanning everything reachable from it instead." >&2
+    listing=$(git rev-list --objects "$local_sha" 2>/dev/null)
+    if [ "$?" != "0" ]; then
+      echo "[pre-push] cannot list the objects reachable from $local_ref - blocking rather than pushing unscanned." >&2
+      BLOCKED=1
+      continue
+    fi
+  fi
+  objects=$(printf '%s\n' "$listing" | awk '{print $1}')
   [ -z "$objects" ] && continue
 
   count=$(printf '%s\n' "$objects" | wc -l)
