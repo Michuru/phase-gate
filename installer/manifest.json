@@ -90,7 +90,7 @@
       "files": [
         {
           "path": "standalone/hooks/block-dangerous-commands/block-dangerous-commands.py",
-          "source_blob": "8224b8ebdba21f5dcb69de0c7c64ed78705810cb",
+          "source_blob": "f88cb7a53a0ed46524c462fef003ec80907d3c8b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/block-dangerous-commands.py"
         },
@@ -115,7 +115,7 @@
       "files": [
         {
           "path": "process/agents/code-reviewer.md",
-          "source_blob": "e1099d712c5139aa160d6dd4b7b7c088b999f5c372a37bcab32b326b6e41a434",
+          "source_blob": "b3e052430ac03fb86b7dcb94f95b6a52e2bd450fef527b481c87c0907e098933",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/code-reviewer.md"
         }
@@ -167,7 +167,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "571ec65d041d745461d5dd5dac0dce0fc456794d",
+          "source_blob": "f57b5e84231adaadaf7e730c938b02cca1eaf6bf",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         }
@@ -193,7 +193,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "97961b07f991e269146525d0b8e1add4ba9e4b4c",
+          "source_blob": "e516de81209ea828ee99ad19d771589d10fe0b5b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }
@@ -232,7 +232,7 @@
       "files": [
         {
           "path": "standalone/hooks/context-usage-nudge/context-usage-nudge.py",
-          "source_blob": "a00884a4e1cdba2c0e3f4685ce9b4f87e9c36d39",
+          "source_blob": "746572a481456119030f4ee54ae8bb12ec63ba78",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/context-usage-check.py"
         },
@@ -257,7 +257,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "b2af47d8dd86991541baa5b9f49221b0b4a949bf",
+          "source_blob": "1e5baf36c91c0578a1a39f3de75988b101011baf",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         }
@@ -270,7 +270,7 @@
       "files": [
         {
           "path": "process/agents/docs-writer.md",
-          "source_blob": "3783bc2d55e53d301b24aa02b6aa40e351da26d2fdb88baf56bab4c6604b3a4c",
+          "source_blob": "1f05eaf99d088fd3e9e0d5554b01b209efb91c6cca4d47a8061ecd6f7f2ea8d6",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/docs-writer.md"
         }
@@ -296,7 +296,7 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "0bf5fa8af9aaff75d278778cfe0a467dbc6b653f",
+          "source_blob": "7be85f13c3cfcf98678e0f3df87379d97dc1b9c4",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         }
@@ -309,7 +309,7 @@
       "files": [
         {
           "path": "standalone/hooks/hooks-health-check/hooks-health-check.py",
-          "source_blob": "4d73aa5b7cf87fc8f0aed89f684502b424525808",
+          "source_blob": "6239531494b84b9c48889540bc91867dd7a4a1ee",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/hooks-health-check.py"
         },
@@ -528,7 +528,7 @@
       "files": [
         {
           "path": "process/skills/backlog/SKILL.md",
-          "source_blob": "7e8747397765bd90951d46c0f6d5f20073905ef5",
+          "source_blob": "ac5e336f61f3486a13b6bc71c28a58f891149443",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/backlog/SKILL.md"
         }
@@ -567,7 +567,7 @@
       "files": [
         {
           "path": "process/agents/periodic-audit-coverage.md",
-          "source_blob": "4b11029e98e1eef8714a60beb72a3541725da0a1f47fb3914a059ef2fc38e29c",
+          "source_blob": "f0494851f1dbd230b469983df683260398b62cd1c86e906f369d764baa849d2c",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/periodic-audit-coverage.md"
         }
@@ -580,7 +580,7 @@
       "files": [
         {
           "path": "process/agents/periodic-audit-structural.md",
-          "source_blob": "397f924d9f37587a7f1596a62438dd5df057397913f80fe25bc43394ca2e940d",
+          "source_blob": "812f767e469c238b4c006610f0b416d13c34a337931d39fe5fa08d645e401915",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/periodic-audit-structural.md"
         }

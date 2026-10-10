@@ -15,8 +15,30 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   `/end-task` if this session's changes are uncommitted, otherwise safe to `/clear`, with
   `/handoff` as the named alternative. `docs/WORKFLOW.md` rule 5 states the same for any next
   command that belongs to a future session.
+- `spec` Step 3.5 gains option (d), "hand this session off to a fresh one via `/handoff`": offered
+  every time, and recommended ahead of "implement now" when the session's context is getting full.
+  It does everything option (b) does, then runs `/handoff`.
+- `block-dangerous-commands` now also blocks a script passed through a heredoc with a backslash in it
+  (an interpreter such as `python - <<'EOF'`, or a redirect into a code file). Those scripts can come back
+  silently corrupted: a `\n` inside a string turns into a real line break and the script dies at run time. Every
+  other heredoc, such as a commit message or notes, and any heredoc script with no backslash, is still allowed.
+- `handoff` never overwrites an existing primer (a same-day second handoff gets an `-<HHMM>` suffix), and
+  checks `git status --short` before committing a path another session may have half-staged.
 
 ### Changed
+- Drift review of the source repo's 12 drifted components, all manifest hashes updated. Ported:
+  `context-usage-nudge` now works as a `UserPromptSubmit` hook and its settings fragment wires it there (a `Stop`
+  hook's `systemMessage` reaches only you, never the model; it still runs unchanged as a `Stop` hook).
+  `hooks-health-check` accepts an absolute `core.hooksPath` that points at the repo's own hooks folder, and reports
+  to the model as well as to you (a drifted `core.hooksPath` means its own commits skip the secret guard).
+  **Reviewed and deliberately not ported**, because each depends on a source-repo script or tool that is not
+  exported: `backlog` (chain mode, snooze markers, the `backlog_view.py` and `backlog_check.py` helpers),
+  `end-task` (the backlog-headline check that runs `backlog_check.py`), `code-reviewer` (a machine-readable
+  `REVIEW-RESULT` footer that only `ops-audit` reads), `spec`'s matching `DESIGN-REVIEW-RESULT` footer,
+  `handoff`'s chain-run primers, `block-dangerous-commands`' launch-line rule (Windows-only and tied to one
+  incident), `verify`'s local-review step (still the deferred drift), and the pinned full model ids and
+  `effort:` lines in the source repo's agent and skill files (the exported agents keep the `sonnet`/`haiku`/`opus`
+  aliases).
 - Manifest hash record for `statusline` updated with no content change. The source repo's copy gained a
   rate-limit sampler that appends the account-wide 5h/7d percentages to a state file for its own `ops-audit`
   tool. That tool is not exported, so the sampler is deliberately not ported: it would add silent file

@@ -4,11 +4,15 @@ tracked with git's executable mode bit set. Exists because core.hooksPath is
 easy to lose silently -- a repo restructure, a fresh clone, a git filter-repo
 run -- and the failure has no symptom of its own until something else
 surfaces it. This catches that failure class at session start instead of by
-accident. Reports via systemMessage only; never blocks anything.
+accident. Reports via systemMessage (shown to you) and additionalContext (shown to the model, which
+matters because a drifted core.hooksPath means its own commits skip the secret guard); never blocks
+anything.
 """
 import json
+import os
 import subprocess
 import sys
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # CONFIGURE ME
@@ -51,7 +55,24 @@ problems = []
 
 hooks_path_result = git("config", "--get", "core.hooksPath")
 configured = hooks_path_result.stdout.strip() if hooks_path_result and hooks_path_result.returncode == 0 else ""
-if configured != EXPECTED_HOOKS_PATH:
+
+
+def _is_expected_hooks_path(value: str) -> bool:
+    """`hooks`, or an absolute path (any slash style, any case) that is this repo's own hooks folder."""
+    if not value:
+        return False
+    if value == EXPECTED_HOOKS_PATH:
+        return True
+    try:
+        top = Path(toplevel.stdout.strip())
+        want = os.path.normcase(os.path.realpath(top / EXPECTED_HOOKS_PATH))
+        got = os.path.normcase(os.path.realpath(top / value))   # an absolute `value` replaces `top`
+    except Exception:
+        return False
+    return got == want
+
+
+if not _is_expected_hooks_path(configured):
     problems.append(
         f"core.hooksPath is {configured!r}, expected {EXPECTED_HOOKS_PATH!r} -- "
         f"run `git config core.hooksPath {EXPECTED_HOOKS_PATH}` (doesn't survive a fresh clone or a git filter-repo run)"
@@ -81,6 +102,10 @@ else:
 
 if problems:
     message = "Hooks health check found issues:\n- " + "\n- ".join(problems)
-    print(json.dumps({"systemMessage": message}))
+    # systemMessage is shown to the user only; additionalContext is what reaches the model
+    print(json.dumps({
+        "systemMessage": message,
+        "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": message},
+    }))
 
 sys.exit(0)

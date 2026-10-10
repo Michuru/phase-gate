@@ -132,4 +132,45 @@ if clean_match:
     if clean_would_remove(flags):
         deny("Blocked: git clean would remove untracked files. Run `git clean -fdn` to preview, or confirm with the user.")
 
+# Rule: a SCRIPT written through a heredoc with a backslash in it. A patch script passed to an interpreter
+# (`python - <<'EOF'`, `node <<EOF`) or written to a code file (`cat > fix.py <<'EOF'`) can come back corrupted
+# when its text holds a backslash (a `\n` inside a Python string becomes a real line break and the script dies
+# with a SyntaxError; a doubled backslash is halved; an unquoted delimiter also lets the shell act on a backtick
+# or a dollar sign). It happened repeatedly in the source repo even with the rule written in a notes file, so
+# this hook enforces it instead.
+# Denied: a heredoc whose command line names an interpreter or redirects into a code file AND whose body holds a
+# backslash (or, with an unquoted delimiter, a backtick or a dollar sign). Allowed: every other heredoc (commit
+# messages, notes, markdown, JSON), and any heredoc script with no backslash. Best-effort pattern matching like
+# the rest of this file; it fails OPEN on any internal error.
+HEREDOC_MSG = (
+    "Blocked: a script passed through a heredoc with a backslash (or, unquoted, a backtick or $) in it. These come "
+    "back corrupted (a backslash-n turns into a real line break, doubled backslashes are halved) and the failure is "
+    "silent until the script runs. Write the script to a file with your editor/Write tool, using raw strings or "
+    "chr(10) for newlines, and run it from the file (one-line edits: your Edit tool). A heredoc with no backslash "
+    "is fine. If you truly need this exact command, run it yourself."
+)
+_HEREDOC = re.compile(r"<<-?[ \t]*(['\"]?)(\w+)\1([^\n]*)\n(.*?)\n[ \t]*\2[ \t]*(?:\n|$)", re.S)
+_INTERPRETER = re.compile(r"\b(?:python3?|py|pythonw|node|nodejs|perl|ruby|pwsh|powershell)(?:\.exe)?\b", re.IGNORECASE)
+_CODE_FILE_TARGET = re.compile(r">>?[ \t]*\S*\.(?:py|pyw|js|mjs|cjs|ts|ps1|psm1|sh|bat|cmd)\b", re.IGNORECASE)
+
+
+def _has_a_heredoc_script_with_a_backslash(raw):
+    for m in _HEREDOC.finditer(raw):
+        line_start = raw.rfind("\n", 0, m.start()) + 1
+        command_line = raw[line_start:m.start()] + m.group(3)
+        if not (_INTERPRETER.search(command_line) or _CODE_FILE_TARGET.search(command_line)):
+            continue
+        body, quoted = m.group(4), bool(m.group(1))
+        if "\\" in body or (not quoted and ("`" in body or "$" in body)):
+            return True
+    return False
+
+
+try:
+    _heredoc = _has_a_heredoc_script_with_a_backslash(command)
+except Exception:
+    _heredoc = False  # fail open
+if _heredoc:
+    deny(HEREDOC_MSG)
+
 sys.exit(0)

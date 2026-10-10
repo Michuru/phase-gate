@@ -5,7 +5,9 @@ the session started in, and that the git hooks it points to are tracked with the
 bit set. `core.hooksPath` is easy to lose silently — a repo restructure, a fresh clone, a
 `git filter-repo` run — and the failure has no symptom of its own until something else
 surfaces it. This catches that failure class at session start instead of by accident.
-Reports via a `systemMessage`; never blocks anything.
+Reports via a `systemMessage` (shown to you) and an `additionalContext` (shown to the model);
+never blocks anything. An absolute `core.hooksPath` that points at this repo's own `hooks` folder is
+accepted as well as the relative `hooks`.
 
 **Zero configuration required, but has two settings worth knowing about.**
 

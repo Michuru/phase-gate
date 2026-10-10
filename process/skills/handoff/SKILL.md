@@ -78,6 +78,10 @@ otherwise discover, since Step 3's own rule tells it not to re-explore the repo.
 actually happening in — by the session's own cwd, never hardcoded to any one repo. Pick `<slug>` from the
 task at hand (short, kebab-case).
 
+**Never overwrite an existing primer.** If that path already exists (a same-day second handoff of the
+same task), append `-<HHMM>` to the name (`<YYYY-MM-DD>-<slug>-<HHMM>.md`); Step 6 consumes the *source*
+primer after this one is written, so reusing its name would overwrite the live file and then archive it.
+
 **This directory holds user-facing primers only** — never hook state or other machine-internal files.
 
 ## Step 5: Write the file
@@ -132,7 +136,10 @@ happens to include it, which could be a long time if the handed-off work spans s
 before it's ever "finished." If that applies to you, immediately after writing the primer, stage and
 commit narrowly: the primer file itself, plus whatever specific file(s) it points at that are also
 uncommitted (a design doc, notes, a `BACKLOG.md` edit) — never `git add -A`/`.`. If the primer and the
-file(s) it points at live in different repos, commit narrowly in each repo separately. If your setup has
+file(s) it points at live in different repos, commit narrowly in each repo separately. **Before committing a
+path that already existed, run `git status --short` on it: a path showing `MM` or staged by another session
+is not committed** (`git commit -- <paths>` takes the working-tree content and would sweep in a peer's
+half-staged hunks); name it in the primer instead. Stage a brand-new file with `git add <file>` first. If your setup has
 no such mechanism, this step is optional — its whole purpose is closing a backup-coverage gap that may
 not exist for you.
 

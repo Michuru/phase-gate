@@ -1,4 +1,7 @@
-"""Stop hook: nudge toward wrapping up as a session's context usage climbs.
+"""UserPromptSubmit hook (also runs unchanged as a Stop hook): nudge toward wrapping up as a
+session's context usage climbs. Wire it on UserPromptSubmit so the model sees the nudge too
+(additionalContext); on Stop, a hook's systemMessage reaches only you, and Stop has no
+additionalContext.
 
 Reads the hook's stdin JSON payload, finds the transcript's own last assistant
 turn with a usage object, and estimates % of that turn's model's context
@@ -245,7 +248,12 @@ def main() -> None:
         "Consider writing yourself a handoff/summary of where things stand, "
         "or continue if this is already a natural stopping point."
     )
-    print(json.dumps({"systemMessage": message}))
+    out = {"systemMessage": message}
+    if payload.get("hook_event_name") == "UserPromptSubmit":
+        # A Stop hook's systemMessage reaches the user only; UserPromptSubmit's additionalContext is
+        # what reaches the model.
+        out["hookSpecificOutput"] = {"hookEventName": "UserPromptSubmit", "additionalContext": message}
+    print(json.dumps(out))
 
 
 if __name__ == "__main__":
