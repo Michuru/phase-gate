@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-16
+
 ### Added
 - `spec` Step 3.4's design-review question now offers "run it, then a second pass" when a
   genuinely different third model exists. The second reviewer gets the first pass's report, and a
