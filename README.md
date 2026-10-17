@@ -231,10 +231,6 @@ someone else's pull request.
 | `/periodic-audit` | Check whether tests cover a tool's branches, and whether an old bug is back |
 | `/review-pr` | Review a GitHub pull request and post the findings |
 
-Two more skills ship but aren't listed above because they're not commands you run directly:
-`/commit` and `/wrap-up-session` are internal redirects to `/end-task`'s own depth modes, kept for
-backward compatibility (see [`docs/WORKFLOW.md`](docs/WORKFLOW.md)).
-
 Four subagents run behind these commands, each in its own fresh conversation: `code-reviewer` (the
 independent check in `/verify`) and `periodic-audit-coverage`/`periodic-audit-structural` (the two
 halves of `/periodic-audit`) do review work; `docs-writer` (mechanical documentation updates) doesn't

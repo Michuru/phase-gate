@@ -20,7 +20,7 @@ say so in one line and stop — don't run the rest of this process for its own s
 
 **Write that one-line decline into the design doc's `## Execution strategy` section anyway, dated.** A
 silent stop is indistinguishable from this skill never having been invoked — the same failure
-`spec`'s own Step 0 was written to prevent. Recording the decline is cheap; recording nothing is
+`spec`'s tier check was written to prevent. Recording the decline is cheap; recording nothing is
 not distinguishable from "never checked."
 
 ## Step 1: The parallelization/Workflow-worthiness gate — and the `/implement-queue` eligibility check
@@ -109,7 +109,7 @@ recorded, the flag is `no` for every task in the design, and Step 8's report say
 `local-delegate` component's own README.
 
 **When `implement` is set and the task's own text names scoping information** (`Target functions:
-...` / `Test classes or selectors: ...`, per `spec/SKILL.md`'s marker convention — needed whenever the
+...` / `Test classes or selectors: ...`, per `spec`'s delegate-marker rules (its local-model-fit reference) — needed whenever the
 visible test file also covers other tasks' functions), **record those names as real columns in the
 Step 6 strategy table**, at class/module granularity rather than individual test-function names — test
 files can gain new assertions between when this gate runs and when `build` actually executes the task,
@@ -148,7 +148,7 @@ can't express that.
 ## Step 6: Write the result as a new `## Execution strategy` section
 
 Append this section to `Design Docs/<slug>.md` — **append, never overwrite**, the same convention as
-`spec` Step 3.6's cross-model review. Once the section's content has been adopted elsewhere, it may
+`spec`'s design-review gate (a review is appended as a new section). Once the section's content has been adopted elsewhere, it may
 later be *trimmed*, provided the full text stays recoverable and the doc names the commit that carries it.
 Trimming after adoption is not a violation of the append-only rule; overwriting in place is.
 
@@ -201,49 +201,25 @@ include:
 4. **A plain-prose model recommendation, only when one is genuinely warranted.** If a Bucket A task or a
    QA-gate `code-reviewer` pass would clearly benefit from a non-default model (real design judgment calling
    for a stronger model, a maximally differentiated review calling for a different one), say so directly in the
-   report — the same pattern `spec` Step 1 already uses for its model-switch offer (an
+   report — the same pattern `spec`'s Tier 1 model check already uses for its model-switch offer (an
    `AskUserQuestion`, not a fixed field). Most tasks need no model call-out at all; don't manufacture one.
    This is deliberately **not** a third scrutiny field alongside Step 5's `stakes`/`approval` — see the
    Notes section below for why.
 
 **Note for Tier 1/2 designs reaching this stage:** A Tier 1/2 design has already had its automatic
-design-phase review via `spec` Step 3.4 (run before Step 3.5, before implementation/backlog/further-review
+design-phase review via `spec`'s design-review gate (run before its implement-or-backlog question, before implementation/backlog/further-review
 questions are even asked). This Step 8 cost line covers only the *implementation* cost — do not re-propose
-a design-level cross-model review pass as part of your execution strategy. Step 3.4's review is sunk cost
+a design-level cross-model review pass as part of your execution strategy. `spec`'s design review is sunk cost
 by the time this step runs, not a projected expense to account for here. **Keep this separate from Step 3's
 QA-gate flag above** — that flag covers *implementation* QA on executed tasks (a different concept from the
 design-phase review), and conflating the two risks a future session treating implementation QA as
-pre-satisfied by Step 3.4's design-phase pass when they're actually independent concerns. Step 5's reactive
+pre-satisfied by the design-phase review when they're actually independent concerns. Step 5's reactive
 QA-burst escalation (a `spec`-scoped feature) is also outside `execution-gate`'s scope entirely.
 
 ## Notes
 
-- Whether *running* this skill should become a required step, rather than opt-in/standalone, was an
-  open question for a while. A narrower version resolved first: *considering* this skill (stating a
-  run/skip recommendation, recording the outcome) became a mandatory, recorded checkpoint in `spec`
-  Step 3.5 whenever a design's breakdown is substantial. **The broader question is now answered too
-  — but as *waived*, not *satisfied*.** `/build` runs this skill automatically as its own opening
-  gate, with no approval question (see `build/SKILL.md` Step 1) — in practice this makes running it
-  mandatory for any Tier 1/2/3 design implemented through the normal path, without your rules doc's
-  tiered-work section ever having to state a separate rule for it. The user made this call directly
-  rather than because some original evidence bar was cleared — record that distinction (waived by
-  direct decision, not satisfied by evidence) if your own history of this skill's design still
-  records the older open question, rather than silently erasing the prior position. This skill
-  remains directly invocable standalone outside `/build` too, e.g. to preview cost before deciding.
-- **No per-task model field, by design.** A per-project model plan (drafting on one model, reviewing on
-  another, an occasional maximally-differentiated pass) is usually resolved by hand without real friction — not
-  enough evidence to justify a new fixed-vocabulary field alongside Step 5's `stakes`/`approval`, and
-  `stakes` doesn't cleanly imply a model choice anyway (an irreversible git push needs a human confirm,
-  not a stronger model). Step 8's point 4 above (plain-prose recommendation, only when genuinely
-  warranted) is the whole fix. Revisit only if a recurring, structured need shows up that this doesn't
-  cover.
-- **Local-model fit: not applicable.** Bucket classification requires judging irreversibility, stakes, and
-  dependencies from context — open-ended judgment with no deterministic gate to check the output against.
-  `spec/SKILL.md`'s own Local-model-fit note (Step 2) states the general principle this falls under: a
-  local model is a plausible fit for the generation half of a propose → deterministic-gate → act
-  pipeline, never for open-ended judgment/QA work with no deterministic gate — bucket, stakes, and
-  approval classification is exactly that kind of work, so it stays on a full model regardless of how
-  tempting a free local pass looks.
+- `/build` runs this skill automatically as its opening gate, with no approval question (`build/SKILL.md` Step 1); it stays directly invocable standalone, e.g. to preview cost before deciding. Making it a required step in your rules doc's tiered-work section was waived, not satisfied: it became effectively mandatory through `/build` by direct decision, not because an evidence bar was cleared.
+- **No per-task model field, by design.** Step 8's point 4 (a plain-prose recommendation, only when genuinely warranted) is the whole mechanism, and `stakes` does not imply a model choice (an irreversible push needs a human confirm, not a stronger model). Revisit only if a recurring structured need shows up.
 - For the full pipeline this skill fits into — from a problem arising through `backlog`/`spec`
   and on to `implement-queue` and the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
   at the repo root.

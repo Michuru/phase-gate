@@ -22,7 +22,7 @@ to prevent.
 Read `BACKLOG.md`'s **"Ready to implement" checklist section** — this is the queue, an explicit list,
 not a grep. Per that section's own rule, an item only appears here if it has **no unmet prerequisite**.
 For a Tier 1/2 design, a pending cross-model review is satisfied automatically once `spec`'s
-Step 3.4 has actually run and recorded a clean or found-something outcome — it's still a real, unmet
+design review has actually run and recorded a clean or found-something outcome — it's still a real, unmet
 prerequisite only when that review was declined or failed without a successful rerun. Other unmet
 prerequisites (a blocked question, user input not yet given) work as before, and an item with one
 stays in its own tool section instead of being listed here at all. So every line in the checklist

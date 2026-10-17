@@ -5,7 +5,7 @@ description: QA gate for an implemented design — invokes code-reviewer to inde
 
 # Verify: the QA gate
 
-Extracts `spec`'s former Step 5 into its own addressable phase, keeping its reactive-escalation
+Is the QA phase `spec` used to hold, as its own addressable phase, keeping its reactive-escalation
 rules intact.
 
 ## Step 1: Independent QA pass
@@ -14,7 +14,7 @@ Invoke the `code-reviewer` subagent (announce it explicitly — "Delegating to `
 verify against `Design Docs/<slug>.md`") to independently check the implementation against the
 design doc and re-verify rather than trusting your own claim.
 
-**If the design doc recorded a Step 2 baseline metric** (`spec`'s own Baseline metrics
+**If the design doc recorded a baseline metric** (`spec`'s Baseline metrics
 checkpoint), confirm the after-number was actually measured and written down here too, not just
 asserted — an unmeasured "this should be faster now" fails this gate the same way an unverified
 correctness claim would.
@@ -43,7 +43,7 @@ evidence this needs a human interrogating it live, not another automated pass** 
 single-shot, no back-and-forth), this lets the user open a fresh session on the stronger model and
 actually dig into the finding interactively — worth the cost only once two automated passes have
 already failed to converge, since it costs the user real window-swap friction a third subagent pass
-wouldn't. Write the primer the same way `handoff/SKILL.md` Step 3 does: the finding itself, both
+wouldn't. Write the primer the same way `handoff`'s outgoing steps assemble one: the finding itself, both
 prior passes' reasoning (why each thought it was/wasn't real), the exact file/line, and the design
 doc pointer — no recache cost either way, but this path trades the subagent's "no friction" for
 genuine interactivity, so only offer it once the cheaper repeated-pass path has already been tried
@@ -52,7 +52,7 @@ and failed.
 ## Step 3: Record the result
 
 Write `## QA gate — done` (or `blocked: <what>` if escalation is still unresolved) into the design
-doc, per the standard phase-record convention (`spec/SKILL.md` Step 3.1) — this is the record,
+doc, per the standard phase-record convention (`spec`'s phase-record convention) — this is the record,
 distinct from `## Verification`, which is the plan `spec` already wrote at draft time.
 
 ## Notes

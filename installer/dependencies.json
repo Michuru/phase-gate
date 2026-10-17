@@ -74,7 +74,7 @@
         ]
       },
       "external_prerequisites": [],
-      "notes": "Added 2026-09-06 (next-command-contract redesign), absorbing commit and wrap-up-session as internal depth modes - one implementation of the shared git-survey logic instead of three cross-referencing copies. docs-writer is hard for the same reason wrap-up-session's own entry had it: Step 6's docs pass delegates substantial NOTES.md/rules-doc writes to it. handoff is soft: Step 4's routing table names it in every row as the alternative (or the recommendation, when work is unfinished), but never invokes it unconditionally - the whole point of the rewrite is surfacing that fork rather than silently picking it. backlog is soft, same conditional catch-all role wrap-up-session's own entry described. consolidate-docs is soft: Step 6's rules-doc-size check recommends running it once a threshold's crossed, conditionally."
+      "notes": "Added 2026-09-06 (next-command-contract redesign), absorbing the former commit and wrap-up-session skills as internal depth modes (those two redirect stubs were later deleted) - one implementation of the shared git-survey logic instead of three cross-referencing copies. docs-writer is hard for the same reason wrap-up-session's own entry had it: Step 6's docs pass delegates substantial NOTES.md/rules-doc writes to it. handoff is soft: Step 4's routing table names it in every row as the alternative (or the recommendation, when work is unfinished), but never invokes it unconditionally - the whole point of the rewrite is surfacing that fork rather than silently picking it. backlog is soft, same conditional catch-all role wrap-up-session's own entry described. consolidate-docs is soft: Step 6's rules-doc-size check recommends running it once a threshold's crossed, conditionally."
     },
     "build": {
       "shelf": "process",
@@ -187,28 +187,6 @@
       ],
       "notes": "No hard dependency on any other component - a standalone script + README that build calls into conditionally. build gains a soft edge to this component (see build's own entry); no other skill references it."
     },
-    "wrap-up-session": {
-      "shelf": "process",
-      "depends_on": {
-        "hard": [],
-        "soft": [
-          "end-task"
-        ]
-      },
-      "external_prerequisites": [],
-      "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its full-sync depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
-    },
-    "commit": {
-      "shelf": "process",
-      "depends_on": {
-        "hard": [],
-        "soft": [
-          "end-task"
-        ]
-      },
-      "external_prerequisites": [],
-      "notes": "Absorbed into end-task 2026-09-06 (next-command-contract redesign) as its narrow-commit depth mode. Now a 5-line redirect stub kept one cycle for backward compatibility - its own text points at end-task, no other functional dependency remains."
-    },
     "handoff": {
       "shelf": "process",
       "depends_on": {
@@ -218,8 +196,13 @@
           "end-task"
         ]
       },
-      "external_prerequisites": [],
-      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption."
+      "external_prerequisites": [
+        {
+          "name": "python3 or python on PATH, and git",
+          "degrades": "the incoming scan (handoff_scan.py) and the consume step (handoff_consume.py) cannot run; outgoing handoffs still work, but a primer then has to be listed and archived by hand, which is the failure the consume script exists to prevent"
+        }
+      ],
+      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption. As of the 2026-10-16 split, handoff ships two stdlib-only scripts under process/skills/handoff/scripts/ (a scan and a consume step) and one reference, references/incoming.md; they are listed in manifest.json like doc-review's own references and scripts."
     },
     "review-pr": {
       "shelf": "process",

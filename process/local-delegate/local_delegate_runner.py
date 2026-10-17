@@ -73,7 +73,7 @@ def find_repo_root(start: Path) -> Path:
 def parent_config_root_of(repo_root: Path) -> Path | None:
     """If you keep several repos nested under one parent that carries the shared
     .claude/ configuration (this export's own multi-repo convention -- see
-    `spec/SKILL.md`'s own upward-resolution note for `fable_available`), a
+    `spec`'s Tier 1 model check, which resolves `fable_available` upward), a
     session in the nested repo should still find the parent's recorded config."""
     return repo_root.parent if (repo_root.parent / ".claude").exists() else None
 

@@ -18,10 +18,10 @@ decision," one screen.
 Gather the raw facts Step 2 sorts, in this order:
 
 1. **Invoke `handoff` incoming mode unconditionally** — don't pre-check its directory first.
-   Detection *is* `handoff` Step 0's own scan; it already discovers every sibling repo dynamically,
+   Detection *is* `handoff`'s own incoming scan (`handoff_scan.py`); it already discovers every sibling repo dynamically,
    handles the zero-primer case gracefully, and lists multiple live candidates for the user to pick
    from rather than silently guessing the most recent. Reimplementing that scan here would just do
-   it worse. **`handoff`'s own multi-candidate list is exempt from Step 3's ≤12-line budget** — it's
+   it worse. **`handoff`'s own multi-candidate list is exempt from this ranker's ≤12-line budget (its Step 3)** — it's
    `handoff`'s own interactive output, not this ranker's.
 2. **Determine whether this project has any process history at all.** Check for `Design Docs/` and
    `BACKLOG.md` in **the current repo, resolved upward** — a sub-repo nested under a parent may have
@@ -37,7 +37,7 @@ Gather the raw facts Step 2 sorts, in this order:
    entries.
 4. **Read every `Design Docs/*.md` file's `Kind:`/`Status:` line.** Collect every `Kind: work-item`
    doc, whatever its status — `running`, `blocked-on-user: <what>`, `blocked-on: <who/what>`, or the
-   legacy plain `blocked: <detail>` form (per `spec/SKILL.md` Step 3.1, read as `blocked-on-user`).
+   legacy plain `blocked: <detail>` form (per `spec`'s phase-record convention, read as `blocked-on-user`).
 
 ## Step 2: Sort into A/B/C — no stop-at-first-match
 
@@ -115,7 +115,7 @@ Start #1 with /spec, or /backlog for the full list?
   bucket's handling needs more explanation than the routing line above, that explanation belongs in
   the skill it routes to, not here.
 - **A clearly-biggest-tier planning request has skipped straight to `EnterPlanMode` without invoking
-  `spec` at all before now.** Because neither skill ran, `spec`'s own Step 1 model-check never fired
+  `spec` at all before now.** Because neither skill ran, `spec`'s Tier 1 model check never fired
   either — exploration and the first several plan drafts ran on the wrong model, and the user had to
   notice and request a model switch manually, mid-session. The fix is cheaper than "remember to
   invoke a skill": before calling `EnterPlanMode` for anything shaped like a plan/design/roadmap/
@@ -127,7 +127,7 @@ Start #1 with /spec, or /backlog for the full list?
   on other people, crowding the one genuinely actionable item to the bottom before an open-ended
   question. Ranking by actionability instead of internal state category fixes this at the root
   rather than patching the report. The former adopting-onto-an-existing-project scoping pass moved
-  out to its own skill, `/adopt` — see that skill and `spec/SKILL.md` Step 0.5.
+  out to its own skill, `/adopt` — see that skill and `spec`'s tier check, which points to it.
 - **Local-model fit: not applicable.** Every check in Step 1/2 is deterministic (file existence, a
   directory listing, a status-line read) — exactly the kind of check that's preferable over a
   probabilistic guess, and there's no generation step here for a local SLM to plausibly take over.

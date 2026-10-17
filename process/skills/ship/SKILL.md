@@ -47,7 +47,7 @@ remote configured, covering everything committed across the whole session, not a
 after every individual commit-producing skill.
 
 **If this work item has a `Design Docs/<slug>.md` file, write `## Shipped — done` into it first**
-(write-on-entry, per `spec/SKILL.md` Step 3.1) — the phase record `/initiate` Step 1.4 reads to
+(write-on-entry, per `spec`'s phase-record convention) — the phase record `/initiate` Step 1.4 reads to
 know the item is actually finished rather than still mid-flight. A plain `BACKLOG.md` item with no
 design doc has nothing to write this into; skip it in that case.
 

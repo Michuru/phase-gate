@@ -48,6 +48,32 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   exported. `context-usage-nudge` already resolves point-release model names through its own
   family fallback, which was checked against `claude-sonnet-5-5`, `claude-opus-5-5` and
   `claude-fable-5-1`. `verify` remains the one deliberately deferred drift (its local-review step).
+- `spec`, `handoff` and `end-task` are each now a short core plus reference files that load only on the
+  branch that needs them, instead of one long file read in full on every use (`spec`: about 44 KB to an 11 KB
+  core plus five references; `handoff`: about 17 KB to a 6 KB core plus one reference; `end-task`: about 17 KB to
+  an 8 KB core plus one reference). Every rule is kept. Citations between skills now name the section or rule
+  rather than a step number, and the same was done in `initiate`, `build`, `verify`, `ship`, `execution-gate`,
+  `implement-queue` and `local-delegate`'s runner comments, so a renumbered step can no longer leave a stale
+  pointer behind.
+- `handoff` ships two small stdlib-only scripts that replace prose procedures that kept going wrong in practice:
+  `handoff_scan.py` lists the live primers (directory position only; the repo you are in, repos nested directly
+  under it, and an `EXTERNAL_REPOS` list you set), and `handoff_consume.py` archives a consumed primer in one
+  safe step (`git mv`, marker, `git add`, a pathspec commit, then proof from `git show HEAD:`; exit 0 consumed,
+  1 refused or rolled back, 2 committed but the proof failed). Python and git are now listed as a prerequisite.
+- `end-task` keeps its survey as short manual steps (`git status` and `git diff --stat` in each repo touched,
+  named by recall); the source repo's survey script is not exported because it depends on helpers that are not.
+- `block-dangerous-commands` now blocks any script passed through a Bash heredoc, not only one with a backslash
+  in it (the narrower rule was broken again within a session). Its message names the working route: a script
+  file, or on Windows a PowerShell here-string piped to the interpreter. Heredocs for commit messages, notes,
+  markdown and JSON are still allowed.
+- Drift review of the 13 components that drifted after the split: all manifest hashes updated. Reviewed and
+  still deliberately not ported: `spec`'s `DESIGN-REVIEW-RESULT` footer, `handoff`'s chain-run primers and
+  `end-task`'s backlog-headline check, for the reasons given in the earlier drift review above.
+
+### Removed
+- The `commit` and `wrap-up-session` redirect stubs, kept for one cycle after `end-task` absorbed them (the
+  first is now `end-task`'s narrow-commit depth, the second its full-sync depth). Anyone who installed them
+  earlier can delete `.claude/skills/commit/` and `.claude/skills/wrap-up-session/`.
 
 ## [1.2.0] - 2026-09-24
 

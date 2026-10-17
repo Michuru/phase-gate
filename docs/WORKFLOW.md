@@ -11,7 +11,7 @@ right before it spawns.
 **Session axis** — the operator's own context lifecycle, orthogonal to the work axis: `/initiate`
 at the start (handing off to `/adopt` once per project, if there's no process history yet),
 `/handoff` when context fills or work is unfinished, `/end-task` to route and close (at
-narrow-commit or full-sync depth, absorbing the former `/commit`/`/wrap-up-session`).
+narrow-commit or full-sync depth).
 `/consolidate-docs` is a self-firing threshold gate. This axis exists only because the collaborator
 is a context window rather than a person — no organizational SDLC models it, and it's covered in its
 own section below.
@@ -51,9 +51,7 @@ closing the loop:
 
 **Exempt from rule 5, deliberately**: `execution-gate`, `implement-queue`, `consolidate-docs`,
 `review-pr` — automatic gates or narrow standalone utilities, not steps in the operator-facing chain
-the diagram above shows. `/commit` and `/wrap-up-session` are exempt too, but for a different
-reason: they're no longer primary user-facing commands at all, only `/end-task`'s internal depth
-modes (see the session axis above).
+the diagram above shows.
 
 ---
 
@@ -147,8 +145,8 @@ fire at any point in it:
   *same* in-progress task with zero shared history (not a session close-out), or resume from one
   at the start of a fresh session.
 - **`/end-task`** — the parent-level session-close router. Detects unfinished work first and
-  routes to `/handoff` if so; otherwise wraps up at narrow-commit depth (absorbs former `/commit`)
-  or full-sync depth (absorbs former `/wrap-up-session`), whichever the docs-sync signal check
+  routes to `/handoff` if so; otherwise wraps up at narrow-commit depth
+  or full-sync depth, whichever the docs-sync signal check
   calls for. `/handoff` is named as the alternative in every row, so it stays discoverable even to
   someone who doesn't know it exists.
 - **`/consolidate-docs`** — a self-firing threshold gate, not a phase anyone invokes deliberately:
