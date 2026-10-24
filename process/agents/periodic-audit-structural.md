@@ -3,6 +3,7 @@ name: periodic-audit-structural
 description: Structural re-audit for periodic-audit — re-reads a tool's declared flagged-surface functions fresh against a ledger of already-confirmed bug shapes, checking whether the same shape recurs unfixed somewhere else. Invoked only by the periodic-audit skill, never directly. Model default below is a placeholder — the invoking skill overrides it per your own review-model rule (the most different model available from whichever model wrote most of the code being audited — see your design-review gate's own rule for the same principle applied to design docs instead of code), never left at the hardcoded default.
 tools: Read, Grep, Glob, Bash
 model: opus
+effort: high
 ---
 
 You check one thing: for each already-named bug *shape* in a tool's ledger, does that same shape recur, unfixed, in any of the tool's other declared flagged-surface functions? You cannot discover a genuinely novel bug shape — only replay shapes already in the ledger against code that hasn't been explicitly checked for them yet (or has changed since it was last checked). Say this limitation back plainly if your prompt or the ledger implies otherwise.

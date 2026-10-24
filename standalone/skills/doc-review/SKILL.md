@@ -57,7 +57,7 @@ State which passes are about to run and on which models before spawning anything
 ## Pass C — voice scan (runs first, costs nothing)
 
 ```
-python scripts/voice_scan.py <path> [<path>...]
+python "${CLAUDE_SKILL_DIR}/scripts/voice_scan.py" <path> [<path>...]
 ```
 
 Stdlib only. It counts what a reader working section by section cannot see: word and
@@ -235,7 +235,7 @@ escaped, and never rendered as Markdown. A line reference in a comment always me
 same line in the file, and the page cannot drift from what it shows.
 
 ```
-python scripts/render_review_page.py <path>
+python "${CLAUDE_SKILL_DIR}/scripts/render_review_page.py" <path>
 ```
 
 `--comments` works the threads on that page: quote the comment, locate the text, run the

@@ -4,9 +4,12 @@ modes, where the soft confirm-first guidance in your rules doc gets skipped
 by design. Scoped deliberately narrow (a short, reviewed list, not a general
 policy engine): root-path rm -rf / PowerShell Remove-Item on a drive root,
 force-push to main/master, and reset --hard / clean -f only when the target
-tree actually has something to lose. Anything not matched here still goes
-through Claude Code's normal permission-prompt flow -- this hook only ever
-adds a stricter floor, never loosens the default.
+tree actually has something to lose, plus a script passed through a Bash
+heredoc. Optionally (off until you name a folder in protected-folders.json),
+it also keeps Grep, Glob and shell searches out of folders you mark protected:
+see protected_folder_guard.py beside this file and the README. Anything not
+matched here still goes through Claude Code's normal permission-prompt flow --
+this hook only ever adds a stricter floor, never loosens the default.
 
 If your Bash tool is configured to route through PowerShell
 (CLAUDE_CODE_USE_POWERSHELL_TOOL), both POSIX and PowerShell command shapes
@@ -21,27 +24,56 @@ JSON contract: code.claude.com/docs/en/hooks.md -- exit 0 with
 {"hookSpecificOutput": {"permissionDecision": "deny", ...}} on stdout blocks
 the call; exit 0 with no output lets normal permission flow proceed.
 """
+import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
+
+# The protected-folder engine is a module beside this file. Loaded by path, not through sys.path, so nothing else in this
+# folder can shadow a module name. A load failure never stops the other rules below.
+_pfg = None
+_pfg_error = None
+try:
+    _spec = importlib.util.spec_from_file_location(
+        "protected_folder_guard", os.path.join(os.path.dirname(os.path.abspath(__file__)), "protected_folder_guard.py"))
+    _pfg = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_pfg)
+except Exception as _e:
+    _pfg = None
+    _pfg_error = "%s: %s" % (type(_e).__name__, _e)
+
+
+def _note_pfg_failure(text):
+    global _pfg_error
+    _pfg_error = text
+
 
 try:
     data = json.load(sys.stdin)
 except Exception:
     sys.exit(0)
 
-if data.get("tool_name") not in ("Bash", "PowerShell"):
+tool_name = data.get("tool_name")
+if tool_name not in ("Bash", "PowerShell", "Grep", "Glob"):
     sys.exit(0)
 
-command = (data.get("tool_input") or {}).get("command") or ""
+tool_input = data.get("tool_input") or {}
 cwd = data.get("cwd") or ""
+if tool_name in ("Grep", "Glob"):
+    # The protected-folder check reads these fields as one text, and the Grep/Glob branch inside it reads them one by one.
+    command = "\n".join(str(tool_input.get(k) or "") for k in ("path", "glob", "pattern"))
+else:
+    command = tool_input.get("command") or ""
 
 if not command.strip():
     sys.exit(0)
 
 
 def deny(reason):
+    if _pfg_error and _pfg_error not in reason:
+        reason += " (The protected-folder guard did not run: %s.)" % _pfg_error
     print(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
@@ -83,6 +115,68 @@ def clean_would_remove(flags):
         return False
     return bool(result.stdout.strip())
 
+
+# 0. The protected-folder guard (optional; off until protected-folders.json names a folder). The engine is
+#    protected_folder_guard.py, which also holds the rules in full. It covers:
+#      - any shell command, Grep or Glob call that names a protected folder (its name as a whole word, any separators)
+#      - a search that starts at a directory above the folder (a drive root, an ancestor, your home directory) and
+#        recurses: find, rg, tree, Get-ChildItem -Recurse, ls -R, os.walk, and the like
+#      - the folder reached through a wildcard (C:\Users\me\Priv*), and drive aliases (subst, junctions) that point at a
+#        directory above it
+#    Text matching, so best-effort: it cannot see a path built at run time or the inside of a script file run by name.
+#    Which folders: `--config <file>` on this hook's command line (a named file that is missing or broken denies), else
+#    the default search described in protected_folder_guard.py. A user-level install should pass --config.
+
+
+def _config_wanted():
+    """True when you asked for the guard: a --config on this command, or a protected-folders.json in the default search
+    places (the project's .claude folder, CLAUDE_CONFIG_DIR or ~/.claude). Used only when the module will not load, so a dead
+    module never leaves a configured guard silently off."""
+    if any(a == "--config" or a.startswith("--config=") for a in sys.argv[1:]):
+        return True
+    try:
+        places = []
+        if os.environ.get("CLAUDE_PROJECT_DIR"):
+            places.append(os.path.join(os.environ["CLAUDE_PROJECT_DIR"], ".claude", "protected-folders.json"))
+        places.append(os.path.join(os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude"),
+                                   "protected-folders.json"))
+        return any(os.path.isfile(p) for p in places)
+    except Exception:
+        return False
+
+
+_NAMED_CONFIG = _config_wanted()
+_FALLBACK_RECURSION = re.compile(
+    r"(?i)(?<![\w.\-])(?:find|rg|fd|fdfind|tree|du|tar|7z|7za|rsync|robocopy|xcopy|ag|ack|locate|compress-archive)(?:\.exe)?(?![\w.\-])"
+    r"|\s-(?=[a-z]*[rs])[a-z]{1,4}(?![\w\-])|\s-rec\w*|\s--recursive\b|\s/[srt](?![\w\-:])"      # -r -rn -lR -rf -s, -Recurse, /s /r /t
+    r"|(?<![\w.\-])cp\s+(?:-[a-z]+\s+)*-[a-z]*a|\bshutil\.(?:copytree|make_archive)\b"
+    r"|\bos\.walk\b|\brglob\b|\bwalk_files\b|\bget-childitem\b|\bgci\b")
+
+
+def _protected_folder_reason():
+    """The deny text from the protected-folder guard, or None. If the module cannot load or crashes: when you asked for the
+    guard (a --config, or a protected-folders.json in the default search places) deny every Grep/Glob call and every
+    statement that looks like a recursion; with no config anywhere the guard is off and the failure is reported in any deny
+    this hook issues."""
+    if _pfg is not None:
+        try:
+            return _pfg.evaluate(tool_name, tool_input, cwd, command, sys.argv[1:])
+        except Exception as e:
+            _note_pfg_failure("%s: %s" % (type(e).__name__, e))
+    if not _NAMED_CONFIG:
+        return None
+    if tool_name in ("Grep", "Glob") or _FALLBACK_RECURSION.search(command):
+        return ("Blocked: the protected-folder guard could not run (%s), so this Grep, Glob or recursive shell command is "
+                "denied while the guard is down. Fix protected_folder_guard.py beside this hook, or run the command "
+                "yourself." % _pfg_error)
+    return None
+
+
+_reason = _protected_folder_reason()
+if _reason:
+    deny(_reason)
+if tool_name in ("Grep", "Glob"):
+    sys.exit(0)
 
 # 1. rm -rf (or PowerShell Remove-Item -Recurse -Force) targeting a bare
 #    filesystem root -- POSIX "/", a drive letter root ("C:\", "C:/"), or
@@ -153,7 +247,9 @@ HEREDOC_MSG = (
     "yourself."
 )
 _HEREDOC = re.compile(r"<<-?[ \t]*(['\"]?)(\w+)\1([^\n]*)\n(.*?)\n[ \t]*\2[ \t]*(?:\n|$)", re.S)
-_INTERPRETER = re.compile(r"\b(?:python3?|py|pythonw|node|nodejs|perl|ruby|pwsh|powershell)(?:\.exe)?\b", re.IGNORECASE)
+# Not inside a file name (`git commit -F - -- tool.py` does not name the interpreter py); bash, sh, cmd and wsl count as
+# interpreters too (`bash <<'EOF'` with a script in it).
+_INTERPRETER = re.compile(r"(?<![\w.\-])(?:python3?|py|pythonw|node|nodejs|perl|ruby|pwsh|powershell|bash|sh|cmd|wsl)(?:\.exe)?\b", re.IGNORECASE)
 _CODE_FILE_TARGET = re.compile(r">>?[ \t]*\S*\.(?:py|pyw|js|mjs|cjs|ts|ps1|psm1|sh|bat|cmd)\b", re.IGNORECASE)
 
 

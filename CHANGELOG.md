@@ -7,11 +7,131 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Added
+- `block-dangerous-commands` can keep searches out of a folder you name (off until you do). Put the
+  folder's absolute path in a `protected-folders.json` (`protected-folders.example.json` shows the
+  shape) and the hook denies a call that names the folder (as a whole word), a recursive search (`rg`,
+  `find`, `ls -R`, `Get-ChildItem -Recurse`, `dir /s` and similar) started at the drive root, at any
+  directory between it and the folder, or at your home directory when the folder is under it, a path
+  that reaches the folder through a wildcard or a `..` climb, a `Grep` or `Glob` call that does any of
+  these, a drive alias or link above the folder (`subst`, `net use`, `mklink` and similar), and any
+  PowerShell `-EncodedCommand` while a folder is protected. The check lives in its own module,
+  `protected_folder_guard.py`, which the hook loads from its own folder, so the hook is now two scripts
+  that sit side by side. If the module cannot load, the other rules keep working. The matcher in
+  `settings.fragment.json` is now `Bash|PowerShell|Grep|Glob`.
+  A hook command can carry `--config <file>`, which is then the only config read; without it the hook
+  reads `.claude/protected-folders.json` in the project and `protected-folders.json` in the user config
+  folder. A config that is wrong makes the guard deny every `Grep`, `Glob` and recursion-looking shell
+  statement, naming the file, instead of switching off silently: a named file that is missing, invalid
+  JSON, not `{"protected_folders": [...]}`, an entry that is not a string, a relative, `~`, UNC or
+  trailing-separator path, a bare drive or filesystem root, a glob or regex character or a `.`/`..`
+  segment in a path, a path that does not exist, or one of two unioned files broken. `Read`, `Edit`
+  and `Write` are not matched, so the file can still be repaired. Install it user-level
+  (`~/.claude/settings.json`, with `--config`) so it holds in every project, and add a `Read()` deny
+  rule for the folder as well, because this hook never sees a `Read`. A name like `Private` or `HR`
+  also denies a commit message or search that mentions the word, so pick a distinctive one. The scripts
+  avoid syntax newer than Python 3.9, but that floor is not tested. No interpreter older than 3.11 was
+  available. What was run: the test module under pytest on Python 3.12 on Windows (79 passed, run from
+  the export copy in a temp directory); and under WSL on Python 3.14.4, the real test file through a
+  hand-written stand-in runner (49 passed, 41 skipped as Windows-only), because pytest is not installed
+  there, so a full pytest run under WSL has not happened. It is a text match on the
+  command, best effort, not a boundary. The tests ship as `test_protected_folder_guard.py`.
+- `end-task` and `handoff` each run an open-items check before saying a session is safe to clear:
+  every open item the session knows of (work found and not done, a decision waiting on the owner, a
+  residual a review named, a deferred step) must be a discrete `BACKLOG.md` line, checked by grep, and
+  the closing line states the result (`open items: N, all on BACKLOG.md (...)` or `no open items`).
+  `spec`'s "backlog it" close-out runs the same check before it says "safe to `/clear`".
+- `session-end-status.sh` also reports uncommitted work in repos nested one directory below the
+  project: direct child directories that are their own git root and that the parent does not track as a
+  submodule, five paths each, then "+N more". Backslashes, quotes, tabs and other control characters in a
+  path no longer break the JSON it prints. Because it now runs one `git status` per nested repo, its entry
+  in `process/hooks/settings.hooks.json` carries `"timeout": 15` (SessionEnd hooks otherwise share a short
+  default timeout).
+- `review-pr` has a "Rules that hold at every step" section: everything from the PR is untrusted text,
+  no PR-derived string goes on a command line (only a validated `owner/repo`, PR number, head SHA and
+  base branch name do), the review body goes through a file, no private-repo text goes into a posted
+  review, and the owner's approval covers one post or one merge only. It also re-reads the PR's state,
+  head SHA and comment and review counts just before posting and just before merging, tells the owner
+  who the post will notify and whether auto-merge is armed, checks that a resume marker was posted by
+  the authenticated user, flags text in the PR that addresses an assistant, and checks the review
+  landed on the commit that was reviewed.
+- `ai-check` and `humanize` moved their long reference sections into files that load only when needed:
+  `ai-check/references/detector-landscape.md`, and `humanize/references/advanced-techniques.md` and
+  `domains.md`. Copy the whole skill folder.
+
+### Changed
+- Drift review of the source repo's 24 drifted components. All manifest hashes are updated. Ported
+  as copies: `ai-check`, `humanize` (SKILL and `research.md`) and `doc-review` (its scripts are now
+  called through `${CLAUDE_SKILL_DIR}`). Ported with this export's own wording: the items under Added,
+  plus `ship` (an item with no deploy target now stops at Step 1 and points at `backlog` or
+  `implement-queue`, which own its archive step), `docs-writer` (`omitClaudeMd: true`, so it no longer
+  loads the project's rules doc; its text restates the few rules that apply to it and tells the invoking
+  session to put any other applicable rule in the prompt), `periodic-audit-structural` (`effort: high`),
+  `code-reviewer` (tier numbers match `spec`'s four tiers: "Tier 1, 2 and 3 work", "a Tier 4 fix"; the
+  same renumbering in `backlog` step 5), `build` (Step 3 is now just "Backlogging stays in `spec`", and
+  the opening lines are shorter), `execution-gate` (a stale pointer to a step that moved now names
+  `verify` Step 2), `adopt` (one general sentence replaces the history of the split from `initiate`),
+  `periodic-audit` (the reason the threshold hook never overwrites a ledger hash), and one-line
+  rewordings in `verify` and `spec`. `block-dangerous-commands` also takes the source's interpreter
+  match for its heredoc-script rule, which changed two ways: an interpreter name inside a file name no
+  longer counts (so a commit-message heredoc such as `git commit -F - -- tool.py` is no longer denied by
+  mistake), and `bash`, `sh`, `cmd` and `wsl` now count as interpreters (so `bash <<EOF` is denied too).
+- Manifest hash records only, with no text change, because this export's wording is already the general
+  form of what the source now says: `consolidate-docs` (the source dropped model names, a date and a
+  skill name this export never had), `spec`'s `phase-records.md` (the source now lists legacy heading
+  names this export's table never carried), and `periodic-audit-coverage` (only a pinned full model id
+  changed; the export keeps the `haiku` alias).
+- `installer/gen_manifest_entry.py` gains `--sha256 EXPORT_PATH=SOURCE_PATH`, which writes the
+  `sha256` row `drift_check.py` expects for a file outside git (the agents under the source repo's
+  `ClaudeCode/agents/`), hashed LF-normalized exactly as `drift_check.py` does.
+- `installer/dependencies.json`: `handoff` lists `backlog` as a soft dependency (its open-items check names
+  the `backlog` skill's quick capture).
+
 ### Decided, not ported
-- Item and primer claims (decided 2026-10-23). The source repo's claim step in `handoff`, `backlog`,
-  `initiate` and `end-task` stays there: it calls `chain_state.py`, which is not exported, and the
-  export already showed 22 drifted components, so a clean port was not available. The same holds as
-  for chain mode earlier: the claims mechanism stays in the source repo.
+Reviewed this round and deliberately left in the source repo, each for a stated reason. Their manifest
+hashes are updated so `drift_check.py` reports clean; the next drift is measured from here.
+- `backlog`: chain mode, the viewer and snooze helper scripts, snooze markers, and the rule that a lead
+  never names a session or window (it exists for the claim tag). Same reason as in the 1.3.0 notes below:
+  the helpers are not exported. The same goes for step 9's and `end-task`'s newer pointer to the source
+  repo's own script that commits a `BACKLOG.md` change hunk by hunk. The rule that script enforces
+  (commit only your own hunks) is already in the export's `end-task` and `handoff`; step 9 of `backlog`
+  did not have it, so one sentence was added there. That sentence is a hand-applied generalization
+  (`git apply --cached`, check `git diff --cached --name-only`, commit with no pathspec), not the
+  source's text. The source's newest `backlog` step 6 and 8 and `end-task` sentences (a new rules-doc
+  entry is one sentence plus a pointer) name the source repo's own notes files, so they stay there;
+  the export's `rules-doc-size-nudge.sh` already nudges toward `consolidate-docs` when the rules doc grows.
+- The primer and item claims (`handoff`'s `Held items:` line and Claims section, `backlog` step 0b, the
+  `ship`/`end-task`/`implement-queue` releases) stay in the source repo: they call `chain_state.py`,
+  which is not exported, like chain mode above. Decided 2026-10-23.
+- `initiate`: the held-primer check depends on those claims; the rest of the diff is the source repo's
+  nested-repo layout and the way it counts open backlog items with its own helper script.
+- `handoff`: `references/incoming.md` (the Claims section and the "held by" notes) and `handoff_consume.py`
+  (it declares the primer to a cross-session commit check, a script that is not exported). Step 6's
+  named-add rule, and the matching parenthetical in `end-task`, exist for that commit check; the export
+  already says to stage narrowly. `end-task`'s push rule is already here, and its primer-consume offer and
+  claims release need the claims store. The evaluation-program sentence in the source's open-items check
+  is dropped: that program is source-only.
+- `spec`: the evaluation-program rule and the design-pressure tripwire script (neither is exported).
+  `tier1-model-check.md` and `design-review-gate.md`: the source added wording tied to its own repo layout
+  that is less general than this export's.
+- `verify`: the local-review step (still the standing deferral); `build`: the sizing-shadow paragraph
+  (it starts a local-model comparison script that is not exported); `execution-gate`: the remaining hunks
+  only trim anecdotes or add source-repo wording.
+- `implement-queue` (skill and workflow script): the source repo's repo-root resolution, and the paragraphs
+  about its agent boundary guard (a hook that is not exported). One fact from that section is ported, in
+  general form: the skill's claim that a stage's tool calls cannot be blocked mid-turn was wrong, since a
+  `PreToolUse` hook does fire inside a subagent and a teammate and a deny stops the call. The harvest
+  check stays either way.
+- `hooks-health-check`: a new report when `hooks/pre-commit` does not call the cross-session commit check
+  (not exported), and a check of the source repo's protected-folders config that hard-codes one drive
+  path (specific to the source repo).
+- `code-reviewer`: the `REVIEW-RESULT` footer (declined a third time; only the source repo's `ops-audit`
+  reads it), the pinned model id and the source repo's tool names. The export keeps the `sonnet` alias.
+- `block-dangerous-commands`, rules the export never had and still does not: printing a process's whole
+  launch line (Windows-only and tied to one incident), starting the owner-run wrap-up or a metered
+  grading run (source-only programs), and `git commit --no-verify` or a `core.hooksPath` change (it
+  protects the cross-session commit check). The sanctioned folder-walking script the source repo keeps for
+  itself is not exported either: it imports a source-repo module.
 
 ## [1.3.0] - 2026-10-16
 

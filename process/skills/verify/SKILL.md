@@ -5,8 +5,7 @@ description: QA gate for an implemented design — invokes code-reviewer to inde
 
 # Verify: the QA gate
 
-Is the QA phase `spec` used to hold, as its own addressable phase, keeping its reactive-escalation
-rules intact.
+The QA gate: its own addressable phase, with reactive escalation (Step 2).
 
 ## Step 1: Independent QA pass
 

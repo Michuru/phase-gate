@@ -12,7 +12,8 @@ component in this export.
 
 ## Install
 
-Copy the whole `humanize/` folder (including `references/research.md`) into your project's
+Copy the whole `humanize/` folder (including the three files under `references/`, which
+`SKILL.md` reads when it needs them) into your project's
 `.claude/skills/humanize/` (or your user-level `~/.claude/skills/`). That's the whole
 installation.
 

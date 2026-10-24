@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Ship a finished work item — for anything with a deploy target, dispatch to the applicable publish-* skill to check locally, copy from source of truth to the deploy target, confirm before it's visible to others, and verify against the real deployed target afterward; then, for any work item (deploy target or not), archive its BACKLOG.md entry to BACKLOG_ARCHIVE.md and commit. Use when the user invokes /ship, says they're ready to ship/publish/push a finished change, or a design/backlog item is otherwise done and needs archiving.
+description: Ship a finished work item — for anything with a deploy target, dispatch to the applicable publish-* skill to check locally, copy from source of truth to the deploy target, confirm before it's visible to others, and verify against the real deployed target afterward; then archive its BACKLOG.md entry to BACKLOG_ARCHIVE.md and commit. Items with no deploy target are archived by `backlog` or `implement-queue`, not here. Use when the user invokes /ship, says they're ready to ship/publish/push a finished change, or a finished item with a deploy target needs archiving.
 ---
 
 # Ship: publish (if applicable) and close out
@@ -9,7 +9,7 @@ Generalizes the shape any tool-specific `publish-*` skills in your repo already 
 locally against a real runtime, copy from the source of truth into the deploy target, confirm
 before anything becomes visible to others, verify against the real deployed target afterward. This
 skill **dispatches** to the applicable `publish-*` skill for the actual tool-specific work rather
-than replacing it — a fifth deploy target just means writing a new `publish-*` skill first; this
+than replacing it — another deploy target just means writing a new `publish-*` skill first; this
 skill picks it up automatically once Step 1's list includes it.
 
 ## Step 1: Does this work item have a deploy target?
@@ -17,22 +17,19 @@ skill picks it up automatically once Step 1's list includes it.
 - **Yes** — a `publish-*` skill already exists for this tool → invoke it now. That skill owns the
   actual publish mechanics end to end (local check, copy, confirm, verify live) — this skill's own
   job is what comes after, in Step 2.
-- **No** — most work items (a skill, a doc, an unpublished tool) have nothing to publish → skip
-  straight to Step 2. This is not a lesser or incomplete path; a one-shape loop with an absent
-  optional stage beats teaching two different-shaped loops depending on the work item. **If `/ship`
-  was invoked directly by the user on an item like this, say so plainly rather than silently
-  no-op'ing**: there's no deploy step here, and Step 2's archive-and-commit is already owned by
-  `backlog` or `implement-queue` for exactly this case (see Step 2 below) — point the user at
-  whichever of those already covers this item instead of proceeding as if `/ship` itself does
-  something further.
+- **No** — most work items (a skill, a doc, an unpublished tool) have nothing to publish → stop
+  here and point the user at `backlog` or `implement-queue`, which already own the archive step for
+  this item. **If `/ship` was invoked directly by the user on an item like this, say so plainly
+  rather than silently no-op'ing**: there's no deploy step here, and Step 2's archive-and-commit is
+  owned by whichever of those two already covers this item (see Step 2 below), so `/ship` does
+  nothing further.
 
 ## Step 2: Archive and commit
 
-**`/ship` owns this step for anything with a deploy target** (Step 1 fired "yes"), extending
-`backlog/SKILL.md`'s existing debugger-only "resolved means published" rule to every tool with a
-`publish-*` skill. For anything with no deploy target, `backlog` and `implement-queue` keep owning
-this step themselves, exactly as they do today — each of the three skills states the split
-explicitly rather than leaving it to be inferred. **The rest of this step only executes when Step 1
+**`/ship` owns this step for anything with a deploy target** (Step 1 fired "yes"), applying the
+"resolved means published" rule `backlog/SKILL.md` states to every tool with a `publish-*` skill.
+For anything with no deploy target, `backlog` and `implement-queue` own this step themselves — each
+of the three skills states the split explicitly rather than leaving it to be inferred. **The rest of this step only executes when Step 1
 fired "yes"** — the no-deploy-target case stops at Step 1's own redirect and never reaches the
 actions below.
 

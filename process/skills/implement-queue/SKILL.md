@@ -87,7 +87,12 @@ an agent not to commit or touch shared docs is advisory only — a confirmed rea
 implement-stage agent doing exactly that anyway (editing `BACKLOG.md` and running `git commit` inside
 its own worktree). Nothing in this harness lets a stage's own tool calls be structurally blocked
 mid-turn, so the boundary has to hold here instead, at the one point fully under your control before
-anything reaches the main tree.
+anything reaches the main tree. **Correction:** the sentence above overstated it. A `PreToolUse` hook
+does fire inside a plain subagent and an in-process teammate, its input carries an `agent_id` (absent
+for the main session), and a deny stops the call: a throwaway probe repo denied `git add` and
+`git commit` for both and allowed the main session's. `agent()` still has no tool-restriction option
+of its own, so a hook is a separate route you would have to write and wire yourself. Keep this step
+either way: a hook that matches shell command text is best-effort.
 
 **Run the anomaly checks below for every item in the batch's results first, regardless of its reported
 status** — a `blocked` item's worktree gets exactly the same scrutiny as a `done` one. This is

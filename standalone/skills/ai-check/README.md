@@ -12,8 +12,9 @@ component in this export.
 
 ## Install
 
-Copy `SKILL.md` into your project's `.claude/skills/ai-check/SKILL.md` (or your user-level
-`~/.claude/skills/` for every project). That's the whole installation.
+Copy the whole `ai-check/` folder (`SKILL.md` and `references/detector-landscape.md`) into your
+project's `.claude/skills/ai-check/` (or your user-level `~/.claude/skills/` for every project).
+That's the whole installation.
 
 ## Use
 

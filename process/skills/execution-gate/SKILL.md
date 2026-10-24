@@ -213,8 +213,8 @@ a design-level cross-model review pass as part of your execution strategy. `spec
 by the time this step runs, not a projected expense to account for here. **Keep this separate from Step 3's
 QA-gate flag above** — that flag covers *implementation* QA on executed tasks (a different concept from the
 design-phase review), and conflating the two risks a future session treating implementation QA as
-pre-satisfied by the design-phase review when they're actually independent concerns. Step 5's reactive
-QA-burst escalation (a `spec`-scoped feature) is also outside `execution-gate`'s scope entirely.
+pre-satisfied by the design-phase review when they're actually independent concerns. Reactive
+escalation of repeated review passes (`verify` Step 2) is also outside this gate's scope.
 
 ## Notes
 

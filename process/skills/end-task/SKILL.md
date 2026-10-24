@@ -42,6 +42,19 @@ work-item design (the next section), and the sizes of the rules doc, the mistake
 Check this before the questions below, on purpose: a session mid-design or mid-build must never be
 routed toward "commit and clear", even when the working tree happens to be clean at this moment.
 
+## Open-items check (every route, a clean tree included)
+
+Before any verdict that ends in "clear", list every open item this session knows of: work found and
+not done, anything waiting on the owner (an approval, a decision, a confirmation), a residual a QA
+pass named, a step deferred, a "next" the session promised. Each must be a **discrete `BACKLOG.md`
+line**: a bullet's "Next:" prose, a design doc's notes or a handoff primer's list do not count,
+because `/backlog` cannot list, rank or snooze prose. Check by grep, not by memory. Add the missing
+ones now (the `backlog` skill's quick capture), commit narrowly and only your own hunks (a
+`BACKLOG.md` showing `MM`, or carrying someone else's hunks, is named in the report and not
+committed), then state it: `open items: N, all on BACKLOG.md (<short names>)` or `no open items`.
+**Never write "safe to clear" while an item lives only in prose** (a session once said it was safe to
+clear with five open items that existed only inside one bullet and a primer).
+
 ## Docs-sync questions (only if nothing is unfinished)
 
 Answer each concretely, by checking, not by impression (checking whether something is already
@@ -83,7 +96,7 @@ the wrong answer is cheap in exactly one direction.
 | Work unfinished | **`/handoff`**, to write a primer so a fresh session continues | wrap up anyway, if you are actually done despite the signal |
 | Any yes in the questions | **Wrap up at full-sync depth** (read `${CLAUDE_SKILL_DIR}/references/full-sync.md` now) | **`/handoff`**, if you are actually still mid-task |
 | Dirty repo or repos, no yes | **Wrap up at narrow-commit depth** (the commit rules below) | **`/handoff`**, if you are actually still mid-task |
-| No dirty repos, no yes | `Clean — nothing pending. Clear to /clear.` | **`/handoff`**, if you are actually still mid-task |
+| No dirty repos, no yes, and the open-items check stated its result | `Clean — nothing pending (open items: <the open-items check's line>). Clear to /clear.` | **`/handoff`**, if you are actually still mid-task |
 
 `/handoff` appears in **every** row: that is what makes it discoverable to someone who does not know
 it exists. State which row fired and why, the concrete signal and not just the verdict, before doing
@@ -110,8 +123,8 @@ unreleased section: if it has real content after this push, ask whether to cut o
 every push needs a release, but the question must never go unasked. Skip if you publish no versioned
 releases from any repo touched this session.
 
-**Report** per repo: commit hash and one line for anything committed, and an explicit call-out of
-anything deliberately left uncommitted and why. Silence would look the same as "nothing was left
+**Report** per repo: commit hash and one line for anything committed, the open-items check's line,
+and an explicit call-out of anything deliberately left uncommitted and why. Silence would look the same as "nothing was left
 outstanding", which is the ambiguity this report exists to remove.
 
 Out of scope: this skill does not change `handoff`'s own mechanics; it only routes to it.

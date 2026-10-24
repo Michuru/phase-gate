@@ -5,10 +5,8 @@ description: Scope phase-gate onto a project that already has real code or a sco
 
 # Adopt: scope phase-gate onto an already-in-progress project
 
-Split out from `initiate`'s own onboarding case, if you have that skill installed — `initiate`
-only detects this case (a two-line check: no `Design Docs/`/`BACKLOG.md` history yet, but real
-existing code or a scope/spec document → "run `/adopt`") and hands off here for the actual body,
-keeping this once-per-project cost off `initiate`'s hot path.
+`initiate` (if you have that skill installed) detects this case (no `Design Docs/`/`BACKLOG.md`
+history, but real code or a scope/spec document) and hands off here.
 
 ## Step 1: Scope the project
 

@@ -23,15 +23,34 @@ exists only in the exported copy (a README written for adopters, say) and
 carries source_blob/source_hash_type/source_path all null, exactly like the
 existing ai-check/humanize entries' own README rows.
 
+A `--sha256 EXPORT_PATH=SOURCE_PATH` pair is for a source file git does not
+track (the agents under the source repo's ignored `ClaudeCode/agents/`, say).
+It records the sha256 of the live file at SOURCE_PATH in the source repo, LF-normalized
+with `drift_check.lf_normalize` itself so the two can never disagree, as a
+`sha256` row (`source_hash_type: "sha256"`), which is what `drift_check.py`
+compares against. Such a row follows the working tree, so it drifts again on
+any edit to the live file, committed or not.
+
 Prints the JSON component object to stdout. Paste it into manifest.json's
 `components` array by hand, or redirect to a file and merge programmatically
 - this script only computes the hard-to-get-right part (real hashes), it does
 not touch manifest.json itself.
 """
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+from drift_check import lf_normalize  # the exact normalization drift_check compares with
+
+
+def sha256_hash(meta_repo: str, source_path: str) -> str:
+    target = Path(meta_repo) / source_path
+    if not target.is_file():
+        raise SystemExit(f"no such file for --sha256: {target}")
+    return hashlib.sha256(lf_normalize(target.read_bytes())).hexdigest()
 
 
 def blob_hash(meta_repo: str, source_path: str) -> str:
@@ -48,24 +67,57 @@ def blob_hash(meta_repo: str, source_path: str) -> str:
     return result.stdout.strip()
 
 
+class _AddSpec(argparse.Action):
+    """Append (kind, value) to one shared list, keeping command-line order across both options."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        specs = list(getattr(namespace, self.dest, None) or [])
+        specs.append((self.const, values))
+        setattr(namespace, self.dest, specs)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--name", required=True)
     parser.add_argument("--shelf", required=True, choices=["standalone", "process"])
     parser.add_argument("--description", required=True)
     parser.add_argument("--meta-repo", required=True, help="Path to the source repo (e.g. J:\\Claude)")
+    # --file and --sha256 share one list so the rows keep the order they were given in.
     parser.add_argument(
         "--file",
-        action="append",
-        required=True,
-        dest="files",
+        action=_AddSpec,
+        const="git-blob",
+        dest="specs",
         metavar="EXPORT_PATH=SOURCE_PATH",
         help="Repeatable. SOURCE_PATH empty marks an export-only file (no source_blob).",
     )
+    parser.add_argument(
+        "--sha256",
+        action=_AddSpec,
+        const="sha256",
+        dest="specs",
+        metavar="EXPORT_PATH=SOURCE_PATH",
+        help="Repeatable. A file git does not track: record the LF-normalized sha256 of the live file.",
+    )
     args = parser.parse_args()
+    if not args.specs:
+        parser.error("at least one --file or --sha256 is required")
 
     files = []
-    for spec in args.files:
+    for kind, spec in args.specs:
+        if kind == "sha256":
+            if "=" not in spec or not spec.split("=", 1)[1]:
+                raise SystemExit(f"--sha256 must be EXPORT_PATH=SOURCE_PATH with a source (got: {spec!r})")
+            export_path, source_path = spec.split("=", 1)
+            files.append(
+                {
+                    "path": export_path,
+                    "source_blob": sha256_hash(args.meta_repo, source_path),
+                    "source_hash_type": "sha256",
+                    "source_path": source_path,
+                }
+            )
+            continue
         if "=" not in spec:
             raise SystemExit(f"--file must be EXPORT_PATH=SOURCE_PATH (got: {spec!r})")
         export_path, source_path = spec.split("=", 1)

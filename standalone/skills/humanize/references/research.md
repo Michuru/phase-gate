@@ -48,7 +48,7 @@ Hybrid (rule + model-in-the-loop) outperforming pure-rule: 2024-2026 benchmark r
 
 - **RAID benchmark (arXiv 2405.07940)**: varying sampling parameters (temperature, top-p,
   repetition penalty) of the source model is more destructive to detectors than
-  paraphrase-based attacks. Basis for the decoding-strategy note in SKILL.md.
+  paraphrase-based attacks. Context only: no step in this skill controls decoding.
 
 ## Documented dead ends
 

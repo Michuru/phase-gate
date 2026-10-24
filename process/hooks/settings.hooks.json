@@ -24,7 +24,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/scripts/session-end-status.sh\""
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/scripts/session-end-status.sh\"",
+            "timeout": 15
           }
         ]
       }

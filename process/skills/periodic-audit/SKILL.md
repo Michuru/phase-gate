@@ -80,7 +80,8 @@ fabrication risk on an otherwise-ungated task.
 - **After a real structural-pass run specifically, also record the ledger's new hash**:
   `python .claude/hooks/audit_state.py set <repo> <main_file> structural ledger_hash <sha256-of-the-ledger-file-you-just-edited>`.
   **This is the only thing allowed to clear a fired `ledger-growth` trigger** — the threshold hook
-  (read-only) deliberately never overwrites a mismatched hash itself. Skipping this step leaves the
+  (read-only) deliberately never overwrites a mismatched hash itself (a hook that did would silently
+  clear the crossed-threshold state without a real audit having run). Skipping this step leaves the
   hook nudging on every future session even after you've actually addressed the finding.
 - Narrow commit: the ledger file, the `NOTES.md` pointer (if this is the first run and it doesn't
   exist yet), and whatever backlog/design-doc change resulted from Step 4 — never the state file

@@ -246,26 +246,7 @@ se ("Base Models Look Human"; details in `references/research.md`). What gets fl
 
 ## Advanced techniques (optional, when stakes are high)
 
-The nine levers are pure-rule; hybrid (rule + model-in-the-loop) approaches benchmark better.
-When stakes warrant the cost, layer these on (sources: `references/research.md`):
-
-1. **Detector-scored best-of-N.** Generate 3–5 variants; score each against a real detector
-   (GPTZero, Pangram, Binoculars), a banned-word count, or a perplexity probe; ship the lowest.
-2. **Iterative paraphrase pass.** Run the output through a second LLM with "paraphrase this,
-   keep the meaning." Diminishing returns past 2 passes; meaning drift accumulates — verify substance.
-3. **Writer-profile distillation.** When the user supplies writing samples, distill style
-   hypotheses first (this is protocol step 0; follow the procedure there). Beats raw few-shot.
-4. **Self-rewrite distance check.** Ask a different LLM to "rewrite this in different words."
-   Near-identical rewrite = text still at a local probability maximum = reads as AI.
-5. **Embedding-guided synonym swap.** When tooling is available, prefer substitutions that
-   explicitly lower detector scores over Lever 1's static word list.
-6. **Disfluency injection (casual register only).** Light hesitations, mid-thought restarts,
-   "wait actually" corrections. Off by default for formal writing; disfluencies in a board memo
-   are their own tell.
-
-**Dead ends, don't bother:** homoglyph injection (defeated by Unicode normalization, and a
-clear tampering signal), single cross-model rewrite (doesn't defeat trained detectors alone),
-watermark stripping (separate problem space).
+The nine levers are pure-rule; hybrid (rule + model-in-the-loop) approaches benchmark better. When stakes warrant the cost, read `references/advanced-techniques.md` for the six layered techniques (detector-scored best-of-N, iterative paraphrase, writer-profile distillation, self-rewrite distance check, embedding-guided synonym swap, disfluency injection) and the dead ends not to bother with.
 
 ---
 
@@ -291,7 +272,7 @@ When given text to humanize:
    default bias toward terse, direct prose yields to the sample's register when they conflict.
    Then apply the levers in service of those hypotheses.
 
-1. **Read the full input first.** Identify topic domain, audience, register, length target.
+1. **Read the full input first.** Identify topic domain, audience, register, length target, then you MUST read `references/domains.md` for that register (Technical, Narrative, Creative, Professional, Slack) before rewriting; the register-specific rules are not in this file.
 
 2. **Inventory the AI tells.** Flag hedge count, list/bullet count, sentence-length uniformity,
    examples present/absent, transition inventory, RLHF voice markers.
@@ -403,9 +384,9 @@ When given text to humanize:
    rewrite, clearly separated. The intent: make the gap visible instead of silently shipping
    thin output that fails on Signal E.
 
-6. **(Optional) Self-rewrite distance sanity check.** When stakes are high, run Advanced 4.
+6. **(Optional) Self-rewrite distance sanity check.** When stakes are high, run Advanced 4 (`references/advanced-techniques.md`).
 
-7. **(Optional) Detector-scored best-of-N.** When stakes are high, run Advanced 1.
+7. **(Optional) Detector-scored best-of-N.** When stakes are high, run Advanced 1 (`references/advanced-techniques.md`).
 
 8. **Output the rewritten text only.** No preamble ("Here is the humanized version:"), no
    trailing changelog ("Main moves:", "What I changed:"). The only permitted additions are
@@ -425,62 +406,17 @@ When writing new content (not rewriting):
 - End without a summary paragraph unless the piece is long enough to genuinely need a re-anchor
 - Calibrate voice to the domain: an engineer's Slack post sounds different from a board memo
 
-**Decoding-strategy note (when controlling generation):** set temperature high (0.9–1.1),
-top-p loose (0.95–0.99), repetition penalty up (1.1–1.2). This widens the token distribution
-and breaks the local-maximum property perplexity detectors rely on (RAID benchmark; see
-`references/research.md`).
-
 ---
 
 ## Domain-specific calibration
 
-### Technical (engineering, code, systems)
+The register-specific rules are in `references/domains.md`, not in this file; read it for the register you are writing in before drafting or rewriting (one file, about 50 lines; `grep -n "^###" references/domains.md` lists the sections):
 
-- Domain-native vocabulary: "the hot path", "this falls apart at scale", "the footgun here is..."
-- Short sentences for definitive claims: "This is O(n²). Don't do it at scale."
-- Tradeoffs direct, not diplomatic: "The downside is real: you lose..."
-- Real tool names, version numbers, error messages when available
-
-### Narrative / blog / essay
-
-- Open with a scene or specific moment, not a thesis
-- Let the argument emerge from the evidence
-- Sentence fragments deliberately for rhythm. Like this.
-- One moment of genuine uncertainty or changed mind per 500 words
-
-### Creative / lyrical prose (fiction, poetic passages, mood pieces)
-
-The register where this skill gets rationalized away. Every hard rule still applies; detectors
-don't grade on artistic merit. The traps:
-
-- **The "literary em dash" exemption.** "Something wouldn't let you stay asleep — a feeling too new to have a name yet." Feels earned; still the single strongest tell. Use a period, a comma, or restructure.
-- **Poetic negation pivots.** "It isn't proof you failed — it's proof you showed up." Say the positive thing: "It's proof you showed up."
-- **Anaphora as lyricism.** "Not every door has been tried. Not every version of yourself." Reads as AI cadence, not poetry. Vary the second sentence.
-- **Mid-sentence colon reveals.** "and you think: this is where it starts" — restructure or end the sentence before the colon.
-- **Balanced imagery pairs and escalating tricolons.** Human lyrical prose is lopsided; AI lyrical prose is symmetric. Break the symmetry.
-
-Human creative writing gets its texture from specificity and asymmetry (a named street, a
-wrong note, an image that doesn't resolve), not punctuation drama.
-
-### Professional / business
-
-- Cut the throat-clearing opener; just the message
-- State the ask in sentence 1 or 2
-- Numbers and deadlines: "by Thursday EOD", "the three blockers are..."
-- Short paragraphs (2–3 sentences max in email/memo)
-
-### Slack / async team updates
-
-Register collapse is the primary tell: AI Slack reads like a polished status report. Real Slack has:
-
-- Abbreviations and approximations: `~60%`, `<10min`, `fwiw`, `btw`, `lmk`, `tmrw`
-- **Fragments throughout**: "hard commits: billing gRPC + pprof thing", not full clauses
-- **Self-corrections mid-message**: "oh also —", "wait, actually"
-- **Thoughts bleeding together**, looping back, trailing off — not topic-per-paragraph
-- Numerals with approximation markers: `~3-4 days`, not "approximately three to four days"
-- Single-word endings: "lmk" as its own line
-- Lowercase throughout except proper nouns
-- **The structure must actually break**: accomplishment → caveat → next steps is still AI even with `fwiw` sprinkled in. Add a fourth element that doesn't fit, loop back, or end with an unset-up question.
+- **Technical** (engineering, code, systems): domain-native vocabulary, direct trade-offs, real tool names and error messages.
+- **Narrative / blog / essay**: scene-first openings, fragments for rhythm, one real moment of uncertainty.
+- **Creative / lyrical prose**: the traps that get this skill rationalized away: every hard rule still applies there (no literary em dash, no poetic negation pivots, no anaphora as lyricism).
+- **Professional / business**: no throat-clearing, the ask in sentence 1 or 2, concrete numbers and deadlines.
+- **Slack / async team updates**: register collapse is the primary tell; fragments, approximations, self-corrections, a structure that actually breaks.
 
 ---
 

@@ -5,8 +5,7 @@ description: Implement an approved spec doc — runs execution-gate automaticall
 
 # Build: implement an approved design
 
-Covers the implementation phase `spec` used to hold, now genuinely automatic at its
-opening gate rather than asking permission to check. Two modes — **single-design** (the common
+Implements an approved design. `execution-gate` runs automatically as its opening gate. Two modes — **single-design** (the common
 case: implement one already-approved `Design Docs/<slug>.md`) and **batch** (several independent,
 already-approved designs sitting on `BACKLOG.md`'s "Ready to implement" checklist, delegated
 straight to `implement-queue`) — decided by what's actually being asked for, not a fixed choice.
@@ -22,12 +21,12 @@ straight to `implement-queue`) — decided by what's actually being asked for, n
 
 ## Step 1: Run `execution-gate` automatically — no approval question
 
-**This is the one behavior change from how implementation used to start.** Run `execution-gate`
+Run `execution-gate`
 against the design's own task breakdown as this skill's opening step, unconditionally — never ask
 whether to run it first. State the cost per `execution-gate` Step 8's existing requirement (task
 count, projected `docs-writer`/fork/`code-reviewer` calls) so the spend is visible, but don't wait
-for a go-ahead before running it — announcing and running happen in the same step, unlike `spec`
-`spec`'s design review, which gets a real `AskUserQuestion` stop to decline at (see Notes for why
+for a go-ahead before running it — announcing and running happen in the same step, unlike `spec`'s
+design review, which gets a real `AskUserQuestion` stop to decline at (see Notes for why
 the two are treated differently).
 
 **"No approval question" means whether the gate runs at all — not its own report.** Deliver
@@ -88,18 +87,11 @@ outcome per task**: `local-delegate: implement, attempted, pass` / `attempted, f
 (<diagnostic summary>)` / `not attempted, <reason>`, plus draft and gate wall-clock — real evidence
 toward your own break-even numbers for this feature, not just a pass/fail note.
 
-## Step 3: What the old implement-or-backlog gate still owns
+## Step 3: Backlogging stays in `spec`
 
-Three things that used to live inside `spec`'s implement-or-backlog gate, alongside the now-retired
-execution-gate-consideration question, still apply and still live there, unchanged by this skill's
-existence — `build` doesn't own backlogging, only implementing:
-- The forbidden-path test and the "Ready to implement" checklist add/skip.
-- Auto-commit-on-(b) when a design is backlogged instead of implemented now.
-- `implement-queue` Step 1's own prerequisite rule (a pending cross-model review satisfied once
-  `spec`'s design review ran) — **unchanged by this task**: eligibility for the checklist never depended
-  on `execution-gate` having already run (it was always optional before, and now always runs
-  automatically inside `/build` itself, never before backlogging) — so there's nothing here for
-  this skill to add a prerequisite for.
+`build` only implements. Backlogging a design (the forbidden-path test, the "Ready to implement"
+checklist line, the auto-commit) is `spec`'s `references/backlog-the-design.md`; `implement-queue`
+Step 1 owns checklist eligibility.
 
 ## Step 4: Hand off to `/verify`
 

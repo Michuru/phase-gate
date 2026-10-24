@@ -153,10 +153,13 @@ Once you're running `/phase-gate-install` — step 3 above, or your own fresh se
 paste path — answer **`recommend-only`** at the mode question. It writes two files under
 `.claude/phase-gate-install/` recording what it would propose, and nothing else anywhere.
 
-To try a single standalone component instead, open its folder, copy the one file, and paste its
-settings snippet. No installer involved. For example, `block-dangerous-commands`: copy
-`standalone/hooks/block-dangerous-commands/block-dangerous-commands.py` into your repo, then merge
-`settings.fragment.json` from that same folder into your `.claude/settings.json`.
+To try a single standalone component instead, open its folder, copy its script (or scripts), and
+paste its settings snippet. No installer involved. For example, `block-dangerous-commands`: copy
+`block-dangerous-commands.py` and `protected_folder_guard.py` from
+`standalone/hooks/block-dangerous-commands/` into your repo's `.claude/hooks/`, then merge
+`settings.fragment.json` from that same folder into your `.claude/settings.json`. If you also want
+its protected-folder option, read that folder's `README.md` first: it needs a user-level install and a
+`Read()` deny rule to hold in every project.
 </details>
 
 ## What happens without asking
@@ -289,13 +292,14 @@ your-project/
 
 ## Standalone components
 
-Each works alone. Most are one file: copy it, paste its settings snippet, done. `doc-review` is a
-skill with its own `references/` and `scripts/` subdirectories and no settings snippet at all — copy
-its whole folder into `.claude/skills/doc-review/` instead.
+Each works alone. Most are one file: copy it, paste its settings snippet, done. `ai-check`,
+`humanize` and `doc-review` are skills with their own `references/` subdirectories (`doc-review` also
+has `scripts/`) and no settings snippet at all — copy the whole folder into `.claude/skills/<name>/`
+instead. `block-dangerous-commands` is two scripts that sit side by side.
 
 | Component | What it does |
 |---|---|
-| `block-dangerous-commands` | Refuses a short list of catastrophic shell commands outright |
+| `block-dangerous-commands` | Refuses a short list of catastrophic shell commands outright, and optionally keeps searches out of folders you name |
 | `hooks-health-check` | Says at session start when your git hooks have come unwired |
 | `schedule-wakeup-guard` | Blocks `ScheduleWakeup` unless a real `/loop` is actually live |
 | `context-usage-nudge` | Warns as a conversation fills up, so you can hand off in time |

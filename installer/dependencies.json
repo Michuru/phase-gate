@@ -27,11 +27,12 @@
           "adopt",
           "build",
           "implement-queue",
-          "backlog"
+          "backlog",
+          "end-task"
         ]
       },
       "external_prerequisites": [],
-      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself."
+      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself. end-task is soft since the 1.4.0 drift port: references/backlog-the-design.md's close-out line runs end-task's open-items check before saying a session is safe to clear, and the same line already recommends /end-task when the session has uncommitted work; without end-task installed the line's check is simply done by hand."
     },
     "initiate": {
       "shelf": "process",
@@ -193,7 +194,8 @@
         "hard": [],
         "soft": [
           "context-usage-nudge",
-          "end-task"
+          "end-task",
+          "backlog"
         ]
       },
       "external_prerequisites": [
@@ -202,7 +204,7 @@
           "degrades": "the incoming scan (handoff_scan.py) and the consume step (handoff_consume.py) cannot run; outgoing handoffs still work, but a primer then has to be listed and archived by hand, which is the failure the consume script exists to prevent"
         }
       ],
-      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption. As of the 2026-10-16 split, handoff ships two stdlib-only scripts under process/skills/handoff/scripts/ (a scan and a consume step) and one reference, references/incoming.md; they are listed in manifest.json like doc-review's own references and scripts."
+      "notes": "context-usage-nudge is standalone-shelf, not process-shelf - this is the one real process-to-standalone soft edge in the export. The skill's own text: 'if you have one wired up' - fully functional without it, just loses the automatic trigger. end-task is a contrast/naming reference only (2026-09-06 next-command-contract redesign renamed the skill this one isn't - previously wrap-up-session), same 'no functional call' relationship commit had with wrap-up-session before the absorption. As of the 2026-10-16 split, handoff ships two stdlib-only scripts under process/skills/handoff/scripts/ (a scan and a consume step) and one reference, references/incoming.md; they are listed in manifest.json like doc-review's own references and scripts. backlog is soft since the 1.4.0 drift port: step 5b's open-items check names the backlog skill's quick capture as the way to add a missing open item, a pointer to a skill the adopter may not have rather than a call the step cannot do without (the same relationship end-task has with it)."
     },
     "review-pr": {
       "shelf": "process",
@@ -271,8 +273,14 @@
           "name": "python3 or python on PATH",
           "degrades": "hook silently never fires if neither is found",
           "note": "Runtime python3-with-fallback pattern in the settings fragment - not a hard install-time check."
+        },
+        {
+          "name": "Python 3.9 or newer",
+          "degrades": "on an older Python the hook may fail to start, and Claude Code treats a hook that exits with an error as non-blocking, so no rule runs",
+          "note": "The scripts avoid syntax newer than 3.9, but that floor is untested: they ran on 3.12 and 3.14, and no interpreter older than 3.11 was available."
         }
-      ]
+      ],
+      "notes": "Two scripts that sit side by side: block-dangerous-commands.py loads protected_folder_guard.py from its own folder (the protected-folder option, off until a protected-folders.json names a folder). If the module is missing the other rules keep working, but copy both. test_protected_folder_guard.py is optional."
     },
     "hooks-health-check": {
       "shelf": "standalone",
