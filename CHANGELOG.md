@@ -7,6 +7,12 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Decided, not ported
+- Item and primer claims (decided 2026-10-23). The source repo's claim step in `handoff`, `backlog`,
+  `initiate` and `end-task` stays there: it calls `chain_state.py`, which is not exported, and the
+  export already showed 22 drifted components, so a clean port was not available. The same holds as
+  for chain mode earlier: the claims mechanism stays in the source repo.
+
 ## [1.3.0] - 2026-10-16
 
 ### Added
