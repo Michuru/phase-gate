@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-24
+
 ### Added
 - `block-dangerous-commands` can keep searches out of a folder you name (off until you do). Put the
   folder's absolute path in a `protected-folders.json` (`protected-folders.example.json` shows the
