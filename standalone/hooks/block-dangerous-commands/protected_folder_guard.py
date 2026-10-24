@@ -245,7 +245,9 @@ def configure(folders):
         if not re.search(r"[A-Za-z0-9]", name):
             words.append(re.escape(name))
         else:
-            words.append(r"(?<![A-Za-z0-9])" + r"[\s_\-]*".join(parts) + r"(?![A-Za-z0-9])")
+            # between two words: space, _ and -, plus the characters a shell puts around an escaped or quoted space (a backslash
+            # in Git Bash, a backtick in PowerShell, a caret in cmd, a quote pair in any of them), so 'Keep\ Out\ Zone' still matches
+            words.append(r"(?<![A-Za-z0-9])" + r"[\s_\-\\`^'\"]*".join(parts) + r"(?![A-Za-z0-9])")
     _S.name_re = re.compile("|".join(words), re.IGNORECASE)
     drives = sorted({f.root for f in folders if f.root != "/"})
     climb = []
@@ -1181,6 +1183,29 @@ def evaluate(tool_name, tool_input, cwd, command, argv=None, env=None):
     if not folders:
         return None
     configure(folders)
+    texts = [command]
+    if tool_name in ("Bash", "PowerShell"):
+        try:
+            decoded = _decode_shell_escapes(command, tool_name)
+        except Exception:
+            decoded = command         # a decode failure leaves only the raw text to judge, never an error
+        if decoded != command:
+            texts.append(decoded)     # the same call with $'\x20' and `u{20} spelled out: judged as well, the raw text first
+    for text in texts:
+        verdict = _evaluate_text(tool_name, tool_input, cwd, text)
+        if verdict:
+            return verdict
+    if tool_name in ("Bash", "PowerShell"):
+        try:
+            stripped = _strip_shell_quotes(command, tool_name)
+        except Exception:
+            stripped = command
+        if stripped not in texts and _S.name_re.search(stripped):
+            return name_message()     # the name once the shell has removed quotes: P\rivate, Pri''vate, Pri"va"te
+    return None
+
+
+def _evaluate_text(tool_name, tool_input, cwd, command):
     if _S.name_re.search(command):
         return name_message()
     cwd = cwd or ""
@@ -1191,3 +1216,110 @@ def evaluate(tool_name, tool_input, cwd, command, argv=None, env=None):
     except Exception:
         hit = seen                    # the analysis broke: deny only if a root token was seen, else fail open
     return guard_message() if hit else None
+
+
+# Escape spellings a shell turns into other characters before the program sees them. Rule 0 and the root rules read text, so
+# 'Private$'\x20'Notes' (Bash ANSI-C quoting) and 'Private`u{20}Notes' (PowerShell) must be read the way the shell will.
+_ANSI_C = re.compile(r"\$'((?:[^'\\]|\\.)*)'", re.S)
+_ANSI_ESC = re.compile(r"\\(?:x([0-9A-Fa-f]{1,2})|u([0-9A-Fa-f]{1,4})|U([0-9A-Fa-f]{1,8})|([0-7]{1,3})|c(.)|(.))", re.S)
+_ANSI_SIMPLE = {"a": "\a", "b": "\b", "e": "\x1b", "E": "\x1b", "f": "\f", "n": "\n", "r": "\r", "t": "\t", "v": "\v",
+                "\\": "\\", "'": "'", '"': '"', "?": "?"}
+_PS_UNICODE = re.compile(r"`u\{([0-9A-Fa-f]{1,6})\}")
+_PS_ESC = re.compile(r"`(.)", re.S)
+_PS_SIMPLE = {"0": "\0", "a": "\a", "b": "\b", "e": "\x1b", "f": "\f", "n": "\n", "r": "\r", "t": "\t", "v": "\v"}
+
+
+def _chr(code, base):
+    try:
+        return chr(int(code, base))
+    except (ValueError, OverflowError):
+        return ""
+
+
+def _ansi_c_unescape(body):
+    def one(m):
+        hx, u4, u8, octal, ctl, simple = m.groups()
+        if hx:
+            return _chr(hx, 16)
+        if u4:
+            return _chr(u4, 16)
+        if u8:
+            return _chr(u8, 16)
+        if octal:
+            return chr(int(octal, 8) & 0xFF)
+        if ctl:
+            return ""
+        return _ANSI_SIMPLE.get(simple, "\\" + simple)
+    return _ANSI_ESC.sub(one, body)
+
+
+def _scan_quotes(text, tool, strip):
+    """One left-to-right pass that knows which quotes it is inside, so a `$'` in an earlier single-quoted string ('x$') cannot be
+    taken for an ANSI-C opener. Always: an unquoted $'...' becomes the characters it stands for (for the PowerShell tool also one
+    inside double quotes, where a nested `bash -c "..."` receives it as an opener). With strip=True it also does Bash quote
+    removal the way a shell does before the program sees a word (P\\rivate, Pri''vate, Pri"va"te all become Private); the
+    PowerShell tool keeps its backslashes, which are path separators there. Everything else stays byte for byte."""
+    ps = tool == "PowerShell"
+    out, i, n, state = [], 0, len(text), None
+    while i < n:
+        c = text[i]
+        if state != "'" and c == "$" and text.startswith("$'", i) and (state is None or ps):
+            m = _ANSI_C.match(text, i)
+            if m:
+                out.append(_ansi_c_unescape(m.group(1)))
+                i = m.end()
+                continue
+        if state is None:
+            if c == "\\" and i + 1 < n:
+                nxt = text[i + 1]
+                out.append((nxt if nxt != "\n" else "") if strip and not ps else c + nxt)
+                i += 2
+                continue
+            if c in "'\"":
+                state = c
+                if not strip:
+                    out.append(c)
+                i += 1
+                continue
+        elif state == "'":
+            if c == "'":
+                state = None
+                if not strip:
+                    out.append(c)
+                i += 1
+                continue
+        else:
+            if c == "\\" and i + 1 < n:
+                nxt = text[i + 1]
+                out.append(nxt if strip and not ps and nxt in '\\"$`' else c + nxt)
+                i += 2
+                continue
+            if c == '"':
+                state = None
+                if not strip:
+                    out.append(c)
+                i += 1
+                continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _ps_escapes(text, tool):
+    out = _PS_UNICODE.sub(lambda m: _chr(m.group(1), 16), text)
+    if tool == "PowerShell":
+        out = _PS_ESC.sub(lambda m: _PS_SIMPLE.get(m.group(1), m.group(1)), out)
+    return out
+
+
+def _decode_shell_escapes(text, tool):
+    """`text` with Bash ANSI-C quotes ($'...') and PowerShell backtick escapes (`u{20}, `n, `<char>) replaced by the characters
+    they stand for, everything else untouched (quotes stay, so the root rules still read quoted text as quoted). PowerShell's
+    plain backtick-before-a-character is dropped only for the PowerShell tool: in Bash a backtick starts a command substitution."""
+    return _ps_escapes(_scan_quotes(text, tool, False), tool)
+
+
+def _strip_shell_quotes(text, tool):
+    """The text as the program receives it once the shell has removed quotes and escapes. For rule 0's name match only: applied
+    to the root rules it would turn quoted text (a commit message holding `find / -name x`) into a live command."""
+    return _ps_escapes(_scan_quotes(text, tool, True), tool)

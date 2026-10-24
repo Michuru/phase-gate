@@ -8,6 +8,7 @@ Run:  python -m pytest test_protected_folder_guard.py -q      (from the folder t
 The fake folder sits two levels below a fake home directory, `<tmp>/home/work/Private Notes`, so the directories above it
 are a drive or filesystem root, the temp path, `home`, `work` and, through `~`, the home directory itself.
 """
+import importlib.util
 import json
 import os
 import shutil
@@ -780,3 +781,146 @@ def test_rule_6_applies_to_powershell_too_and_an_unterminated_heredoc_is_left_al
 def test_ordinary_commands_pass_untouched(fake):
     for tool, cmd in [(BASH, "ls -la"), (BASH, "python -m pytest -q"), (PS, "Get-ChildItem | Select-Object Name")]:
         assert run_hook(tool, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.elsewhere)) is None
+
+
+# ---------------------------------------------------------------- third review (2026-10-24): escaped names, Monitor, mutants
+
+def _above(fake):
+    """The fake work folder (the folder's parent) spelled the way the Bash tool reads it."""
+    return msys(fake.work) if WIN else fake.work.as_posix()
+
+
+ESCAPED_NAMES = {
+    "a Git Bash backslash-escaped space": (BASH, "Private" + BS + " Notes"),
+    "a PowerShell backtick-escaped space": (PS, "Private` Notes"),
+    "a cmd caret-escaped space": (PS, "Private^ Notes"),
+    "a double-quote pair around the space": (BASH, 'Private" "Notes'),
+    "a single-quote pair around the space": (BASH, "Private' 'Notes"),
+}
+
+
+@pytest.mark.parametrize("label", list(ESCAPED_NAMES))
+def test_the_folder_name_with_an_escaped_or_quoted_space_is_denied(fake, label):
+    tool, name = ESCAPED_NAMES[label]
+    for cmd in ("ls %s", "cat %s/x.txt", "ls %s/*", "Get-ChildItem %s", "dir %s"):
+        assert run_hook(tool, cmd % name, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is not None, "not denied: " + cmd % name
+    for tool2, cmd in [(BASH, "ls Private"), (BASH, "ls Notes"), (BASH, "echo Private" + BS + " things"), (PS, "Get-ChildItem Public")]:
+        assert run_hook(tool2, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is None, "wrongly denied: " + cmd
+
+
+DECODED_NAMES = {
+    "Bash ANSI-C quoted space between the words": (BASH, "ls Private$' 'Notes"),
+    "Bash ANSI-C hex space": (BASH, "cat Private$'" + BS + "x20'Notes/x.txt"),
+    "Bash ANSI-C octal space": (BASH, "cat Private$'" + BS + "040'Notes/x.txt"),
+    "Bash ANSI-C unicode space": (BASH, "cat Private$'" + BS + "u0020'Notes/x.txt"),
+    "Bash whole name inside one ANSI-C string": (BASH, "ls $'Private" + BS + "x20Notes'"),
+    "Bash ANSI-C letter in the name": (BASH, "ls $'" + BS + "x50'rivate' 'Notes"),
+    "PowerShell backtick-u space": (PS, "Get-Content Private`u{20}Notes" + BS + "x.txt"),
+    "PowerShell backtick-u letter": (PS, "Get-ChildItem `u{50}rivate` Notes"),
+}
+
+
+@pytest.mark.parametrize("label", list(DECODED_NAMES))
+def test_the_folder_name_spelled_with_a_shell_escape_sequence_is_denied(fake, label):
+    tool, cmd = DECODED_NAMES[label]
+    assert run_hook(tool, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is not None, "not denied: " + cmd
+    assert run_hook("Monitor", cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is not None or tool == PS, "Monitor: " + cmd
+
+
+def test_a_drive_root_spelled_with_an_ansi_c_escape_is_denied(fake):
+    cmd = "find $'" + BS + "x2f'" + _above(fake)[1:] + " -name x"
+    assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env) is not None, "not denied: " + cmd
+
+
+def test_ordinary_escape_sequences_stay_allowed(fake):
+    for tool, cmd in [(BASH, "echo $'a" + BS + "tb'"), (BASH, "printf '%s' $'x'"), (BASH, "cat $'notes.txt'"),
+                      (BASH, "git log --format=$'%h" + BS + "n'"), (BASH, "echo `date`"), (BASH, "echo $'Private' Notes2"),
+                      (PS, "Write-Output `u{41}"), (PS, "Write-Output \"a`tb\""), (PS, "Get-ChildItem `Public")]:
+        assert run_hook(tool, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.elsewhere)) is None, "wrongly denied: " + cmd
+
+
+QUOTE_REMOVED_NAMES = {
+    "a backslash inside a word": "ls P" + BS + "rivate Notes",
+    "an empty single-quote pair inside a word": "ls Pri''vate Notes",
+    "a double-quoted piece inside a word": 'ls Pri"va"te Notes',
+    "a quoted word and a quoted space": "ls \"Pri\"vate' 'Notes",
+    "an escaped space and an empty pair": "ls Pr''ivate" + BS + " Notes",
+}
+
+
+@pytest.mark.parametrize("label", list(QUOTE_REMOVED_NAMES))
+def test_the_folder_name_with_shell_quote_removal_inside_a_word_is_denied(fake, label):
+    cmd = QUOTE_REMOVED_NAMES[label]
+    assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is not None, "not denied: " + cmd
+
+
+def test_an_earlier_dollar_quote_in_a_single_quoted_string_does_not_hide_a_real_escape(fake):
+    """'x$' is a grep anchor, not an ANSI-C opener; the decoder must still find the real $'\\x20' after it."""
+    for cmd in ["grep -n 'x$' a.txt; ls Private$'" + BS + "x20'Notes",
+                "grep 'x$' a.txt 'y$' b.txt && ls Private$' 'Notes",
+                "grep -n 'x$' a.txt; find $'" + BS + "x2f'" + _above(fake)[1:] + " -name x"]:
+        assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.elsewhere)) is not None, "not denied: " + cmd
+
+
+def test_dollar_quote_inside_other_quotes_is_not_decoded_into_a_false_deny(fake):
+    """Bash does not decode $' inside single or double quotes; a command that only holds such text must keep its raw verdict."""
+    cases = [(BASH, "grep -l 'foo$' notes.md 'bar'"), (BASH, "grep -c 'a$' x 'b$' y"), (BASH, "echo \"cost $'5' here\""),
+             (PS, "git commit -m \"fix the `notes` handling\""), (PS, "Write-Output 'a$' 'b'"),
+             (BASH, "git commit -m 'anchor x$ and the folder list'")]
+    if WIN:
+        cases.append((BASH, "grep -l 'foo$' C:" + BS + "notes" + BS + "x.md 'bar'"))
+    for tool, cmd in cases:
+        assert run_hook(tool, cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is None, "wrongly denied: " + cmd
+
+
+def test_a_decode_failure_never_changes_the_raw_verdict(fake, monkeypatch):
+    """The decoded view is an addition: when decoding raises, the raw text is still judged and no error escapes."""
+    spec = importlib.util.spec_from_file_location("pfg_decode_probe", MODULE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    monkeypatch.setattr(mod, "_decode_shell_escapes", lambda text, tool: 1 / 0)
+    assert mod.evaluate(BASH, {"command": "ls Private Notes"}, str(fake.work), "ls Private Notes", ["--config", str(fake.cfg)],
+                        env=fake.env) is not None
+    assert mod.evaluate(BASH, {"command": "git status"}, str(fake.work), "git status", ["--config", str(fake.cfg)],
+                        env=fake.env) is None
+
+
+def test_monitor_is_screened_like_bash(fake):
+    """Monitor starts a shell command in tool_input.command, so every rule that applies to Bash applies to it."""
+    assert run_hook("Monitor", "find %s -name x" % _above(fake), cfg=fake.cfg, env=fake.env) is not None
+    assert run_hook("Monitor", "ls Private" + BS + " Notes", cfg=fake.cfg, env=fake.env, cwd=str(fake.work)) is not None
+    assert run_hook("Monitor", "rm -rf /", cfg=fake.cfg, env=fake.env) is not None
+    for cmd in ("git status", "find %s -maxdepth 1 -name x" % _above(fake), "tail -f build.log"):
+        assert run_hook("Monitor", cmd, cfg=fake.cfg, env=fake.env, cwd=str(fake.elsewhere)) is None, "wrongly denied: " + cmd
+
+
+def test_find_maxdepth_is_a_limit_only_at_0_and_1(fake):
+    for n in ("2", "3", "5", "10"):
+        cmd = "find %s -maxdepth %s -name x" % (_above(fake), n)
+        assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env) is not None, "not denied: " + cmd
+    for n in ("0", "1"):
+        cmd = "find %s -maxdepth %s -name x" % (_above(fake), n)
+        assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env) is None, "wrongly denied: " + cmd
+
+
+def test_cp_with_a_recursive_flag_over_the_folder_is_denied(fake):
+    for flag in ("-r", "-R", "-a", "-ra", "-rf", "-aT"):
+        cmd = "cp %s %s /tmp/dump" % (flag, _above(fake))
+        assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env) is not None, "not denied: " + cmd
+    other = msys(fake.other) if WIN else fake.other.as_posix()
+    for flag in ("-r", "-a"):
+        cmd = "cp %s %s /tmp/dump" % (flag, other)
+        assert run_hook(BASH, cmd, cfg=fake.cfg, env=fake.env) is None, "wrongly denied: " + cmd
+
+
+@windows_only
+def test_grep_and_glob_path_in_the_admin_share_form_is_denied(fake):
+    drive = fake.letter.upper()
+    rest = os.path.splitdrive(str(fake.home))[1].lstrip(BS)
+    other = os.path.splitdrive(str(fake.other))[1].lstrip(BS)
+    for p in (BS * 2 + "localhost" + BS + drive + "$", BS * 2 + "localhost" + BS + drive + "$" + BS + rest,
+              "//localhost/%s$/%s" % (drive, rest.replace(BS, "/"))):
+        assert grep_tool(fake, path=p) is not None, "Grep not denied: " + p
+        assert glob_tool(fake, "**/*.md", path=p) is not None, "Glob not denied: " + p
+    p = BS * 2 + "localhost" + BS + drive + "$" + BS + other
+    assert grep_tool(fake, path=p) is None, "wrongly denied: " + p

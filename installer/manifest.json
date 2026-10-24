@@ -96,19 +96,19 @@
       "files": [
         {
           "path": "standalone/hooks/block-dangerous-commands/block-dangerous-commands.py",
-          "source_blob": "58a7dae85038d038947b2a471746ec79df923ecf",
+          "source_blob": "99a1e2b6319fe78d20a6c509cb3c888e8b6687a4",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/block-dangerous-commands.py"
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/protected_folder_guard.py",
-          "source_blob": "b73b9c5c40622bd2ff0439c901c49da090a8364a",
+          "source_blob": "cc7c0364a99e511d87553c1c152f73aac7c7b328",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/protected_folder_guard.py"
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/test_protected_folder_guard.py",
-          "source_blob": "62062d1b786da86427290f3965f1f2ac46cc615a",
+          "source_blob": "1eea016177dcf7c3f117224fca519b4c9e0d94bd",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/test_protected_folder_guard.py"
         },

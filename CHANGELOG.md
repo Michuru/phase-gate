@@ -7,6 +7,24 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `block-dangerous-commands`, protected-folder option: a folder name spelled the way a shell reads it
+  back was getting through. The name match now accepts an escaped or quoted space (`Private\ Files`,
+  `Private" "Files`, a caret in cmd, a backtick in PowerShell), and the command is judged a second time
+  with Bash ANSI-C strings (`$'...'`, `$'\x20'`) and PowerShell escapes (`` `u{20} ``) decoded, by a scan
+  that tracks which quotes it is inside (a `'x$'` grep anchor cannot hide a later real escape); a third
+  view with the shell's quote removal done (`Pri''vate Files`) is used for the name match only. The
+  original text is judged first and a decoded view can only add a deny. Checked over 45,600 real shell
+  commands with 0 changes to any verdict.
+- The `Monitor` tool starts a shell command, and no hook screened it. The hook now treats a `Monitor`
+  call as `Bash`, and the matcher in `settings.fragment.json` is now `Bash|PowerShell|Grep|Glob|Monitor`.
+- Three checks in the guard's test suite could be removed without a failure (`find -maxdepth N` for
+  any N, the `cp -a`/`-r` marker, the `\\host\X$` admin-share path form); each now has a test that fails
+  without it.
+- Still not caught, and stated in the README: a name built at run time (a variable, `$(printf ...)`,
+  `[char]32`), brace expansion, a wildcard relative to the folder's parent, a root passed through a
+  variable, and a few embedded-script walks.
+
 ## [1.4.0] - 2026-10-24
 
 ### Added

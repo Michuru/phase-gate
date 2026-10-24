@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell|Grep|Glob",
+        "matcher": "Bash|PowerShell|Grep|Glob|Monitor",
         "hooks": [
           {
             "type": "command",

@@ -56,6 +56,8 @@ except Exception:
     sys.exit(0)
 
 tool_name = data.get("tool_name")
+if tool_name == "Monitor":      # Monitor starts a shell command (tool_input.command) the way Bash does: screen it the same way
+    tool_name = "Bash"
 if tool_name not in ("Bash", "PowerShell", "Grep", "Glob"):
     sys.exit(0)
 

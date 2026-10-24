@@ -34,8 +34,9 @@ The hook is two scripts that sit side by side, and the test module is optional.
    `.claude/hooks/` in your project (the hook loads the module from its own folder).
 2. Merge the contents of `settings.fragment.json` into your `.claude/settings.json`'s `hooks`
    key (or create that key if you don't have one yet). The matcher is
-   `Bash|PowerShell|Grep|Glob`: the last two are what let the protected-folder option see
-   searches that never run a shell command.
+   `Bash|PowerShell|Grep|Glob|Monitor`: Grep and Glob are what let the protected-folder option
+   see searches that never run a shell command, and Monitor runs a shell command like Bash does
+   (the hook screens it the same way).
 3. Restart Claude Code, or start a new session, for the hook to take effect.
 
 The fragment's command is `python3 "..." || python "..."`. That form runs under Git Bash and
@@ -82,7 +83,7 @@ project-level install cannot do:
    ```
 
 2. This hook never sees the Read, Edit or Write tools (it is matched on Bash, PowerShell,
-   Grep and Glob). Close those with a permissions rule in the same settings file, one per
+   Grep, Glob and Monitor). Close those with a permissions rule in the same settings file, one per
    protected folder, using the `//` absolute-path form:
 
    ```json
@@ -94,7 +95,13 @@ project-level install cannot do:
 **What it catches.**
 
 - A command, Grep or Glob call that names the folder: its name as a whole word, in any
-  separator style (`Private Files`, `private_files`, `private-files`).
+  separator style (`Private Files`, `private_files`, `private-files`), and the spellings a shell
+  turns back into that name: an escaped or quoted space (`Private\ Files`, `Private" "Files`), a
+  Bash ANSI-C string (`Private$' 'Files`, `$'Private\x20Files'`), a PowerShell escape
+  (`` Private`u{20}Files ``) and quote removal inside a word (`Pri''vate Files`). The command is
+  also judged with those escapes decoded, so a drive root spelled that way is caught too. This is
+  a text match: a name built at run time (a variable, `$(printf ...)`, `[char]32`), brace
+  expansion and a wildcard relative to the folder's parent are not caught.
 - A search that starts above the folder and recurses into it without naming it: `find`, `rg`,
   `fd`, `tree`, `grep -r`, `ls -R`, `cp -r`, `tar`, `robocopy`, `Get-ChildItem -Recurse`,
   `dir /s`, `findstr /s`, `os.walk` and similar, started at the drive root, at any directory
