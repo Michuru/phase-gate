@@ -25,6 +25,15 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   `[char]32`), brace expansion, a wildcard relative to the folder's parent, a root passed through a
   variable, and a few embedded-script walks.
 
+### Decided, not ported
+Reviewed and deliberately left in the source repo, with the manifest hashes re-pinned so
+`drift_check.py` no longer counts them as drifted; the next drift is measured from here.
+- `initiate`, `build`, `execution-gate`, `implement-queue`, `ship` and `spec`'s `backlog-the-design.md`:
+  the source repo's one "Ready to implement" list, a route verdict recorded by the gate, and a teams
+  runbook for unattended builds. The runbook depends on the source repo's agent boundary guard (a hook
+  that is not exported) and on a window started with an experimental variable, and a teams run is
+  unproven. Revisit after a second teams run.
+
 ## [1.4.0] - 2026-10-24
 
 ### Added

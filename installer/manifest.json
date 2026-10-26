@@ -152,7 +152,7 @@
       "files": [
         {
           "path": "process/skills/initiate/SKILL.md",
-          "source_blob": "a5439e2450b147c7050e99a72aaf07db77dd0e9e",
+          "source_blob": "2e4713999bd6503e4a71b8a9d37b476f17f391c6",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/initiate/SKILL.md"
         }
@@ -197,7 +197,7 @@
       "files": [
         {
           "path": "process/skills/build/SKILL.md",
-          "source_blob": "274c4ecf192445d1493cc7b781e5ab41cbf316f2",
+          "source_blob": "b276c31cbae7955f4f46fd7d4c165087a0a906b0",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/build/SKILL.md"
         }
@@ -223,7 +223,7 @@
       "files": [
         {
           "path": "process/skills/ship/SKILL.md",
-          "source_blob": "3749d2d694308836df6992fe6c6c796c07cfb648",
+          "source_blob": "7d875511bb3dc1e6b56dc6b0ee2f6b3bdc083c9b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/ship/SKILL.md"
         }
@@ -304,7 +304,7 @@
         },
         {
           "path": "process/skills/spec/references/backlog-the-design.md",
-          "source_blob": "85f00ca91ce63faef6332fe3537a141670b3936a",
+          "source_blob": "0a57741464a91d76a8af6b494c529247b2717936",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/references/backlog-the-design.md"
         }
@@ -330,7 +330,7 @@
       "files": [
         {
           "path": "process/skills/execution-gate/SKILL.md",
-          "source_blob": "c9a54f7b37d13ea74864b03509801d3ff5501414",
+          "source_blob": "6a786647723c23a85eddac9656750d60f73900ad",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/execution-gate/SKILL.md"
         }
@@ -492,7 +492,7 @@
       "files": [
         {
           "path": "process/skills/implement-queue/SKILL.md",
-          "source_blob": "f06e2c594bf27f5573f99c53cdf417031c98548b",
+          "source_blob": "d66147c52168a67bc85fcfc581fe50662bfaaedf",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/implement-queue/SKILL.md"
         },
