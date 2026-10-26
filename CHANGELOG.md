@@ -33,6 +33,8 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
   runbook for unattended builds. The runbook depends on the source repo's agent boundary guard (a hook
   that is not exported) and on a window started with an experimental variable, and a teams run is
   unproven. Revisit after a second teams run.
+- `backlog`: List mode's second script call (`backlog_view.py tags`, the "Waiting for a tag" list). The
+  script it reads is not exported, same reason as the chain-mode and viewer notes under 1.4.0.
 
 ## [1.4.0] - 2026-10-24
 
