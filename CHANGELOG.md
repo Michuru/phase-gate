@@ -35,6 +35,9 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
   unproven. Revisit after a second teams run.
 - `backlog`: List mode's second script call (`backlog_view.py tags`, the "Waiting for a tag" list). The
   script it reads is not exported, same reason as the chain-mode and viewer notes under 1.4.0.
+- `end-task`: docs-sync question 9, the stale-claim sweep. It runs `stale_claim_sweep.py`, a script of the
+  source repo that is not exported, and cites that repo's own `MISTAKES.md`. Revisit if the sweep is
+  generalized and exported.
 
 ## [1.4.0] - 2026-10-24
 
