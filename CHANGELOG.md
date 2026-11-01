@@ -25,6 +25,11 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   `[char]32`), brace expansion, a wildcard relative to the folder's parent, a root passed through a
   variable, and a few embedded-script walks.
 
+### Changed
+- `initiate`, `ship` and `consolidate-docs`: the frontmatter `description` is shorter (the same triggers,
+  fewer words, so the always-loaded skill listing costs less). Ported from the source repo's change;
+  `consolidate-docs` names "a doc-size threshold hook" rather than the source repo's own script.
+
 ### Decided, not ported
 Reviewed and deliberately left in the source repo, with the manifest hashes re-pinned so
 `drift_check.py` no longer counts them as drifted; the next drift is measured from here.

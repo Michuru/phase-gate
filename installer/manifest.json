@@ -152,7 +152,7 @@
       "files": [
         {
           "path": "process/skills/initiate/SKILL.md",
-          "source_blob": "2e4713999bd6503e4a71b8a9d37b476f17f391c6",
+          "source_blob": "18d05887088c859d1bd9d99ceca8cbfa6e2e167d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/initiate/SKILL.md"
         }
@@ -223,7 +223,7 @@
       "files": [
         {
           "path": "process/skills/ship/SKILL.md",
-          "source_blob": "7d875511bb3dc1e6b56dc6b0ee2f6b3bdc083c9b",
+          "source_blob": "94623b3a7e6cf95678ee6253db182f2bddec5005",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/ship/SKILL.md"
         }
@@ -236,7 +236,7 @@
       "files": [
         {
           "path": "process/skills/consolidate-docs/SKILL.md",
-          "source_blob": "7052507c8a1ba82e70ba71452449ed2b838e6698",
+          "source_blob": "3c41050a5209ef6115e9e85ea0c16ef887d03d18",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/consolidate-docs/SKILL.md"
         }

@@ -1,6 +1,6 @@
 ---
 name: initiate
-description: Session-start ranker — surveys the project's own tracked state (a live handoff primer, the BACKLOG.md implement-queue checklist, every Design Docs/ file's own Kind/Status record), sorts everything by actionability instead of stopping at the first matching signal, and closes by naming the correct next command for the top item. Use when the user types /initiate, asks "what's going on," "what should I work on," "what's in flight," or starts a session wanting to pick up wherever things left off.
+description: "Session-start ranker: surveys the project's tracked state (live handoff primer, BACKLOG.md implement-queue checklist, Design Docs/ Kind/Status records), sorts by actionability, and names the correct next command for the top item. Use when the user types /initiate, asks \"what's going on,\" \"what should I work on,\" \"what's in flight,\" or wants to pick up where things left off."
 ---
 
 # Initiate: the session-start ranker

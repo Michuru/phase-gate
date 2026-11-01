@@ -1,6 +1,6 @@
 ---
 name: consolidate-docs
-description: Periodic maintenance pass covering three related but distinct targets — keeps CLAUDE.md lean (sweeps sections that have grown into dated, narrative bug-fix history into companion NOTES.md files, plus a staleness pass that deletes rules no longer true), prunes MISTAKES.md by archiving entries already promoted into CLAUDE.md, fully superseded, or aged out with zero recurrence, and prunes an overgrown tool NOTES.md by archiving closed investigations no longer needed to understand current behavior. Use when CLAUDE.md/MISTAKES.md/a tool's NOTES.md feels like it's grown noticeably since the last pass, the user asks to clean up/consolidate/trim the docs, or a doc-size threshold hook has fired.
+description: "Periodic maintenance pass: keeps CLAUDE.md lean (moves narrative history to NOTES.md, deletes stale rules), prunes MISTAKES.md and overgrown tool NOTES.md by archiving promoted, superseded or closed entries. Use when those files have grown, the user asks to clean up/consolidate/trim the docs, or a doc-size threshold hook has fired."
 ---
 
 # Consolidate project docs
