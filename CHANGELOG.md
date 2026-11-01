@@ -21,11 +21,18 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 - Three checks in the guard's test suite could be removed without a failure (`find -maxdepth N` for
   any N, the `cp -a`/`-r` marker, the `\\host\X$` admin-share path form); each now has a test that fails
   without it.
-- Still not caught, and stated in the README: a name built at run time (a variable, `$(printf ...)`,
-  `[char]32`), brace expansion, a wildcard relative to the folder's parent, a root passed through a
-  variable, and a few embedded-script walks.
+- Still not caught, and stated in the README: a name built at run time (`$(printf ...)`, `[char]32`, a
+  variable holding anything other than plain text), brace expansion, a wildcard relative to the
+  folder's parent, and a few embedded-script walks.
 
 ### Changed
+- `block-dangerous-commands`, protected-folder option: a root held in a variable, a loop variable or a
+  PowerShell splat is now read where it is used, a listing of a root followed by a descent into its
+  entries is caught, an embedded recursive call (`os.walk`, `glob(..., recursive=True)`) is judged
+  against the folder, and a drive alias or junction whose target, once a `..` climb is resolved, sits
+  above the folder is caught. Variable tracking is capped (plain text only, short values, one expansion
+  budget per command) and a child-process time budget applies. Ported byte for byte from the source
+  repo's guard and its test; the export's suite passes (420 passed, 13 skipped).
 - `initiate`, `ship` and `consolidate-docs`: the frontmatter `description` is shorter (the same triggers,
   fewer words, so the always-loaded skill listing costs less). Ported from the source repo's change;
   `consolidate-docs` names "a doc-size threshold hook" rather than the source repo's own script.
@@ -43,6 +50,21 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
 - `end-task`: docs-sync question 9, the stale-claim sweep. It runs `stale_claim_sweep.py`, a script of the
   source repo that is not exported, and cites that repo's own `MISTAKES.md`. Revisit if the sweep is
   generalized and exported.
+- `build`, `verify`, `spec`'s `design-review-gate.md`, `block-dangerous-commands.py` (rule 9),
+  `execution-gate`, `local_delegate_runner.py` and `statusline.py`: the source repo's ration-mode work
+  (a tier check, junior QA-test drafting, a protected first review pass, a fix-check rule, the owner's
+  one-shot override and the guard rule that keeps a session from granting it). It depends on ration
+  scripts that are not exported and on that repo's local-model lane. Decided by the owner, 2026-10-31
+  (and 2026-10-30 for the last three).
+- `end-task`: the checkpoint depth, `references/final-route.md` and the survey's checkpoint marker. They
+  need `end_task_survey.py` changes that are not exported. Revisit once that script is exported.
+- `handoff` and `handoff_scan.py`: `/handoff from-session` and the `**Session:**` primer line. The
+  feature needs `session_digest.py` and a transcript reader that call scripts of the source repo, and it
+  has not been used live yet. Revisit after its first live use.
+- `backlog`: List mode's "Waiting for a tag" wording grew again (repos with only docs or CI commits left
+  off, the `next: /release ...` line). Same reason as the 2026-10-30 entry above.
+- `code-reviewer`: the source repo's generic step 4 test command. The export's step already reads the
+  resolved `test_command` from the install receipt, so nothing was ported; the hash is re-pinned.
 
 ## [1.4.0] - 2026-10-24
 

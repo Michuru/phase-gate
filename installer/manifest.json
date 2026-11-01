@@ -96,19 +96,19 @@
       "files": [
         {
           "path": "standalone/hooks/block-dangerous-commands/block-dangerous-commands.py",
-          "source_blob": "99a1e2b6319fe78d20a6c509cb3c888e8b6687a4",
+          "source_blob": "99950137f9ada2ba34f29818cc4b74394d84b325",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/block-dangerous-commands.py"
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/protected_folder_guard.py",
-          "source_blob": "cc7c0364a99e511d87553c1c152f73aac7c7b328",
+          "source_blob": "b871058fad13c8b864870471cf17c2b795773479",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/protected_folder_guard.py"
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/test_protected_folder_guard.py",
-          "source_blob": "1eea016177dcf7c3f117224fca519b4c9e0d94bd",
+          "source_blob": "2fea2b3480a22643c53cfe7e9a95e962d5c5dbc1",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/test_protected_folder_guard.py"
         },
@@ -139,7 +139,7 @@
       "files": [
         {
           "path": "process/agents/code-reviewer.md",
-          "source_blob": "850260aea749a44ff749550517c2159d88f8fe317fefdd6f07e37cad4d3262cc",
+          "source_blob": "ff5a8fc6a02145cd68fe3d2f70b2e92025ae33d8d0483a16daaf20c00addee88",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/code-reviewer.md"
         }
@@ -178,7 +178,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "419b17dce68598040a7b52b9ec50d9f8cca3ea91",
+          "source_blob": "77a12ef8d1e9c47b39ad7e90c8f4f7fd0f88634a",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         },
@@ -197,7 +197,7 @@
       "files": [
         {
           "path": "process/skills/build/SKILL.md",
-          "source_blob": "b276c31cbae7955f4f46fd7d4c165087a0a906b0",
+          "source_blob": "fa2783aceb4d877c76d0add11ae515db4490f995",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/build/SKILL.md"
         }
@@ -210,7 +210,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "5b392ee5a35f89dbbb1c85a2b2583da4b80b332a",
+          "source_blob": "f0b95aee6b8df3e424c4299b40b70f43fe2cafe4",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }
@@ -286,7 +286,7 @@
         },
         {
           "path": "process/skills/spec/references/design-review-gate.md",
-          "source_blob": "5f86db17f7f60ae09b60507586f6c08c1b68ecae",
+          "source_blob": "ce7ca24fc354fa4c1a26461c6d73959810a77fda",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/references/design-review-gate.md"
         },
@@ -330,7 +330,7 @@
       "files": [
         {
           "path": "process/skills/execution-gate/SKILL.md",
-          "source_blob": "6a786647723c23a85eddac9656750d60f73900ad",
+          "source_blob": "a605560ad0ffd209375bc934d568a6bbbcaa8264",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/execution-gate/SKILL.md"
         }
@@ -343,7 +343,7 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "a5aebdf5a040399ddb11c30cccdfbbca36e87f96",
+          "source_blob": "1187112a76de8637d887ebec9555a14aefff09da",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         },
@@ -355,7 +355,7 @@
         },
         {
           "path": "process/skills/handoff/scripts/handoff_scan.py",
-          "source_blob": "63ce5fd23a987582cbe9974e99740df94d0ff077",
+          "source_blob": "e715064c86216e6f0dc0a1d030ad76c4076fb850",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/scripts/handoff_scan.py"
         },
@@ -511,7 +511,7 @@
       "files": [
         {
           "path": "process/local-delegate/local_delegate_runner.py",
-          "source_blob": "711b717542fd5e2592540c687ce4c6f003ce4300",
+          "source_blob": "bd383a37ca42fd8330f76177a42d492a0abd3b0f",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/local_delegate_runner.py"
         },
@@ -580,7 +580,7 @@
       "files": [
         {
           "path": "standalone/statusline/statusline.py",
-          "source_blob": "11d0a9d200421d7ae4782ef805166df63dba641c",
+          "source_blob": "868b9826ffe9b1fb5e5ab915ea1a5e29a5017347",
           "source_hash_type": "git-blob",
           "source_path": ".claude/statusline.py"
         },
@@ -605,7 +605,7 @@
       "files": [
         {
           "path": "process/skills/backlog/SKILL.md",
-          "source_blob": "ca8ec2ce61d71e3d1280fca5515c84239ece80fa",
+          "source_blob": "05250ccf4fc79e8afd3f23793c110b0ae65a854d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/backlog/SKILL.md"
         }

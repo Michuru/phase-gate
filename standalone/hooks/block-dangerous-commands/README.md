@@ -100,8 +100,9 @@ project-level install cannot do:
   Bash ANSI-C string (`Private$' 'Files`, `$'Private\x20Files'`), a PowerShell escape
   (`` Private`u{20}Files ``) and quote removal inside a word (`Pri''vate Files`). The command is
   also judged with those escapes decoded, so a drive root spelled that way is caught too. This is
-  a text match: a name built at run time (a variable, `$(printf ...)`, `[char]32`), brace
-  expansion and a wildcard relative to the folder's parent are not caught.
+  a text match: a name built at run time (`$(printf ...)`, `[char]32`, a variable that holds
+  anything other than plain text), brace expansion and a wildcard relative to the folder's
+  parent are not caught.
 - A search that starts above the folder and recurses into it without naming it: `find`, `rg`,
   `fd`, `tree`, `grep -r`, `ls -R`, `cp -r`, `tar`, `robocopy`, `Get-ChildItem -Recurse`,
   `dir /s`, `findstr /s`, `os.walk` and similar, started at the drive root, at any directory
@@ -126,6 +127,11 @@ project-level install cannot do:
   and junctions or symlinks made with `mklink` or `New-Item`), and any PowerShell
   `-EncodedCommand`, which is denied outright while a folder is protected because it hides
   what it runs.
+- A root held in a variable, a loop variable or a PowerShell splat, read where it is used
+  (`d=J:/; find $d ...`, `for d in $(ls J:/)`, `foreach ($d in Get-ChildItem J:\)`), and a list of a
+  root's entries followed by a descent into them. A variable is only remembered when its value is
+  plain text (a path or a list of paths) and short, and one expansion budget covers a whole
+  command, so a value that grows as it is built (`b1=$b0$b0 ...`) is refused, not expanded.
 
 **A config that is wrong denies, never switches the guard off.** If the file named by
 `--config` is missing, or any file the default search finds does not parse, the guard

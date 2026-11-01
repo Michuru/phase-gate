@@ -924,3 +924,390 @@ def test_grep_and_glob_path_in_the_admin_share_form_is_denied(fake):
         assert glob_tool(fake, "**/*.md", path=p) is not None, "Glob not denied: " + p
     p = BS * 2 + "localhost" + BS + drive + "$" + BS + other
     assert grep_tool(fake, path=p) is None, "wrongly denied: " + p
+
+
+# ---------------------------------------------------------------- fourth round (2026-10-25): the third review's findings 3 to 7
+# Spellings used in the cases below: @A@ is the fake work folder (the folder's parent) the way the Bash tool reads it, @AP@ with
+# forward slashes (what a Python or Node string holds), @AN@ native (what PowerShell is given); @O@ @OP@ @ON@ are the same for the
+# unrelated folder beside it, which must stay allowed.
+
+def _spell(fake, cmd):
+    work, other = fake.work, fake.other
+    pairs = {"@A@": _above(fake), "@AP@": work.as_posix(), "@AN@": str(work),
+             "@O@": msys(other) if WIN else other.as_posix(), "@OP@": other.as_posix(), "@ON@": str(other)}
+    for k, v in pairs.items():
+        cmd = cmd.replace(k, v)
+    return cmd
+
+
+def _denied(fake, tool, cmd, cwd=None):
+    return run_hook(tool, _spell(fake, cmd), cfg=fake.cfg, env=fake.env, cwd=str(cwd or fake.elsewhere))
+
+
+# finding 3: an if/while/until statement that holds a brace is a Bash condition here, not a PowerShell script block
+BRACE_DENY = [
+    (BASH, "if find @A@ -name '{x}'; then echo hit; fi"),
+    (BASH, "if find @A@ -name x -exec ls {} +; then echo hit; fi"),
+    (BASH, "while find @A@ -name '*.{pdf,docx}'; do break; done"),
+    (BASH, "until find @A@ -iname '*.{pdf,docx}' -print -quit | grep -q .; do break; done"),
+]
+BRACE_ALLOW = [
+    (BASH, "if [ -d @A@ ]; then echo hit; fi"),
+    (BASH, "if find @O@ -name '{x}'; then echo hit; fi"),
+    (BASH, "if find @O@ -name x -exec ls {} +; then echo hit; fi"),
+    (PS, "if (Test-Path '@AN@') { Get-ChildItem '@ON@' -Recurse }"),
+    (PS, "foreach ($d in '@ON@') { Get-ChildItem $d -Recurse }"),
+]
+
+
+@pytest.mark.parametrize("tool,cmd", BRACE_DENY, ids=[c for _, c in BRACE_DENY])
+def test_a_brace_in_an_if_or_while_condition_does_not_hide_a_recursion_over_the_folders_parent(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is not None, "not denied: " + _spell(fake, cmd)
+
+
+@pytest.mark.parametrize("tool,cmd", BRACE_ALLOW, ids=[c for _, c in BRACE_ALLOW])
+def test_a_brace_in_a_condition_stays_allowed_when_nothing_walks_into_the_folder(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is None, "wrongly denied: " + _spell(fake, cmd)
+
+
+# finding 4: a root held in a variable, a loop variable or a splat, then recursed
+VARIABLE_DENY = [
+    (PS, "$p='@AN@'; Get-ChildItem $p -Recurse"),
+    (PS, "$p = \"@AN@\"; Get-ChildItem -Path $p -Recurse"),
+    (PS, "$p='@AN@'" + NL + "Get-ChildItem -Path $p -Recurse"),
+    (PS, "$a=@{Path='@AN@';Recurse=$true}; Get-ChildItem @a"),
+    (PS, "$p='@AN@'; $q=$p; Get-ChildItem $q -Recurse"),
+    (PS, "foreach ($d in '@AN@') { Get-ChildItem $d -Recurse }"),
+    (BASH, "d=@A@; find $d -name x"),
+    (BASH, "export d=@A@; find \"$d\" -name x"),
+    (BASH, "d=@A@; e=$d; find ${e} -name x"),
+    (BASH, "for d in @A@; do find $d -name x; done"),
+    (BASH, "d=@A@; cd $d; find . -name x"),
+    # QA of the fourth round: a list variable, a value set from itself, Bash case, ${d%/}, assignments in other places
+    (PS, "$dirs = '@AN@'; foreach ($d in $dirs) { Get-ChildItem $d -Recurse }"),
+    (PS, "$dirs = '@AN@','@ON@'; foreach ($d in $dirs) { Get-ChildItem $d -Recurse }"),
+    (PS, "$dirs = @('@AN@'); foreach ($d in $dirs) { Get-ChildItem $d -Recurse }"),
+    (PS, "foreach ($d in @('@AN@')) { Get-ChildItem $d -Recurse }"),
+    (PS, "$all = @(); $all += Get-ChildItem '@AN@' -Recurse"),
+    (PS, "$p = '@AN@'; $p += ''; Get-ChildItem $p -Recurse"),
+    # second QA pass: a comma list with spaces, foreach over itself, the loop variable's old value, quoted pieces, appends, typed and scoped names
+    (PS, "$dirs = '@ON@', '@AN@'; foreach ($d in $dirs) { Get-ChildItem $d -Recurse }"),
+    (PS, "$d='@AN@'; foreach ($d in $d) { Get-ChildItem $d -Recurse }"),
+    (PS, "$d='@ON@'; foreach ($d in '@AN@') { Get-ChildItem $d -Recurse }"),
+    (PS, "[string]$p = '@AN@'; Get-ChildItem $p -Recurse"),
+    (PS, "$script:p = '@AN@'; Get-ChildItem $script:p -Recurse"),
+    (BASH, "d=\"@A@\"/; find $d -name x"),
+    (BASH, "d='@A@'/; find $d -name x"),
+    (BASH, "d=@A@; d+=''; find $d -name x"),
+    (BASH, "d=@A@; (d=@O@); find $d -name x"),
+    (PS, "$p='@AN@'; $p = \"$p\"; Get-ChildItem $p -Recurse"),
+    (PS, "$p='@AN@'; $p = $p; Get-ChildItem $p -Recurse"),
+    (PS, "$env:P = '@AN@'; Get-ChildItem $env:P -Recurse"),
+    (BASH, "d=@A@; for d in $d; do find $d -name x; done"),
+    (BASH, "d=@A@; D=@O@; find $d -name x"),
+    (BASH, "d=@A@; find ${d%/} -name x"),
+    (BASH, "d=@A@; find \"${d:-/tmp}\" -name x"),
+    (BASH, "d=@A@ e=1; find $d -name x"),
+    (BASH, "if true; then d=@A@; fi; find $d -name x"),
+    (BASH, "for i in 1; do d=@A@; done; find $d -name x"),
+    (BASH, "d=@A@ # a note" + NL + "find $d -name x"),
+]
+VARIABLE_ALLOW = [
+    (PS, "$p='@ON@'; Get-ChildItem $p -Recurse"),
+    (PS, "$p='@AN@'; Get-ChildItem $p -Directory"),
+    (PS, "$p='@AN@'; Write-Output $p"),
+    (PS, "$p='@AN@'; $p='@ON@'; Get-ChildItem $p -Recurse"),
+    (PS, "foreach ($d in '@ON@') { Get-ChildItem $d -Recurse }"),
+    (BASH, "d=@O@; find $d -name x"),
+    (BASH, "d=@A@; echo $d"),
+    (BASH, "d=@A@; d=@O@; find $d -name x"),
+    (BASH, "for d in @O@; do find $d -name x; done"),
+    (BASH, "d=@A@; ls $d"),
+    (BASH, "D=@A@; d=@O@; find $d -name x"),
+    (BASH, "d=@A@; d=$(mktemp -d); find $d -name x"),
+    (BASH, "d=@A@; unset d; find $d -name x"),
+    (PS, "$ds = Get-ChildItem '@ON@'; foreach ($d in $ds) { Get-ChildItem $d.FullName }"),
+    (PS, "$dirs = '@ON@'; foreach ($d in $dirs) { Get-ChildItem $d -Recurse }"),
+    (PS, "$d='@AN@'; foreach ($d in '@ON@') { Get-ChildItem $d -Recurse }"),
+    (BASH, "n=$(ls @A@ | wc -l); for i in $n; do echo $i; done"),
+    (PS, "$p = '@AN@'; $p = '@ON@'; $p += '/Public'; Get-ChildItem $p -Recurse"),
+    (PS, "$p = '@AN@'; Remove-Variable p; Get-ChildItem $p -Recurse"),
+    (PS, "$p = '@AN@'; Remove-Variable q,p; Get-ChildItem $p -Recurse"),
+    (BASH, "ls @A@ | wc -l | while read n; do echo $n; done"),
+    (PS, "$p = '@AN@'; $p += 'x'; $p = '@ON@'; Get-ChildItem $p -Recurse"),
+]
+
+
+@pytest.mark.parametrize("tool,cmd", VARIABLE_DENY, ids=[c.replace(NL, " / ") for _, c in VARIABLE_DENY])
+def test_a_root_held_in_a_variable_is_read_when_it_is_recursed_in_the_next_statement(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is not None, "not denied: " + _spell(fake, cmd)
+
+
+@pytest.mark.parametrize("tool,cmd", VARIABLE_ALLOW, ids=[c for _, c in VARIABLE_ALLOW])
+def test_a_variable_that_does_not_hold_a_root_or_is_not_recursed_stays_allowed(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is None, "wrongly denied: " + _spell(fake, cmd)
+
+
+# finding 5: recursive calls inside embedded scripts
+EMBEDDED_DENY = [
+    (BASH, "python -c \"import os; [print(r) for r in os.fwalk('@AP@')]\""),
+    (BASH, "python -c \"from pathlib import Path; [print(p) for p in Path('@AP@').walk()]\""),
+    (BASH, "python -c \"import glob; print(glob.glob('@AP@/**', recursive=True))\""),
+    (BASH, "python -c \"import glob; g = glob.glob('@AP@/**', recursive=True)\""),
+    (BASH, "node -e \"require('fs').readdir('@AP@',{recursive:true},(e,f)=>console.log(f))\""),
+    (BASH, "node -e \"console.log(require('fs').globSync('**',{cwd:'@AP@'}))\""),
+    (PS, "[IO.Directory]::GetFiles('@AN@','*',1)"),
+    (PS, "(New-Object IO.DirectoryInfo '@AN@').EnumerateFiles('*',1)"),
+    (BASH, "python -c \"from pathlib import Path; last = Path('@AP@'); print(list(last.walk()))\""),
+    (PS, "[IO.Directory]::GetFiles('@AN@','*',[IO.EnumerationOptions]@{RecurseSubdirectories=$true})"),
+    (PS, "[IO.Directory]::EnumerateFiles('@AN@','*',[IO.SearchOption]::AllDirectories)"),
+]
+EMBEDDED_ALLOW = [
+    (BASH, "python -c \"import os; [print(r) for r in os.fwalk('@OP@')]\""),
+    (BASH, "python -c \"import glob; print(glob.glob('@OP@/**', recursive=True))\""),
+    (BASH, "python -c \"import os; print(os.listdir('@AP@'))\""),
+    (BASH, "python -c \"import ast; print(os.path.isdir('@AP@'), list(ast.walk(ast.parse('1'))))\""),
+    (BASH, "python -c \"import glob; print(glob.glob('@AP@/*.md'))\""),
+    (BASH, "node -e \"console.log(require('fs').readdirSync('@AP@'))\""),
+    (BASH, "node -e \"console.log(require('fs').globSync('**',{cwd:'@OP@'}))\""),
+    (PS, "[IO.Directory]::GetFiles('@AN@','*',0)"),
+    (PS, "[IO.Directory]::GetFiles('@ON@','*',1)"),
+]
+
+
+@pytest.mark.parametrize("tool,cmd", EMBEDDED_DENY, ids=[c for _, c in EMBEDDED_DENY])
+def test_a_recursive_call_inside_an_embedded_script_over_the_folders_parent_is_denied(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is not None, "not denied: " + _spell(fake, cmd)
+
+
+@pytest.mark.parametrize("tool,cmd", EMBEDDED_ALLOW, ids=[c for _, c in EMBEDDED_ALLOW])
+def test_an_embedded_script_that_does_not_recurse_over_the_folders_parent_stays_allowed(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is None, "wrongly denied: " + _spell(fake, cmd)
+
+
+# finding 6: list the parent, then open each entry
+LIST_THEN_DESCEND_DENY = [
+    (BASH, "find @A@ -maxdepth 1 | xargs ls"),
+    (BASH, "find @A@ -maxdepth 1 -type d | while read d; do cat \"$d/x\"; done"),
+    (BASH, "ls @A@ | while read d; do ls \"@A@/$d\"; done"),
+    (BASH, "for d in $(ls @A@); do ls \"@A@/$d\"; done"),
+    (BASH, "for d in `ls @A@`; do ls \"@A@/$d\"; done"),
+    (PS, "foreach ($d in Get-ChildItem '@AN@' -Directory) { Get-ChildItem $d.FullName }"),
+    (PS, "foreach ($d in (Get-ChildItem '@AN@')) { Get-Content $d.FullName }"),
+    (PS, "$ds = Get-ChildItem '@AN@' -Directory; foreach ($d in $ds) { Get-ChildItem $d.FullName }"),
+    (BASH, "ds=$(ls @A@); for d in $ds; do ls \"@A@/$d\"; done"),
+    # third QA pass: a loop after then/do, a backtick-newline in Bash, a loop in a group after the listing
+    (BASH, "if true; then for d in $(ls @A@); do ls \"@A@/$d\"; done; fi"),
+    (BASH, "while true; do for d in $(ls @A@); do cat \"@A@/$d/x\"; done; done"),
+    (BASH, "x=`ls @A@`" + NL + "for d in $x; do ls \"@A@/$d\"; done"),
+    (BASH, "for d in `ls @A@`" + NL + "do ls \"@A@/$d\"" + NL + "done"),
+    (BASH, "ls @A@ | (while read d; do cat \"@A@/$d\"; done)"),
+    (BASH, "ls @A@ | { while read d; do cat \"@A@/$d\"; done; }"),
+]
+LIST_THEN_DESCEND_ALLOW = [
+    (BASH, "ls @A@ | head -3"),
+    (BASH, "find @A@ -maxdepth 1 | sort"),
+    (BASH, "ls @A@ | wc -l"),
+    (BASH, "ls @A@ | xargs echo"),
+    (BASH, "for d in $(ls @A@ | wc -l); do echo $d; done"),
+    (PS, "foreach ($d in (Get-ChildItem '@AN@' | Measure-Object)) { Write-Output $d.Count }"),
+    (BASH, "ls @O@ | while read d; do ls \"@O@/$d\"; done"),
+    (BASH, "for d in $(ls @O@); do ls \"@O@/$d\"; done"),
+    (PS, "foreach ($d in Get-ChildItem '@ON@' -Directory) { Get-ChildItem $d.FullName }"),
+    (PS, "Get-ChildItem '@AN@' -Directory | Select-Object Name"),
+]
+
+
+@pytest.mark.parametrize("tool,cmd", LIST_THEN_DESCEND_DENY, ids=[c for _, c in LIST_THEN_DESCEND_DENY])
+def test_listing_the_folders_parent_and_then_opening_each_entry_is_denied(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is not None, "not denied: " + _spell(fake, cmd)
+
+
+@pytest.mark.parametrize("tool,cmd", LIST_THEN_DESCEND_ALLOW, ids=[c for _, c in LIST_THEN_DESCEND_ALLOW])
+def test_a_names_only_listing_and_other_folders_entries_stay_allowed(fake, tool, cmd):
+    assert _denied(fake, tool, cmd) is None, "wrongly denied: " + _spell(fake, cmd)
+
+
+# finding 7: a drive alias aimed at a folder above the protected one, written with a .. climb or a relative target
+ALIAS_DENY = [
+    (PS, "subst X: @AN@" + BS + "..", None),
+    (PS, "New-PSDrive -Name X -PSProvider FileSystem -Root @AN@" + BS + "..", None),
+    (PS, "cmd /c mklink /J C:" + BS + "tmp" + BS + "q @AN@" + BS + "..", None),
+    (PS, "New-Item -ItemType Junction -Path C:" + BS + "tmp" + BS + "q -Target @AN@" + BS + "..", None),
+    (PS, "subst X: .", "work"),
+    (PS, "New-Item -ItemType SymbolicLink -Path C:" + BS + "tmp" + BS + "q -Target ..", "work"),
+]
+ALIAS_ALLOW = [
+    (PS, "subst X: @ON@", None),
+    (PS, "subst X: .", "other"),
+    (BASH, "git grep mklink -- ..", "other"),
+    (BASH, "git grep -n subst -- .", "work"),
+    (PS, "New-PSDrive -Name X -PSProvider FileSystem -Root @ON@", None),
+    (PS, "cmd /c mklink /J C:" + BS + "tmp" + BS + "q @ON@", None),
+]
+
+
+def _alias_cwd(fake, which):
+    return {None: fake.elsewhere, "work": fake.work, "other": fake.other}[which]
+
+
+@pytest.mark.parametrize("tool,cmd,cwd", ALIAS_DENY, ids=[c for _, c, _ in ALIAS_DENY])
+def test_a_drive_alias_or_junction_aimed_above_the_folder_is_denied_however_the_target_is_spelled(fake, tool, cmd, cwd):
+    assert _denied(fake, tool, cmd, cwd=_alias_cwd(fake, cwd)) is not None, "not denied: " + _spell(fake, cmd)
+
+
+@pytest.mark.parametrize("tool,cmd,cwd", ALIAS_ALLOW, ids=[c for _, c, _ in ALIAS_ALLOW])
+def test_a_drive_alias_aimed_somewhere_that_cannot_reach_the_folder_stays_allowed(fake, tool, cmd, cwd):
+    assert _denied(fake, tool, cmd, cwd=_alias_cwd(fake, cwd)) is None, "wrongly denied: " + _spell(fake, cmd)
+
+
+def _fresh_module(name):
+    spec = importlib.util.spec_from_file_location(name, MODULE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_a_variable_value_is_kept_only_when_it_is_short_plain_text():
+    mod = _fresh_module("pfg_values")
+    assert mod._bash_value("x" * 1100) is None and mod._bash_value("a" * 1000) == "a" * 1000
+    for bad in ("a&b", "a|b", "a;b", "a$(x)", "a`x`", "a{b}", "a(b)", "a<b"):
+        assert mod._bash_value(bad) is None, bad
+    assert mod._bash_value("\"/c/x y\"/z") == "/c/x y/z"
+    assert mod._ps_value("'" + "x" * 1100 + "'") is None
+    for bad in ("'a;b'", "'a&b'", "\"a$b\"", "'a','b;c'", "Get-Item x", "(Get-Location).Path"):
+        assert mod._ps_value(bad) is None, bad
+    assert mod._ps_value("'C:\\x', 'D:\\y'") == "'C:\\x','D:\\y'" and mod._ps_value("'C:\\x'") == "C:\\x"
+
+
+def test_the_expansions_of_one_command_share_one_budget_and_past_it_the_command_is_denied(fake):
+    """A harmless command that expands 1 KB values 12 times (12 KB, past the 8 KB budget) is not read and is denied; 6 times is fine.
+    Fourth QA pass: heredoc bodies and the decoded view of the same call draw on the same budget, they do not start a new one."""
+    mod = _fresh_module("pfg_budget")
+    argv = ["--config", str(fake.cfg)]
+    cmd = lambda n: "p=" + "x" * 1000 + "; " + "; ".join(["echo $p"] * n)
+    assert mod.evaluate(BASH, {"command": cmd(12)}, str(fake.elsewhere), cmd(12), argv, env=fake.env) is not None
+    assert mod.evaluate(BASH, {"command": cmd(6)}, str(fake.elsewhere), cmd(6), argv, env=fake.env) is None
+    body = lambda n: "bash <<E%d\np=%s; %s\nE%d\n" % (n, "x" * 1000, "; ".join(["echo $p"] * 5), n)
+    two = body(1) + body(2)                             # 5 KB per body: each fits, together they do not
+    assert mod.evaluate(BASH, {"command": two}, str(fake.elsewhere), two, argv, env=fake.env) is not None
+    assert mod.evaluate(BASH, {"command": body(1)}, str(fake.elsewhere), body(1), argv, env=fake.env) is None
+    # a padding statement ahead of the real one must not switch the variable tracking off for the rest of the command
+    pad = "p=" + "x" * 1000 + "; " + "; ".join(["echo $p"] * 40) + "; a=@A@; find $a -name x"
+    assert _denied(fake, BASH, pad) is not None
+
+
+def test_a_short_command_that_expands_a_long_value_many_times_is_denied_quickly(fake):
+    """Fourth QA pass: a 1,020 character value used 12 times inside heredoc bodies (13 KB, judged inline) took 85 s; one statement
+    with nested $( ) took 28 s. Now the expansions share an 8 KB budget and a call over 2 KB that uses a variable is judged by the
+    child process, so the call is denied well inside the hook's timeout."""
+    import time
+    value = ("for d in " * 120)[:1020]
+    bodies = "".join("bash <<E%d\na=\"%s\"; echo %s\nE%d\n" % (i, value, "$a" * 31, i) for i in range(12))
+    one = "a=\"%s\"; echo $(echo $(echo $(echo %s))); echo $'\\x41'" % (value, "$a" * 32)
+    for cmd in (bodies + "find @A@ -name x", one + "; find @A@ -name x"):
+        start = time.time()
+        assert _denied(fake, BASH, cmd) is not None
+        assert time.time() - start < 25, "took %.1f s" % (time.time() - start)
+
+
+def test_a_value_made_of_shell_syntax_cannot_make_the_analysis_quadratic(fake):
+    """QA of the fourth round (second pass): b0="x&x&...x&" re-parsed as commands took 89 s for 1.3 KB; such a value is not kept."""
+    import time
+    value = "x&" * 500
+    cmd = "b0=\"%s\"; echo %s; echo %s; echo %s; find @A@ -name x" % (value, "$b0" * 32, "$b0" * 32, "$b0" * 32)
+    start = time.time()
+    assert _denied(fake, BASH, cmd) is not None
+    assert time.time() - start < 15, "took %.1f s" % (time.time() - start)
+
+
+@pytest.mark.parametrize("cmd", ["for d in x" + " " * 90000 + "y; do :; done; find @A@ -name x",
+                                 "$a = x" + " " * 90000 + "y; Get-ChildItem '@AN@' -Recurse"],
+                         ids=["bash-for-loop", "powershell-assignment"])
+def test_a_long_run_of_spaces_in_a_loop_or_assignment_does_not_stall_the_hook(fake, cmd):
+    import time
+    start = time.time()
+    assert _denied(fake, PS if cmd.startswith("$") else BASH, cmd) is not None
+    assert time.time() - start < 15, "took %.1f s" % (time.time() - start)
+
+
+def test_a_call_the_guard_cannot_read_in_time_is_denied_not_left_to_the_hook_timeout(fake):
+    """Third QA pass: text matching has shapes that run for minutes inside one regex call, and a hook that times out lets the
+    call through. A big call is judged by a child process that is killed at the budget; the call is then denied."""
+    import time
+    mod = _fresh_module("pfg_budget_child")
+    mod._CHILD_ABOVE, mod._ANALYSIS_BUDGET_S = 0, 3.0
+    argv = ["--config", str(fake.cfg)]
+    slow = "a=1; " + "${a " * 6000                     # an unclosed bracket per command position: quadratic, about 9 s on its own
+    start = time.time()
+    verdict = mod.evaluate(BASH, {"command": slow}, str(fake.elsewhere), slow, argv, env=fake.env)
+    assert verdict is not None and "could not finish reading" in verdict
+    assert time.time() - start < 12, "took %.1f s" % (time.time() - start)
+
+
+@windows_only
+def test_the_child_process_dies_with_a_hook_that_is_killed(fake):
+    """Fourth QA pass: a hook killed mid-call (an interrupt, the harness's own timeout) left its --judge child running for minutes.
+    On Windows the child is put in a job object that is closed with the hook."""
+    import time
+    slow = "a=1; " + "${a " * 15000                                   # about 60 KB and 50 s of analysis: the child is still busy at 4 s
+    payload = json.dumps({"tool_name": BASH, "tool_input": {"command": slow}, "cwd": str(fake.elsewhere)})
+    hook = subprocess.Popen([sys.executable, str(HOOK), "--config", str(fake.cfg)], stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=_clean_env(fake.env))
+    hook.stdin.write(payload.encode())
+    hook.stdin.close()
+    time.sleep(4)
+    query = "(Get-CimInstance Win32_Process -Filter 'ParentProcessId=%d').ProcessId" % hook.pid
+    kids = subprocess.run(["powershell", "-NoProfile", "-Command", query], capture_output=True, text=True).stdout.split()
+    try:
+        assert kids, "the hook had no child process after 4 s (the call was not routed to the child)"
+        hook.kill()
+        hook.wait()
+        time.sleep(2)
+        alive = subprocess.run(["tasklist", "/FI", "PID eq %s" % kids[0], "/NH"], capture_output=True, text=True).stdout
+        assert "python" not in alive.lower(), "the child outlived the hook: " + alive
+    finally:
+        hook.kill()
+        for pid in kids:
+            subprocess.run(["taskkill", "/PID", pid, "/T", "/F"], capture_output=True)
+
+
+def test_a_big_call_gets_the_same_verdict_from_the_child_process_as_inline(fake):
+    mod = _fresh_module("pfg_child_same")
+    argv = ["--config", str(fake.cfg)]
+    pad = " " * 20000
+    for cmd, denied in [("find %s -name x%s-print" % (_above(fake), pad), True), ("echo hello%sworld" % pad, False),
+                        ("ls Private Notes%s", True)]:
+        cmd = cmd % pad if "%s" in cmd else cmd
+        inline = mod._evaluate_inner(BASH, {"command": cmd}, str(fake.elsewhere), cmd, argv, fake.env)
+        via_child = mod.evaluate(BASH, {"command": cmd}, str(fake.elsewhere), cmd, argv, env=fake.env)
+        assert (inline is not None) == denied == (via_child is not None), cmd[:60]
+        assert inline == via_child
+
+
+@pytest.mark.parametrize("make", [lambda n: ("ls @A@|" * n) + "cat", lambda n: "find @A@ -name x" + " " * (n * 4) + "-print"],
+                         ids=["many-pipe-segments", "denied-command-padded-with-spaces"])
+def test_long_padded_calls_are_denied_quickly_through_the_hook(fake, make):
+    """Third QA pass: a rooted listing rescanned every later pipe segment, and the comment strip was quadratic on a run of
+    spaces; 130 KB or 260 KB of padding then outlasted the hook's timeout, which lets the call through."""
+    import time
+    start = time.time()
+    assert _denied(fake, BASH, make(20000)) is not None
+    assert time.time() - start < 20, "took %.1f s" % (time.time() - start)
+
+
+@pytest.mark.parametrize("tool", [BASH, PS])
+def test_variables_that_grow_ten_fold_per_step_cannot_stall_the_hook(fake, tool):
+    """QA of the fourth round: b1=$b0 x10 ... b6=$b5 x10 is about 370 characters and expands to 10^7 if every level is built; the
+    hook has a 60 second timeout that lets the command through. Values are capped, so the command is judged in well under that."""
+    import time
+    if tool == BASH:
+        steps = ["b0=xxxxxxxxxx"] + ["b%d=%s" % (i, "$b%d" % (i - 1) * 10) for i in range(1, 7)]
+        cmd = "; ".join(steps) + "; c=" + "$b6" * 6 + "; find @A@ -name x"
+    else:
+        steps = ["$b0='xxxxxxxxxx'"] + ["$b%d=\"%s\"" % (i, "$b%d" % (i - 1) * 10) for i in range(1, 7)]
+        cmd = "; ".join(steps) + "; $c=\"" + "$b6" * 6 + "\"; Get-ChildItem '@AN@' -Recurse"
+    start = time.time()
+    verdict = _denied(fake, tool, cmd)
+    assert time.time() - start < 15, "took %.1f s" % (time.time() - start)
+    assert verdict is not None, "not denied: " + _spell(fake, cmd)

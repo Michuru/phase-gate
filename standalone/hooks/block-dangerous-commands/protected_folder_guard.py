@@ -28,6 +28,8 @@ import json
 import os
 import posixpath
 import re
+import subprocess
+import sys
 from collections import namedtuple
 
 IS_WINDOWS = os.name == "nt"
@@ -158,6 +160,7 @@ class _State(object):
     first_wild_res = ()
     name_re = None
     cwd_climb = None
+    expanded = 0                # characters the variable expansions of the call being judged have added so far (see _EXPAND_CAP)
 
 
 _S = _State()
@@ -284,8 +287,21 @@ _ALIAS_VERBS = re.compile(
     r"(?i)(?<![\w-])subst(?:\.exe)?\s|\bNew-PSDrive\b[^\n]*-Root\b|(?<![\w-])net(?:\.exe)?\s+use\b"
     r"|\bmklink\b|\bNew-Item\b[^\n]*-ItemType\s+(?:Junction|SymbolicLink)\b")
 _EMBEDDED = re.compile(
-    r"\bos\.walk\b|\brglob\b|\bi?glob\s*\([^)]*\*\*|\breaddirSync\b[^)]*recursive|\bAllDirectories\b|\bwalk_files\b"
-    r"|\bshutil\.(?:copytree|make_archive)\b")
+    r"\bos\.walk\b|\bos\.fwalk\b|(?<!\bast)\.walk\s*\(|\bRecurseSubdirectories\b|\brglob\b|\bi?glob\s*\([^)]*\*\*|\breaddir(?:Sync)?\b[^)]*recursive"
+    r"|\bglobSync\b|\bfs\.glob\b|\bAllDirectories\b|\bwalk_files\b|\bshutil\.(?:copytree|make_archive)\b"
+    # .NET: the integer 1 is SearchOption.AllDirectories, and PowerShell reads the method names without regard to case
+    r"|(?i:\b(?:Get|Enumerate)(?:Files|Directories|FileSystemEntries|FileSystemInfos)\s*\([^)]*,\s*"
+    r"(?:1|[\[\w.]*SearchOption\]?::AllDirectories)\s*\))")
+_WILD_AFTER_SEP = re.compile(r"(?<=[\\/])[*?]+")
+
+
+def _embedded_root(text):
+    """An embedded recursive call (os.walk, glob(..., recursive=True), GetFiles(..., 1) ...) in a text that names a directory
+    above a protected folder. The root is also read with a wildcard run directly after its separator turned into a space, so
+    glob.glob('J:/**', recursive=True) (the `**` after `J:/` keeps it from being a whole root token) is seen as the root."""
+    if not _EMBEDDED.search(text):
+        return False
+    return bool(ROOT_ANY.search(text) or ROOT_ANY.search(_WILD_AFTER_SEP.sub(" ", text)))
 _SHELLOUT = re.compile(
     r"(?i)\b(?:os\.system|os\.popen|subprocess\.\w+|execSync|spawnSync|child_process|popen|system|exec)\s*\(")
 _LEADERS = re.compile(
@@ -613,7 +629,8 @@ def _groups(s):
 
 
 def _join_continuations(t):
-    t = re.sub(r"`[ \t]*\r?\n[ \t]*", " ", t)
+    if _TOOL_CTX[0] == "PowerShell":                 # a backtick before a newline continues the line in PowerShell only
+        t = re.sub(r"`[ \t]*\r?\n[ \t]*", " ", t)
     t = re.sub(r"(?<=\s)\\[ \t]*\r?\n[ \t]*", " ", t)
     return re.sub(r"\|[ \t]*\r?\n[ \t]*", "| ", t)
 
@@ -775,7 +792,7 @@ def _seg_rooted(seg, tool, cwd, first_in_pipe=True, feeds=False):
                         break
     if first in _PRINTERS and not feeds:
         text = re.sub(r"'[^']*'|\"[^\"]*\"", "''", text)      # a quoted string handed to echo/printf is only printed, unless a pipe passes it on
-    if ROOT_ANY.search(text):
+    if ROOT_ANY.search(text) or _embedded_root(text):
         return True
     has_path, plain_seen = False, 0
     for t in _tokens(text)[1:]:
@@ -914,12 +931,359 @@ def _apply_cd(seg, tool, st):
         st[0] = _riskiest(_norm_variants(target, st[0], tool))
 
 
+# ---- variables: a root held in a variable, a loop variable or a splat is read where it is used (third review, finding 4)
+# A value is only kept when it is plain text (a path, a list of paths): nothing that the shell would read as syntax, so an
+# expanded value can never turn into commands, and its length is capped. One expansion budget covers the whole command.
+_ASSIGN_WORDS = r"(?:(?:export|declare|local|readonly|typeset)\s+(?:-[A-Za-z]+\s+)*)?"
+_BASH_ASSIGN = re.compile(
+    r"\s*" + _ASSIGN_WORDS + r"([A-Za-z_]\w*)(\+?)=((?:\"[^\"]*\"|'[^']*'|[^\s;&|<>()\"'])*)")
+_BASH_ASSIGN_NAME = re.compile(r"^\s*" + _ASSIGN_WORDS + r"([A-Za-z_]\w*)\+?=")
+_BASH_UNSET = re.compile(r"^\s*unset\s+(?:-[vf]\s+)*([A-Za-z_]\w*)")
+_PS_REMOVE = re.compile(
+    r"^\s*(?:Remove-Variable|rv|Clear-Variable|clv)\s+(?:-Name\s+)?\$?([^\W\d]\w*(?:\s*,\s*\$?[^\W\d]\w*)*)", re.IGNORECASE)
+_PS_APPEND = re.compile(r"^\s*\$((?:\w+:)?[^\W\d]\w*)\s*\+=\s*")
+_PS_ASSIGN = re.compile(r"^\s*(?:\[[\w.\[\], ]+\]\s*)?\$((?:\w+:)?[^\W\d]\w*)\s*=\s*")
+_BASH_FOR = re.compile(r"^\s*for\s+([A-Za-z_]\w*)\s+in\s+")
+_PS_FOREACH = re.compile(r"^\s*foreach\s*\(\s*\$([^\W\d]\w*)\s+in\s+", re.IGNORECASE)
+_VAR_REF_BASH = re.compile(r"\$\{([A-Za-z_]\w*)(?:[^}\w][^}]*)?\}|\$([A-Za-z_]\w*)(?!\w)")
+_VAR_REF_PS = re.compile(
+    r"\$\{([^\W\d]\w*)(?:[^}\w][^}]*)?\}|\$((?:\w+:)?[^\W\d]\w*)(?![\w:])|@([^\W\d]\w*)(?![\w:.])")
+_ITEM = re.compile(r"\"[^\"]*\"|'[^']*'|[^,\s]+")
+_PS_QUOTED_LIST = re.compile(r"^(?:'[^']*'|\"[^\"]*\")(?:\s*,\s*(?:'[^']*'|\"[^\"]*\"))*$")
+_VALUE_META = re.compile(r"[&|;<>(){}\r\n$`]")
+# A path is never this long; a longer value is a string being built up (b1=$b0$b0 ...), and expanding it grows without limit.
+_VALUE_CAP = 1024
+_EXPAND_CAP = 8192           # the most characters all expansions of one call may add; past it the call is denied
+
+
+class _TooLarge(Exception):
+    """Variable expansion grew past _EXPAND_CAP."""
+
+
+def _vk(name, tool):
+    """The key a variable is kept under: PowerShell names ignore case and a scope prefix, Bash names are exact."""
+    if tool == "PowerShell":
+        return re.sub(r"^(?:script|global|local|private):", "", name.lower())
+    return name
+
+
+def _unquote(v):
+    v = v.strip()
+    return v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"" else v
+
+
+def _expand_vars(text, env, tool):
+    """`text` with every known variable ($d, ${d}, ${d%/}, $env:P, and a PowerShell splat @a) replaced by the value it was given
+    earlier in the same command. A ${d...} modifier is ignored (the value is read as if set). Single-quoted text is left alone
+    (neither shell expands it); a variable being assigned to (`$all += ...`) is not a use. Raises _TooLarge when this command's
+    expansions have added more than _EXPAND_CAP characters in all (one budget for the whole call: every statement, group, heredoc
+    body and text view of it)."""
+    if not env or not re.search(r"[$@]", text):
+        return text
+    rx = _VAR_REF_PS if tool == "PowerShell" else _VAR_REF_BASH
+    out, i, q = [], 0, None
+    while i < len(text):
+        c = text[i]
+        if q == "'":
+            if c == "'":
+                q = None
+            out.append(c)
+            i += 1
+            continue
+        if c == "'" and q is None:
+            q = "'"
+        elif c == '"':
+            q = None if q == '"' else '"'
+        m = rx.match(text, i) if c in "$@" else None
+        if m:
+            g = m.groups()
+            key = _vk(g[0] or g[1], tool) if (g[0] or g[1]) else "@" + _vk(g[2], tool)
+            if key in env and not re.match(r"\s*[+\-*/%]?=(?!=)", text[m.end():m.end() + 4]):
+                out.append(env[key])
+                _S.expanded += len(env[key])
+                if _S.expanded > _EXPAND_CAP:
+                    raise _TooLarge()
+                i = m.end()
+                continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _splat_text(raw):
+    """(arguments, elements) a PowerShell splat or array stands for: `@{Path='J:\\';Recurse=$true}` is (`-Path 'J:\\' -Recurse
+    $true`, None), `@('J:\\','-r')` is (`'J:\\' '-r'`, ["'J:\\'", "'-r'"]). None when the text is neither."""
+    m = re.match(r"^@\{(.*)\}$", raw, re.S)
+    if m:
+        pairs = []
+        for part in _split_top(m.group(1), "stmt"):
+            kv = re.match(r"\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*$", part, re.S)
+            if kv:
+                pairs.append("-%s %s" % (kv.group(1), kv.group(2)))
+        return " ".join(pairs), None
+    m = re.match(r"^@\((.*)\)$", raw, re.S)
+    if m:
+        items = _ITEM.findall(m.group(1))
+        return " ".join(items), items
+    return None
+
+
+def _splat_ok(text):
+    """A splat's argument text is safe to keep: short, every quoted piece plain, every bare word a switch, $true/$false/$null or plain."""
+    return len(text) <= _VALUE_CAP and all(
+        _plain(_unquote(t)) if t[0] in "'\"" else (re.fullmatch(r"-\w+|\$(?:true|false|null)", t, re.IGNORECASE) or _plain(t))
+        for t in re.findall(r"\"[^\"]*\"|'[^']*'|\S+", text))
+
+
+def _plain(v):
+    """True when a value is safe to keep: short, and nothing the shell would read as syntax or another variable."""
+    return len(v) <= _VALUE_CAP and not _VALUE_META.search(v)
+
+
+def _ps_value(raw):
+    """The text a PowerShell variable holds for this right-hand side, or None when it cannot be known here (an expression, a
+    command, another variable, a string with $ in it). A quoted string, a comma list of quoted strings or a bare word is known."""
+    raw = raw.strip()
+    if _PS_QUOTED_LIST.match(raw):
+        items = _ITEM.findall(raw)
+        if len(raw) > _VALUE_CAP or not all(_plain(_unquote(t)) for t in items):
+            return None
+        return _unquote(items[0]) if len(items) == 1 else ",".join(items)
+    quoted = len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "'\"" and raw[0] not in raw[1:-1]
+    v = raw[1:-1] if quoted else raw
+    if not _plain(v) or (not quoted and re.search(r"\s", v)):
+        return None
+    return v
+
+
+def _bash_value(raw):
+    """The text a Bash assignment gives its variable, quotes removed (`"J:"/x` is `J:/x`); None when it holds a $ or a backtick
+    (a variable or a command substitution) or anything the shell reads as syntax."""
+    pos, out = 0, []
+    for m in re.finditer(r"\"([^\"]*)\"|'([^']*)'|([^\"']+)", raw):
+        if m.start() != pos:
+            return None
+        pos = m.end()
+        piece = next(g for g in m.groups() if g is not None)
+        if m.group(2) is None and re.search(r"[$`]", piece):
+            return None
+        out.append(piece)
+    if pos != len(raw):
+        return None
+    v = "".join(out)
+    return v if _plain(v) else None
+
+
+def _literal_items(expr):
+    """The items of a loop's list when it is a list of literals (quoted strings, paths, a comma list, @(...)); None when it is a
+    command (`Get-ChildItem J:\\ -Directory`: its entries are not the root itself)."""
+    expr = expr.strip()
+    am = re.match(r"^@\((.*)\)$", expr, re.S)
+    if am:
+        expr = am.group(1)
+    first = re.match(r"\s*([^\s,'\"]+)", expr)
+    if first and not re.search(r"[\\/:]", first.group(1)) and not first.group(1).startswith(("$", "@")):
+        return None
+    return [_unquote(t) for t in _ITEM.findall(expr)]
+
+
+def _record_assignment(s, tool, env, cwd):
+    """Remember what an assignment or a loop header gives its variable, forget a variable that is given something unknown (or is
+    unset). `for d in A B`: a rooted item wins, so a loop over a list that holds a root counts as holding it. A variable given
+    the listing of a directory above a protected folder is marked ("!name"): a loop over it opens each entry (finding 6)."""
+    s = _BLOCK_LEADER.sub("", s)                                         # `then d=...`, `do d=...`, `{ d=...` (a `(` is a subshell: its own variables)
+    s = re.sub(r"(?<=\s)#[^\n]*$", "", s)                                # a trailing comment
+    m = _BASH_UNSET.match(s) or _PS_REMOVE.match(s)
+    if m:
+        for name in re.split(r"\s*,\s*", m.group(1)):                  # Remove-Variable q,p forgets both
+            for prefix in ("", "@", "!"):
+                env.pop(prefix + _vk(name.lstrip("$"), tool), None)
+        return
+    m = _PS_APPEND.match(s)
+    if m:                                                                # $p += x: appends when both parts are plain text
+        key = _vk(m.group(1), tool)
+        old, v = env.pop(key, None), _ps_value(s[m.end():])
+        for k in ("@" + key, "!" + key):
+            env.pop(k, None)
+        if old is not None and v is not None and not re.search(r"['\",]", old + v) and len(old + v) <= _VALUE_CAP:
+            env[key] = old + v
+        return
+    pos, found = 0, []
+    while True:                                                          # `d=A e=1`: several assignments, nothing after them
+        m = _BASH_ASSIGN.match(s, pos)
+        if not m:
+            break
+        found.append(m)
+        pos = m.end()
+    if found and not s[pos:].strip():
+        for m in found:
+            key = _vk(m.group(1), tool)
+            old, v = env.pop(key, None), _bash_value(m.group(3))
+            if m.group(2):                                               # d+=x appends: unknown if the old value is
+                v = None if v is None or old is None else old + v
+                if v is not None and len(v) > _VALUE_CAP:
+                    v = None
+            if v is not None:
+                env[key] = v
+        return
+    nm = _BASH_ASSIGN_NAME.match(s)
+    if nm:                                                               # an assignment we cannot read (d=$(...)): forget the name
+        key = _vk(nm.group(1), tool)
+        env.pop(key, None)
+        env.pop("!" + key, None)
+        rhs = s[nm.end():]
+        if any(_lists_root(c, tool, cwd) for c in _groups(rhs) + re.findall(r"`([^`]+)`", rhs)):
+            env["!" + key] = "1"
+        return
+    m = _PS_ASSIGN.match(s)
+    if m:
+        key = _vk(m.group(1), tool)
+        for k in (key, "@" + key, "!" + key):
+            env.pop(k, None)
+        raw = s[m.end():].strip()
+        if any(_lists_root(c, tool, cwd) for c in [raw] + _groups(raw)):
+            env["!" + key] = "1"
+            return
+        splat = _splat_text(raw)
+        if splat is not None:
+            if _splat_ok(splat[0]):
+                env["@" + key] = splat[0]
+                if splat[1] is not None and _ps_value(",".join(splat[1])) is not None:
+                    env[key] = ",".join(splat[1])
+            return
+        v = _ps_value(raw)
+        if v is not None:
+            env[key] = v
+        return
+    items, name = None, None
+    m = _BASH_FOR.match(s)
+    if m:
+        name, items = _vk(m.group(1), tool), [_unquote(t) for t in re.findall(r"\"[^\"]*\"|'[^']*'|\S+", s[m.end():])]
+    else:
+        m = _PS_FOREACH.match(s)
+        gs = _groups(s) if m else []
+        if m and gs:
+            after = re.split(r"\s+in\s+", gs[0], maxsplit=1)
+            name = _vk(m.group(1), tool)
+            items = _literal_items(after[1]) if len(after) == 2 else None
+    if name is None:
+        return
+    env.pop(name, None)
+    items = [t for t in (items or []) if t and _plain(t)]
+    if items:
+        rooted = [t for t in items if ROOT_ANY.search(t) or any(_is_rooted(loc) for loc in _norm_variants(t, cwd, tool))]
+        env[name] = (rooted or items)[0]
+
+
+# ---- loops over a root listing, and drive aliases written with a climb (third review, findings 6 and 7)
+def _is_lister(word, args):
+    """A command that lists the entries of a directory: ls, dir, gci, and find or fd held to the top level."""
+    return word in _LISTERS or (word in ("find", "rg", "fd", "fdfind") and _depth_limited(word, _tokens(args)))
+
+
+def _lists_root(text, tool, cwd):
+    """True when `text` is a listing of a directory above a protected folder (a names-only listing is allowed on its own,
+    but not as the thing a loop or a command then walks entry by entry)."""
+    segs = [x.strip() for x in _split_top(text, "pipe")]
+    for i, seg in enumerate(segs):
+        ip = _command_positions(seg) if seg else []
+        if any(_is_lister(w, a) for w, a in ip) and _seg_rooted(seg, tool, cwd, True, False):
+            # a pipe into wc or Measure-Object turns the listing into a number: nothing is opened
+            counted = any(w in ("wc", "measure-object", "measure") for later in segs[i + 1:]
+                          for w, _ in (_command_positions(later) if later else [])[:1])
+            if not counted:
+                return True
+    return False
+
+
+_LOOP_SEG = re.compile(r"\s*[({]?\s*(?:while|until|for)\b")
+_BLOCK_LEADER = re.compile(r"^\s*(?:(?:do|then|else)\s+|\{\s*)")      # `then for d in ...`, `do for ...`, `{ for ...`
+
+
+def _loop_header_expr(s):
+    """What a loop header iterates over: `for d in <expr>` (Bash) or `foreach ($d in <expr>)` (PowerShell); None otherwise."""
+    m = _BASH_FOR.match(_BLOCK_LEADER.sub("", s))
+    if m:
+        return _BLOCK_LEADER.sub("", s)[m.end():].strip()
+    if _PS_FOREACH.match(s):
+        gs = _groups(s)
+        after = re.split(r"\s+in\s+", gs[0], maxsplit=1) if gs else []
+        if len(after) == 2:
+            return after[1]
+    return None
+
+
+def _loop_over_root_listing(s, segs, rooted, infos, tool, cwd, env):
+    """`for d in $(ls J:/)`, `foreach ($d in Get-ChildItem J:\\)`, `$ds = gci J:\\; foreach ($d in $ds)`, `ls J:/ | while read d`:
+    the loop opens what the listing of a directory above the protected folder returns, one entry at a time, so one pass is the
+    folder."""
+    expr = _loop_header_expr(s)
+    if expr is not None:
+        inner = _groups(expr) + re.findall(r"`([^`]+)`", expr)       # `$(ls J:/ | wc -l)`: judge what is inside the brackets
+        for cand in (inner or [expr]):
+            if _lists_root(cand, tool, cwd):
+                return True
+        if any("!" + _vk(name, tool) in env for name in re.findall(r"\$\{?([^\W\d]\w*)", expr)):
+            return True                                # the list is a variable that was given a root listing
+    # a rooted listing with a loop (or a loop in a ( ) or { } group) anywhere after it in the pipeline: one pass over the segments
+    last_loop = max((j for j, seg in enumerate(segs) if _LOOP_SEG.match(seg)), default=-1)
+    if last_loop < 0:
+        return False
+    return any(rooted[i] and any(_is_lister(w, a) for w, a in infos[i])
+               and not any(infos[j] and infos[j][0][0] in ("wc", "measure-object", "measure") for j in range(i + 1, last_loop))
+               for i in range(last_loop))                  # `ls J:/ | wc -l | while read n`: a count, nothing is opened
+
+
+_ALIAS_CMDS = frozenset(("subst", "mklink", "new-psdrive", "ndr", "net", "new-item", "ni"))
+
+
+def _alias_target_above(s, tool, cwd):
+    """A drive alias or junction whose target, once a .. climb or a relative path is resolved, is a directory above a protected
+    folder (`subst X: J:\\Claude\\..`, `mklink /J l .` from the drive root). Rule 0d's raw-text check cannot see these."""
+    if not any(w in _ALIAS_CMDS for w, _ in _command_positions(s)):      # the word as a grep pattern or in a message is no alias
+        return False
+    for t in _tokens(_strip_switch_flags(s))[1:]:
+        if t.startswith("-") or re.fullmatch(r"[A-Za-z]:", t):       # a flag, or the alias's own drive letter
+            continue
+        if any(_is_ancestor(loc) for loc in _norm_variants(t, cwd, tool)):
+            return True
+    return False
+
+
+def _has_script_block(s):
+    """A PowerShell script block: a `{` right after a `)` or after else, try, finally, do, begin, process or end, outside quotes.
+    In Bash an if or while condition holds braces of its own (find -exec ... {} +, a brace glob) and never has one."""
+    if _TOOL_CTX[0] != "PowerShell":
+        return False
+    return bool(re.search(r"(?:\)|\b(?:else|try|finally|do|begin|process|end))\s*\{",
+                          re.sub(r"'[^']*'|\"[^\"]*\"", "''", s), re.IGNORECASE))
+
+
 def _scan_statement(s, tool, st, depth):
     if not s:
         return False
+    try:
+        off = _BLOCK_LEADER.match(s)
+        off = off.end() if off else 0                   # `then for d in ...`: the loop header starts after the keyword
+        core = s[off:]
+        m = _PS_ASSIGN.match(core) or _BASH_FOR.match(core)
+        if m:                                           # `$p = "$p\x"`, `for d in $d`: only the right-hand side is read with the old value
+            s = s[:off + m.end()] + _expand_vars(s[off + m.end():], st[1], tool)
+        else:
+            m = _PS_FOREACH.match(s)
+            gs = _groups(s) if m else []
+            if m and gs and s.find(gs[0]) >= 0:         # foreach ($d in <list>) { ... $d ... }: the list is read with the old value,
+                he = s.find(gs[0]) + len(gs[0])         # and the body (scanned as its own group) with the one the list gives
+                s = s[:m.end()] + _expand_vars(s[m.end():he], st[1], tool) + s[he:]
+                st[1].pop(_vk(m.group(1), tool), None)
+            else:
+                s = _expand_vars(s, st[1], tool)
+    except _TooLarge:
+        return True                                     # one command that expands past the budget is not read: denied
+    _record_assignment(s, tool, st[1], st[0])
     if _ENCODED.search(s):
         return True
-    if _ALIAS_VERBS.search(s) and ROOT_ANY.search(_strip_switch_flags(s)):
+    if _ALIAS_VERBS.search(s) and (ROOT_ANY.search(_strip_switch_flags(s)) or _alias_target_above(s, tool, st[0])):
         return True
     segs = [x.strip() for x in _split_top(s, "pipe") if x.strip()]
     if not segs:
@@ -949,14 +1313,16 @@ def _scan_statement(s, tool, st, depth):
               for i, seg in enumerate(segs)]
     # if (...) { ... } / foreach (... in ...) { ... }: the condition and the body are scanned as their own groups below, so
     # a root named in the condition ('J:\') does not make a recursion in the body (over another folder) a root search
-    control = bool(re.match(r"\s*(?:if|elseif|else|while|foreach|for|switch|until)\b", s, re.IGNORECASE)) and "{" in s
+    control = bool(re.match(r"\s*(?:if|elseif|else|while|foreach|for|switch|until)\b", s, re.IGNORECASE)) and _has_script_block(s)
+    if _loop_over_root_listing(s, segs, rooted, infos, tool, st[0], st[1]):
+        return True
     if any(rooted) and not control:
         # a marker counts when its own segment, or a segment feeding it, is rooted: a 'J:\' string in a LATER segment
         # (a Replace or -like argument) does not make an earlier recursion over some other folder a root search
         if any(_has_marker(ip, seg, tool) and any(rooted[:j + 1]) for j, (ip, seg) in enumerate(zip(infos, segs))):
             return True
         for i, seg in enumerate(segs):
-            if rooted[i] and any(w in _LISTERS for w, _ in infos[i]):
+            if rooted[i] and any(_is_lister(w, a) for w, a in infos[i]):
                 if any(_is_sink(segs[j], j == i + 1, tool) for j in range(i + 1, len(segs))):
                     return True
     if depth < 3:
@@ -965,7 +1331,7 @@ def _scan_statement(s, tool, st, depth):
                 # os.system('find /j ...'), subprocess.run(['find', '/j', ...]), execSync(...), system("..."): the quoted
                 # pieces are the command; scan them one by one and joined (the list form splits the command into pieces)
                 quoted = [a or b for a, b in re.findall(r"\"([^\"]*)\"|'([^']*)'", seg)]
-                if any(_scan_text(t, "Bash", st[0], depth + 1) for t in quoted + [" ".join(quoted)]):
+                if any(_scan_text(t, "Bash", st[0], depth + 1, st[1]) for t in quoted + [" ".join(quoted)]):
                     return True
             words = [w for w, _ in ip]
             if any(w in _WRAPPERS for w in words) or re.search(r"(?i)scriptblock\]::create|\binvoke-expression\b|\biex\b", seg):
@@ -977,12 +1343,12 @@ def _scan_statement(s, tool, st, depth):
                 if tail:
                     nested.append(tail.group(1))
                 nested += [re.sub(r"(?i)^\s*(?:/[ck]|-c|-command)\s+", "", t) for t in nested]    # Start-Process cmd -ArgumentList '/c dir ...'
-                if any(_scan_text(t, inner, st[0], depth + 1) for t in nested):
+                if any(_scan_text(t, inner, st[0], depth + 1, st[1]) for t in nested):
                     return True
-        if any(_scan_text(g, tool, st[0], depth + 1) for g in _groups(s)):
+        if any(_scan_text(g, tool, st[0], depth + 1, st[1]) for g in _groups(s)):
             return True
         if tool != "PowerShell" and "`" in s:        # Bash command substitution: echo `find /j -name x`
-            if any(_scan_text(g, "Bash", st[0], depth + 1) for g in re.findall(r"`([^`]+)`", s)):
+            if any(_scan_text(g, "Bash", st[0], depth + 1, st[1]) for g in re.findall(r"`([^`]+)`", s)):
                 return True
     return False
 
@@ -1000,26 +1366,26 @@ def _clean_for_0c(t):
     return t
 
 
-def _scan_text(text, tool, cwd_parts, depth=0):
+def _scan_text(text, tool, cwd_parts, depth=0, env=None):
     prev = _TOOL_CTX[0]
     _TOOL_CTX[0] = tool
     try:
-        return _scan_text_inner(text, tool, cwd_parts, depth)
+        return _scan_text_inner(text, tool, cwd_parts, depth, env)
     finally:
         _TOOL_CTX[0] = prev
 
 
-def _scan_text_inner(text, tool, cwd_parts, depth):
+def _scan_text_inner(text, tool, cwd_parts, depth, env=None):
     if depth > 3:
         return False
     text = re.sub(r"[–—―]", "-", text)           # PowerShell reads an en or em dash as a parameter prefix
     text, bodies = _strip_bodies(_join_continuations(text))
     for body in bodies:
-        if ROOT_ANY.search(body) and _EMBEDDED.search(body):
+        if _embedded_root(body):
             return True
         if _scan_text(body, tool, cwd_parts, depth + 1):
             return True
-    st = [cwd_parts]
+    st = [cwd_parts, dict(env or {})]            # the cwd the next statement starts in, and the variables set so far
     return any(_scan_statement(stmt.strip(), tool, st, depth) for stmt in _split_top(text, "stmt"))
 
 
@@ -1089,6 +1455,15 @@ def _root_token_seen(command, cwd):
 
 
 def _any_marker(text, tool, depth=0):
+    prev = _TOOL_CTX[0]
+    _TOOL_CTX[0] = tool                      # the escape and continuation rules follow the tool whose text this is
+    try:
+        return _any_marker_inner(text, tool, depth)
+    finally:
+        _TOOL_CTX[0] = prev
+
+
+def _any_marker_inner(text, tool, depth=0):
     """True when the text holds a recursion marker (find, rg, tree, Get-ChildItem -Recurse, ls -R, cp -r, os.walk ...),
     read the same way the root check reads one, quoted strings and wrappers included. Used only while the config is
     broken, to deny exactly the commands that could walk into a folder nobody can name."""
@@ -1168,10 +1543,104 @@ def broken_message(problem):
 
 # ---------------------------------------------------------------- the entry point
 
+_ANALYSIS_BUDGET_S = 20.0      # well under the hook's own 60 s timeout, which lets the call through
+_CHILD_ABOVE = 16384           # characters; a shorter call cannot run for long, so it is judged in this process
+_CHILD_ABOVE_VARS = 2048       # ... unless it uses a variable ($ or @): expansion can multiply the text the analysis reads
+_JOBS = []                     # Windows job handles, kept open for as long as this process lives
+
+
+def slow_message():
+    return (
+        "Blocked: the protected-folder guard could not finish reading this call in %d seconds (a very long or deeply nested "
+        "command), so it is denied rather than left to the hook's timeout, which would let it through. Split it into smaller "
+        "commands, or run it yourself with the ! prefix. (Protected-folder guard: protected_folder_guard.py.)"
+        % int(_ANALYSIS_BUDGET_S))
+
+
+def _die_with_parent(proc):
+    """Windows: put the child in a job object that kills it when this process ends, so a hook killed mid-call (an interrupt, the
+    harness's own timeout) does not leave a child running for minutes. Best effort: any failure leaves the child as it was."""
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class _Basic(ctypes.Structure):
+            _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                        ("LimitFlags", wintypes.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                        ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wintypes.DWORD),
+                        ("Affinity", ctypes.c_size_t), ("PriorityClass", wintypes.DWORD), ("SchedulingClass", wintypes.DWORD)]
+
+        class _Io(ctypes.Structure):
+            _fields_ = [(n, ctypes.c_uint64) for n in ("ReadOps", "WriteOps", "OtherOps", "ReadBytes", "WriteBytes", "OtherBytes")]
+
+        class _Ext(ctypes.Structure):
+            _fields_ = [("Basic", _Basic), ("Io", _Io), ("ProcessMemoryLimit", ctypes.c_size_t),
+                        ("JobMemoryLimit", ctypes.c_size_t), ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                        ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        k32.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+        k32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        job = k32.CreateJobObjectW(None, None)
+        if not job:
+            return
+        info = _Ext()
+        info.Basic.LimitFlags = 0x2000                    # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        if k32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info)) \
+                and k32.AssignProcessToJobObject(job, int(proc._handle)):
+            _JOBS.append(job)
+    except Exception:
+        pass
+
+
+def _judge_in_child(tool_name, tool_input, cwd, command, argv, env):
+    """(verdict, ok). A big call is judged by a child process (this file run with --judge) that is killed when it passes
+    _ANALYSIS_BUDGET_S: text matching has input shapes that run for minutes inside one regex call, which holds the interpreter,
+    so only another process can stop it. ok is False when no child could be run or it failed; the caller then judges inline."""
+    try:
+        payload = json.dumps({"tool_name": tool_name, "tool_input": tool_input, "cwd": cwd, "command": command,
+                              "argv": list(argv) if argv else None, "env": dict(env) if env is not None else None})
+        proc = subprocess.Popen([sys.executable, "-I", os.path.abspath(__file__), "--judge"], stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except (OSError, ValueError, TypeError):
+        return None, False
+    _die_with_parent(proc)
+    try:
+        out, _ = proc.communicate(payload.encode("ascii"), timeout=_ANALYSIS_BUDGET_S)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        return slow_message(), True                   # the child was killed: this call could not be read in time
+    except (OSError, ValueError):
+        proc.kill()
+        return None, False
+    if proc.returncode != 0:
+        return None, False
+    try:
+        verdict = json.loads(out.decode("ascii"))["verdict"]
+    except (ValueError, KeyError, TypeError):
+        return None, False
+    return (verdict, True) if verdict is None or isinstance(verdict, str) and verdict else (None, False)
+
+
 def evaluate(tool_name, tool_input, cwd, command, argv=None, env=None):
     """None to let the call through, or the text of the deny. `command` is the shell text, or for Grep and Glob the
     path, glob and pattern fields joined with newlines. Never raises: an analysis error denies only when a root token
-    was seen by the plain pre-check, and otherwise fails open like the hook's other rules."""
+    was seen by the plain pre-check, and otherwise fails open like the hook's other rules. A call longer than
+    _CHILD_ABOVE characters (or _CHILD_ABOVE_VARS when it uses a variable) is judged by a child process with a time budget,
+    and one that cannot be read in time is denied (fail closed)."""
+    if isinstance(command, str) and (len(command) > _CHILD_ABOVE
+                                     or (len(command) > _CHILD_ABOVE_VARS and re.search(r"[$@]", command))):
+        verdict, ok = _judge_in_child(tool_name, tool_input, cwd, command, argv, env)
+        if ok:
+            return verdict
+    return _evaluate_inner(tool_name, tool_input, cwd, command, argv, env)
+
+
+def _evaluate_inner(tool_name, tool_input, cwd, command, argv=None, env=None):
     folders, problem = load_folders(argv, env)
     if problem:
         if tool_name in ("Grep", "Glob"):
@@ -1183,6 +1652,7 @@ def evaluate(tool_name, tool_input, cwd, command, argv=None, env=None):
     if not folders:
         return None
     configure(folders)
+    _S.expanded = 0
     texts = [command]
     if tool_name in ("Bash", "PowerShell"):
         try:
@@ -1323,3 +1793,14 @@ def _strip_shell_quotes(text, tool):
     """The text as the program receives it once the shell has removed quotes and escapes. For rule 0's name match only: applied
     to the root rules it would turn quoted text (a commit message holding `find / -name x`) into a live command."""
     return _ps_escapes(_scan_quotes(text, tool, True), tool)
+
+
+def _judge_main():
+    """--judge: read one call as JSON on stdin, print {"verdict": <text or null>}. Used by _judge_in_child."""
+    data = json.loads(sys.stdin.buffer.read().decode("ascii"))
+    verdict = _evaluate_inner(data["tool_name"], data["tool_input"], data["cwd"], data["command"], data.get("argv"), data.get("env"))
+    sys.stdout.write(json.dumps({"verdict": verdict}))
+
+
+if __name__ == "__main__" and "--judge" in sys.argv[1:]:
+    _judge_main()
