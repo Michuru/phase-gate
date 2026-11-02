@@ -36,6 +36,17 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 - `initiate`, `ship` and `consolidate-docs`: the frontmatter `description` is shorter (the same triggers,
   fewer words, so the always-loaded skill listing costs less). Ported from the source repo's change;
   `consolidate-docs` names "a doc-size threshold hook" rather than the source repo's own script.
+- `end-task`: the unfinished-work check now asks only about this window's own unfinished work (work that
+  belongs to another window, a handoff primer, a parent design's remaining tasks or the owner's own step
+  is an open item, not carry-over), and the report ends on the close instead of recommending other work.
+  Ported from the source repo's change with its owner and date attribution removed.
+- `consolidate-docs`: step 1 names the optional, owner-run `/doctor prompt-audit` (the source repo's cap
+  text for `CLAUDE.md` stays out: it needs a script that is not exported).
+- `context-usage-nudge`: a first nudge tier at 35% (the tiers are now 35/50/60/70/80/90), because calls
+  made at 400K or more of context are the costly ones.
+- `docs-writer` agent: `effort: low` added (the model stays the portable alias `haiku`).
+- `backlog`: a note to use `Edit`, not a patch script, on `BACKLOG.md` when a cross-session write guard
+  is in use. The guard itself is not exported.
 
 ### Decided, not ported
 Reviewed and deliberately left in the source repo, with the manifest hashes re-pinned so
@@ -65,6 +76,14 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
   off, the `next: /release ...` line). Same reason as the 2026-10-30 entry above.
 - `code-reviewer`: the source repo's generic step 4 test command. The export's step already reads the
   resolved `test_command` from the install receipt, so nothing was ported; the hash is re-pinned.
+- `spec` and `spec`'s `design-review-gate.md`: the `Drafted <date> on <model> (Tier N: <reason>)`
+  parenthetical that the source repo's ration tier check reads, and the `RATION-EXEMPT: design-review`
+  marker line. Both depend on ration scripts that are not exported (decided by the owner, 2026-11-01).
+- `handoff` and `references/incoming.md`: the auto-offered primer (a `[handoff resume]` line, a pointer
+  file, the `[ref]` in a claim's name). The owner chose to port it, but it needs `handoff_pointer.py`
+  and a `SessionStart` hook that are not exported yet, so it waits for that work and the two files are
+  left drifted on purpose. The first live use of `/handoff from-session` happened 2026-11-01 on the
+  source repo with no defect, which was the revisit condition of the entry above.
 
 ## [1.4.0] - 2026-10-24
 

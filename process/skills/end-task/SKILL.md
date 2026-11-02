@@ -32,12 +32,25 @@ work-item design (the next section), and the sizes of the rules doc, the mistake
 
 ## Unfinished-work check (first, before anything below)
 
-**Work unfinished** fires, and nothing below runs, when any of these holds:
+**The question is about this window only: is anything this window itself started and did not finish,
+such that a fresh session would lose it if this window closed now?** Work belonging to other windows,
+to a handoff primer, to a parent design's remaining tasks, or waiting on the owner's own step or
+go-ahead is not carry-over for this window: it is an open item, and the open-items check below puts it
+on a `BACKLOG.md` line, not into a handoff.
 
-- A `Kind: work-item` design doc (under `Design Docs/`) was edited this session with no done
-  `## QA gate`, **except** one that was reviewed and backlogged and whose `## Build` has not started
-  (that is a design waiting its turn, not work in flight).
+**Work unfinished** fires, and nothing below runs, only when one of these holds:
+
+- This window was itself mid-build or mid-design on a `Kind: work-item` design doc (under
+  `Design Docs/`) with no done `## QA gate` (it wrote that design's `## Build` or `## Design review`
+  section, or has an unfinished task of that design in flight, a half-edited file or a half-run step),
+  **except** one that was reviewed and backlogged and whose `## Build` has not started (a design
+  waiting its turn).
 - An open Plan Mode plan exists with no matching saved `Design Docs/<slug>.md` yet.
+
+The survey's "unfinished candidate" line is only a signal to judge against that question: it lists
+any work-item design this window touched, including one edited only to record a result or a note,
+whose open tasks belong to someone else or wait on the owner. Judge each candidate, say which part is
+this window's own and which is not, and do not route to `/handoff` for the part that is not.
 
 Check this before the questions below, on purpose: a session mid-design or mid-build must never be
 routed toward "commit and clear", even when the working tree happens to be clean at this moment.
@@ -125,6 +138,11 @@ releases from any repo touched this session.
 
 **Report** per repo: commit hash and one line for anything committed, the open-items check's line,
 and an explicit call-out of anything deliberately left uncommitted and why. Silence would look the same as "nothing was left
-outstanding", which is the ambiguity this report exists to remove.
+outstanding", which is the ambiguity this report exists to remove. **The report ends on the close,
+never on other work:** `/end-task` exists to be done with this session, so it lists open items for the
+record only (the names on `BACKLOG.md` the open-items check found) and does not recommend, offer or ask
+about picking one up, starting the next task, or writing a handoff for work that is not this window's
+own. The closing line is the route's own (`Clear to /clear.`, or `/handoff` only when work this window
+started is unfinished).
 
 Out of scope: this skill does not change `handoff`'s own mechanics; it only routes to it.

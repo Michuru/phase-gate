@@ -3,7 +3,7 @@
 A `UserPromptSubmit` hook that nudges you (and the model) toward wrapping up as a session's context usage climbs. Scans
 the transcript for the last assistant turn's token-usage numbers, estimates what percentage
 of that model's context window is in use, and fires a message once per debounce tier
-(50/60/70/80/90%) per session — never more often than that, and never twice for the same
+(35/50/60/70/80/90%) per session — never more often than that, and never twice for the same
 tier.
 
 **Zero configuration. Zero repository coupling** — the nudge message suggests writing

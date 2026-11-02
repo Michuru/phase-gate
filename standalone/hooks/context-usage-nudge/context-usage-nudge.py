@@ -5,7 +5,7 @@ additionalContext.
 
 Reads the hook's stdin JSON payload, finds the transcript's own last assistant
 turn with a usage object, and estimates % of that turn's model's context
-window. Fires a systemMessage once per debounce tier (50/60/70/80/90) per
+window. Fires a systemMessage once per debounce tier (35/50/60/70/80/90) per
 session, never more often.
 """
 
@@ -60,7 +60,9 @@ def context_window_for(model: str) -> int:
             return window
     return DEFAULT_CONTEXT_WINDOW
 
-TIERS = (50, 60, 70, 80, 90)
+# 35 added: calls made at 400K or more of context are the costly ones, so the first nudge comes early
+# enough to hand off before them (it fires once per session, like every other tier).
+TIERS = (35, 50, 60, 70, 80, 90)
 STATE_MAX_AGE_DAYS = 30
 
 SCRIPT_DIR = Path(__file__).resolve().parent

@@ -178,7 +178,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "77a12ef8d1e9c47b39ad7e90c8f4f7fd0f88634a",
+          "source_blob": "c405787998ff2f8f95f8b6dd61182c23ef370a19",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         },
@@ -236,7 +236,7 @@
       "files": [
         {
           "path": "process/skills/consolidate-docs/SKILL.md",
-          "source_blob": "3c41050a5209ef6115e9e85ea0c16ef887d03d18",
+          "source_blob": "d6a285b2f61f51cdc45b2e4c1be0a1f8608c5ed5",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/consolidate-docs/SKILL.md"
         }
@@ -249,7 +249,7 @@
       "files": [
         {
           "path": "standalone/hooks/context-usage-nudge/context-usage-nudge.py",
-          "source_blob": "746572a481456119030f4ee54ae8bb12ec63ba78",
+          "source_blob": "97264b42b08cf751ec8c950152782e6574ab9139",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/context-usage-check.py"
         },
@@ -274,7 +274,7 @@
       "files": [
         {
           "path": "process/skills/spec/SKILL.md",
-          "source_blob": "22b22e01573dff60d88d8c02204e402aa187bd84",
+          "source_blob": "82ecfc073abd6dd665e7c38e6aed270dff447c54",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/SKILL.md"
         },
@@ -286,7 +286,7 @@
         },
         {
           "path": "process/skills/spec/references/design-review-gate.md",
-          "source_blob": "ce7ca24fc354fa4c1a26461c6d73959810a77fda",
+          "source_blob": "e22bb1621321dbc9a4f7e34093b51392c993df8a",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/references/design-review-gate.md"
         },
@@ -317,7 +317,7 @@
       "files": [
         {
           "path": "process/agents/docs-writer.md",
-          "source_blob": "9e63938ff5c30a581e3a8960f10df9e95091efbef71b7395aea5a9074787fe22",
+          "source_blob": "666f0b800e93a72960223a8ccec5186ba28f379add4b2a9f900dc94e8cec0374",
           "source_hash_type": "sha256",
           "source_path": "ClaudeCode/agents/docs-writer.md"
         }
@@ -605,7 +605,7 @@
       "files": [
         {
           "path": "process/skills/backlog/SKILL.md",
-          "source_blob": "05250ccf4fc79e8afd3f23793c110b0ae65a854d",
+          "source_blob": "bcfcdf865aa5f6ce720acf7eaa6c158f00fa7d2d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/backlog/SKILL.md"
         }

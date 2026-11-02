@@ -3,6 +3,7 @@ name: docs-writer
 description: Mechanical docs-sync work where the decisions have already been made — writing/extending a tool's NOTES.md entry, adding a one-line CLAUDE.md pointer, or running a consolidate-docs sweep (splitting a narrative CLAUDE.md section into its companion NOTES.md file). Not for anything requiring new judgment calls about what happened or why.
 tools: Read, Edit, Write, Grep, Glob
 model: haiku
+effort: low
 omitClaudeMd: true
 ---
 

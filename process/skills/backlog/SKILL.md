@@ -53,4 +53,5 @@ The normal full effort:
   last piece of work. Quick-capture mode's recommendation is simply continuing whatever the session
   was already doing — the note is written and nothing else is owed.
 - If another session may have touched `BACKLOG.md`/`CLAUDE.md`/`MISTAKES.md` since this session started (e.g. a very recent commit from elsewhere), re-read the file immediately before editing rather than trusting what was loaded at session start — `Edit`'s exact-string match fails safely on drift, `Write`'s full-file replacement doesn't.
+- On `BACKLOG.md`, change lines with `Edit`, not a patch script, if you run a cross-session write guard (a hook that checks a commit against what this session itself wrote): such a guard usually records only `Edit`/`Write` writes, so a script's own lines look like another session's and raise a would-deny on commit. If a script is unavoidable, have it record its write with the guard's own helper.
 - For a tool with its own publish/release/deploy step, "resolved" also means that step actually happened — not just that the fix works locally — before archiving.
