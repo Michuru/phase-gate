@@ -268,6 +268,49 @@
       ]
     },
     {
+      "name": "handoff-resume-notice",
+      "shelf": "standalone",
+      "description": "SessionStart hook: after a bare /clear, offers the window the handoff primer it wrote just before. Pairs with the handoff skill's pointer step.",
+      "files": [
+        {
+          "path": "standalone/hooks/handoff-resume-notice/handoff-resume-notice.py",
+          "source_blob": "1e990430db0b655258076fbb4629b1ad01306511",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/handoff-resume-notice.py"
+        },
+        {
+          "path": "standalone/hooks/handoff-resume-notice/handoff_pointer.py",
+          "source_blob": "7df53024d77164d4a4e33916fdf3cdcf8a4b8aa5",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/handoff_pointer.py"
+        },
+        {
+          "path": "standalone/hooks/handoff-resume-notice/test_handoff_resume_notice.py",
+          "source_blob": "412111111c80d83950051cca186a246addb3d898",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/test_handoff_resume_notice.py"
+        },
+        {
+          "path": "standalone/hooks/handoff-resume-notice/test_handoff_pointer.py",
+          "source_blob": "d662bd714f0575d3bbfbe0d9126611eaa68a5959",
+          "source_hash_type": "git-blob",
+          "source_path": ".claude/scripts/test_handoff_pointer.py"
+        },
+        {
+          "path": "standalone/hooks/handoff-resume-notice/README.md",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        },
+        {
+          "path": "standalone/hooks/handoff-resume-notice/settings.fragment.json",
+          "source_blob": null,
+          "source_hash_type": null,
+          "source_path": null
+        }
+      ]
+    },
+    {
       "name": "spec",
       "shelf": "process",
       "description": "Produce a short design doc before implementing a tiered change, per the tiered-work methodology. Renamed from design-gate 2026-09-05 (the two-axis SDLC redesign) - /design collides with a bundled Claude Code skill.",
@@ -343,13 +386,13 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "1187112a76de8637d887ebec9555a14aefff09da",
+          "source_blob": "84ca84dddeda61d08425c4f22e55b0879690b0a8",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         },
         {
           "path": "process/skills/handoff/references/incoming.md",
-          "source_blob": "2422b8ba43e2da7de48ac0585e72731e14d119df",
+          "source_blob": "d41d1fcee236a10c7a59d76b234d7350c598cad6",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/references/incoming.md"
         },

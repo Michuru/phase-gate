@@ -295,7 +295,7 @@ your-project/
 Each works alone. Most are one file: copy it, paste its settings snippet, done. `ai-check`,
 `humanize` and `doc-review` are skills with their own `references/` subdirectories (`doc-review` also
 has `scripts/`) and no settings snippet at all — copy the whole folder into `.claude/skills/<name>/`
-instead. `block-dangerous-commands` is two scripts that sit side by side.
+instead. `block-dangerous-commands` and `handoff-resume-notice` are two scripts that sit side by side, and the latter does nothing without the `handoff` skill.
 
 | Component | What it does |
 |---|---|
@@ -303,6 +303,7 @@ instead. `block-dangerous-commands` is two scripts that sit side by side.
 | `hooks-health-check` | Says at session start when your git hooks have come unwired |
 | `schedule-wakeup-guard` | Blocks `ScheduleWakeup` unless a real `/loop` is actually live |
 | `context-usage-nudge` | Warns as a conversation fills up, so you can hand off in time |
+| `handoff-resume-notice` | After `/handoff` and a bare `/clear`, offers the new window the primer it just wrote. Needs the `handoff` skill and a `/rename` name on the window |
 | `update-notification` | Mentions when Phase-Gate has new commits. Never fetches or applies anything |
 | `periodic-audit-threshold-check` | Flags when a tool is due for an audit. Needs `/periodic-audit` |
 | `statusline` | Context usage, session cost, and elapsed time in your status bar |

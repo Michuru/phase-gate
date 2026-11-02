@@ -195,7 +195,8 @@
         "soft": [
           "context-usage-nudge",
           "end-task",
-          "backlog"
+          "backlog",
+          "handoff-resume-notice"
         ]
       },
       "external_prerequisites": [
@@ -333,6 +334,30 @@
           "degrades": "hook silently never fires if neither is found"
         }
       ]
+    },
+    "handoff-resume-notice": {
+      "shelf": "standalone",
+      "depends_on": {
+        "hard": [],
+        "soft": [
+          "handoff"
+        ]
+      },
+      "external_prerequisites": [
+        {
+          "name": "python3 or python on PATH",
+          "degrades": "hook silently never fires if neither is found"
+        },
+        {
+          "name": "the window's own session id and a transcript file named <session id>.jsonl under Claude Code's config directory (handoff step 6c)",
+          "degrades": "no pointer is written, so no offer is made; /handoff then lists the live primers for a manual pick. Not yet confirmed live outside the source repo"
+        },
+        {
+          "name": "a /rename name on the window, kept across a bare /clear (the SessionStart input's session_title)",
+          "degrades": "no offer is made for that window; /handoff then lists the live primers for a manual pick, as it does without this hook"
+        }
+      ],
+      "notes": "Soft on handoff: the hook only offers a primer that the handoff skill's step 6c wrote a pointer for, so installed alone it does nothing and is harmless. handoff_pointer.py must sit beside the hook script in .claude/hooks/; the skill calls it from there. Ported 2026-11-02 as a fork of the source repo's hook without its claim-store and chain-run checks, which this export has no counterpart for."
     },
     "statusline": {
       "shelf": "standalone",

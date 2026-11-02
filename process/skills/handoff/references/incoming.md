@@ -7,6 +7,7 @@ Read from `SKILL.md`'s Direction section. "The scan" is `handoff_scan.py` and "t
 - Check each candidate for a closed thread
 - Ask the other live sessions first
 - Confirm, then act
+- Auto-offered primer
 
 ## Discover the live primers
 
@@ -38,3 +39,13 @@ Standing rule: the user often works several handoffs at once, so a primer that l
 ## Confirm, then act
 
 With one live candidate identified (directly or by the user's pick) and its check run, confirm with the user before treating it as authoritative: state its filename, repo, date and a one-line summary, **and, if either check found evidence of closure, say so plainly** (for example "this thread looks closed per `BACKLOG.md` or git log; want me to consume it and pick something else, or is there a real tail left?"). If confirmed live, act on the primer directly: read what it points at (design doc, `BACKLOG.md` entry, file and line) and continue, changing into that primer's own repo first if it differs from the current cwd. The primer is the full briefing; nothing more is needed from this skill. If confirmed closed, consume it with the consume script (`--reason "thread closed, see <source>"`; exit codes are in `SKILL.md`) and ask what to work on instead.
+
+## Auto-offered primer
+
+Applies only when a `[handoff resume]` line is in this session's context: the `handoff-resume-notice` `SessionStart` hook injects it after a bare `/clear` when the window kept its `/rename` name and wrote a primer through `/handoff`. It names exactly one primer and the writer's `[ref]`. Skip the scan for it; everything else above still applies.
+
+1. **Identity check first.** Run `ListAgents` once. Its first line's `[ref]` must equal the `[ref]` in the `[handoff resume]` line. If it differs, this primer belongs to a different window that shares this name: ignore the offer. If the user is asking to resume (a go-ahead or `/handoff`), take the normal path (scan, pick list); if their message is about something else, just do their task.
+2. **Trigger.** A plain go-ahead to resume ("go", "continue", "resume", "yes", "ok go ahead") or `/handoff` as the first message: go on. If it is about something else, mention the waiting primer in one line, do their task, and leave the primer live (no consume); the `[handoff resume]` line then stops governing, and a later `/handoff` after real work is an outgoing handoff, while a later `/handoff resume` finds the primer through the scan. A later handoff by this window replaces its old pointer, so the declined primer is not offered again.
+3. **Check that one primer** for a closed thread (the two checks in "Check each candidate for a closed thread", on that primer only). No peer round: the pointer was written by this window itself, which the `[ref]` match in step 1 confirmed.
+4. **Confirmation.** The user's go-ahead is the confirmation when the closed-thread check found no sign the thread is finished; if it did, ask as in "Confirm, then act". This path has no record of whether another window already resumed the same primer, so when `ListAgents` shows other live windows, add one clause to your first reply: "if you already resumed this primer in another window, say stop".
+5. **Then** act on the primer exactly as "Confirm, then act" says.

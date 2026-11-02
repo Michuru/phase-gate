@@ -25,6 +25,20 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   variable holding anything other than plain text), brace expansion, a wildcard relative to the
   folder's parent, and a few embedded-script walks.
 
+### Added
+- `handoff-resume-notice` (standalone hook, with `handoff_pointer.py` beside it): after `/handoff` and a
+  bare `/clear`, a window that kept its `/rename` name is told which primer it wrote, and a plain "go"
+  resumes it. The `handoff` skill gains outgoing step 6c (writes the pointer when the hook is installed
+  and the harness gives the window its session id, transcript path and `ListAgents` reference; says so in
+  one line and skips otherwise) and an "Auto-offered primer" section in `references/incoming.md`. Ported
+  from the source repo's hook as a fork: its claim-store check (another window holding the primer) and
+  its chain-run wording are left out, because this export has no counterpart for either. `dependencies.json`
+  lists it as a soft dependency of `handoff`. 46 tests pass in the hook's folder. Two limits, stated in the
+  hook's README: step 6c finds the window's transcript by the file name `<session id>.jsonl` (no other
+  source for it is exported), so an install where that lookup fails writes no pointer and falls back to the
+  manual pick list; and nothing records that another window already resumed the same primer, so the
+  incoming section asks the user to say stop. Not yet confirmed in a live install outside the source repo.
+
 ### Changed
 - `block-dangerous-commands`, protected-folder option: a root held in a variable, a loop variable or a
   PowerShell splat is now read where it is used, a listing of a root followed by a descent into its
@@ -79,11 +93,12 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
 - `spec` and `spec`'s `design-review-gate.md`: the `Drafted <date> on <model> (Tier N: <reason>)`
   parenthetical that the source repo's ration tier check reads, and the `RATION-EXEMPT: design-review`
   marker line. Both depend on ration scripts that are not exported (decided by the owner, 2026-11-01).
-- `handoff` and `references/incoming.md`: the auto-offered primer (a `[handoff resume]` line, a pointer
-  file, the `[ref]` in a claim's name). The owner chose to port it, but it needs `handoff_pointer.py`
-  and a `SessionStart` hook that are not exported yet, so it waits for that work and the two files are
-  left drifted on purpose. The first live use of `/handoff from-session` happened 2026-11-01 on the
-  source repo with no defect, which was the revisit condition of the entry above.
+- `handoff` and `references/incoming.md`: the claim and chain-run parts of the auto-offered primer (the
+  `[ref]` in a claim's name, a holder check, the `## Chain run` resume). The auto-offer itself is ported
+  (see Added; decided by the owner 2026-11-01, built 2026-11-02) but these parts call `chain_state.py`
+  of the source repo, which is not exported, so the two files stay drifted on purpose and the hashes are
+  re-pinned. The first live use of `/handoff from-session` happened 2026-11-01 on the source repo with
+  no defect, which was the revisit condition of the entry above.
 
 ## [1.4.0] - 2026-10-24
 
