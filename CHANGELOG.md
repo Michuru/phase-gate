@@ -8,6 +8,10 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 ## [Unreleased]
 
 ### Fixed
+- `block-dangerous-commands`, protected-folder option: a protected folder reachable through its
+  Windows 8.3 short name (`COMPAN~1`) was getting through. The short spelling of each existing
+  protected path is now matched wherever the long name is. Only volumes that generate short names are
+  affected; the tests stand in for the short form on a drive that has none.
 - `block-dangerous-commands`, protected-folder option: a folder name spelled the way a shell reads it
   back was getting through. The name match now accepts an escaped or quoted space (`Private\ Files`,
   `Private" "Files`, a caret in cmd, a backtick in PowerShell), and the command is judged a second time
@@ -26,6 +30,15 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   folder's parent, and a few embedded-script walks.
 
 ### Added
+- `block-dangerous-commands`, protected-folder option: a config entry can now be an object,
+  `{"path": ..., "tail": N, "optional": true}`. `tail` matches the folder by its last N path segments
+  (so `acme/work` is caught and the bare word `work` is not), `optional` stops a missing path from
+  being a config problem, and a relative path that lands inside an object entry is denied with no
+  recursion marker needed. An object entry's protected ancestors stop at its own parent, so a
+  recursive search started above that parent can still walk into the folder (a stated limit; a
+  string entry protects every ancestor up to the drive root, as before). A duplicate key anywhere in
+  the config file is now a config problem. Ported byte for byte from the source repo's guard and its
+  test; the export's suite passes (520 passed, 13 skipped).
 - `handoff-resume-notice` (standalone hook, with `handoff_pointer.py` beside it): after `/handoff` and a
   bare `/clear`, a window that kept its `/rename` name is told which primer it wrote, and a plain "go"
   resumes it. The `handoff` skill gains outgoing step 6c (writes the pointer when the hook is installed

@@ -59,9 +59,28 @@ a small config file, and the hook denies a call that would reach it:
 }
 ```
 
-`protected-folders.example.json` is this file. Paths are absolute, drive-letter or `/`-rooted;
+`protected-folders.example.json` holds this entry plus an object entry (below), both with invented
+paths: replace them with real ones before use, since a required path that does not exist is a
+config problem. Paths are absolute, drive-letter or `/`-rooted;
 a `\\host\share` path is not supported. On Windows write a drive-letter path (a `/mnt/c/...`
 path is read as the `C:` drive too).
+
+An entry can also be an object, `{"path": "<absolute path>", "tail": N, "optional": true}`, for a
+folder whose last name is a common word. `tail` (default 1) is how many trailing path segments
+identify it in the name match, so with `"tail": 2` on `D:\Projects\acme\work` the text
+`acme/work` is matched in full and the bare last name `work` is left alone. An object entry is
+scoped: only its own parent counts as a protected ancestor (a plain string entry protects every
+ancestor up to the drive root), and a relative path that lands inside it, from the working
+directory or after a `cd`, is denied. `optional` only means "do not raise a config problem when the
+path does not exist"; the text rules still apply. An unknown or duplicate key, a `tail` that is not
+a whole number from 1 up or is larger than the number of segments below the root, and an `optional`
+that is not true or false are config problems.
+
+**Windows 8.3 short names.** Each existing protected path's 8.3 short spelling (`COMPAN~1`,
+`PRIVAT~1`) is matched wherever the long name is. A short name exists only on a volume that
+generates them (normally `C:`; many other drives have them turned off), and only for a folder that
+exists, so a missing optional entry has none. Where short names are off, nothing extra is matched
+and the long name alone is judged.
 
 **Where the hook looks.** A hook command that carries `--config <file>` reads that one file
 and nothing else. Without `--config` it reads `${CLAUDE_PROJECT_DIR}/.claude/protected-folders.json`
@@ -107,7 +126,9 @@ project-level install cannot do:
   `fd`, `tree`, `grep -r`, `ls -R`, `cp -r`, `tar`, `robocopy`, `Get-ChildItem -Recurse`,
   `dir /s`, `findstr /s`, `os.walk` and similar, started at the drive root, at any directory
   between the root and the folder, or at your home directory (`~`, `$HOME`, `%USERPROFILE%`)
-  when the folder is under it. A recursive search elsewhere is untouched. `~` is read both as
+  when the folder is under it. **An object entry is the exception:** only its own parent is
+  protected, so a recursive search started higher up (the drive root, your home) can walk into it;
+  use a plain string entry when you need the whole climb covered. A recursive search elsewhere is untouched. `~` is read both as
   your real home directory and, because cmd.exe and Windows PowerShell 5.1 hand it to a native
   program literally, as a folder named `~` under the working directory, so a `..` climb counts
   from either place; under Git Bash a climb out of the home (`~/../../..` reaching the MSYS
@@ -137,11 +158,11 @@ project-level install cannot do:
 `--config` is missing, or any file the default search finds does not parse, the guard
 cannot know what to protect, so it denies every Grep and Glob call and every shell statement
 that holds a recursion marker, and names the file. Read and Edit are not matched by this
-hook, so the file can be repaired. The cases: not valid JSON; not `{"protected_folders": [...]}`;
-an entry that is not a string; a relative path; a `~` path; a path with a trailing separator;
+hook, so the file can be repaired. The cases: not valid JSON; a duplicate key anywhere in the file; not `{"protected_folders": [...]}`;
+an entry that is neither a string nor a valid object (see above); a relative path; a `~` path; a path with a trailing separator;
 a bare drive or filesystem root (it would match everything); a glob or regex character in
 the path (`* ? [ ] { } ^ $ | + < > "`); a UNC path; a `.` or `..` segment; a folder name with no letter or digit (the name rule would
-match that punctuation anywhere); a path that does not exist on disk; one of two unioned files broken. A statement with no recursion marker
+match that punctuation anywhere); a required path that does not exist on disk (an `optional` object entry may be missing); one of two unioned files broken. A statement with no recursion marker
 (`git status`, `echo hello`) still goes through.
 
 **If the module cannot load** (the file is missing, or a syntax error from a bad edit), the

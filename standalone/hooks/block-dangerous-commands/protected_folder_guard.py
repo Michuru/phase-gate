@@ -7,7 +7,14 @@ that points at one of its ancestors. It also denies a command that names the fol
 over the raw command, not a real shell parser: best-effort, same philosophy as the hook that calls it. The real
 boundary would be an operating-system permission, which is a separate decision.
 
-Config: protected-folders.json, `{"protected_folders": ["<absolute path>", ...]}`.
+Config: protected-folders.json, `{"protected_folders": [<entry>, ...]}`. An entry is an absolute path string (the folder's
+last name is rule 0, every ancestor up to the drive root is protected, the path must exist), or an object
+`{"path": "<absolute path>", "tail": N, "optional": true}` (Design Docs/protected-folder-path-qualified-entries.md):
+`tail` (default 1) is how many trailing path segments identify it in rule 0, so `work/companion` is matched in full and
+the bare word `work` is left alone; an object entry's ancestors stop at its own parent; a relative path word that lands
+inside it (from the cwd or after a `cd`) is denied; `optional` only means "do not raise when the path is missing" (the
+text rules still apply). An unknown or duplicate key, a non-integer or out-of-range `tail` and a non-boolean `optional`
+are config problems. Each existing path's 8.3 short spelling (COMPAN~1) is matched in every layer too.
   * `--config <file>` on the hook's command line names the one file to read; a named file that is missing or broken
     denies. This is how a user-level install should wire it, so the guard does not depend on the hook process
     inheriting any environment variable.
@@ -15,8 +22,9 @@ Config: protected-folders.json, `{"protected_folders": ["<absolute path>", ...]}
     `${CLAUDE_CONFIG_DIR or ~/.claude}/protected-folders.json` and unions the lists. A file that does not exist is
     skipped; a file that exists but is broken denies.
   * No file found, or an empty list: the guard is off (every function here allows).
-Every way a config can be wrong (bad JSON, not a list of strings, a relative or `~` path, a trailing separator, a bare
-drive or filesystem root, a glob or regex character in the path, a UNC path, a path that does not exist) is a deny
+Every way a config can be wrong (bad JSON, a duplicate key, an entry that is neither a string nor a valid object, a relative or
+`~` path, a trailing separator, a bare drive or filesystem root, a glob or regex character in the path, a UNC path, a
+required path that does not exist) is a deny
 with a message naming the file, never a silent switch-off. The deny reaches every Grep and Glob call and every shell
 statement that holds a recursion marker (find, rg, tree, ls -R, Get-ChildItem -Recurse, cp -r ...); Read and Edit
 are not matched by the hooks, so the file can be fixed.
@@ -37,8 +45,11 @@ CONFIG_NAME = "protected-folders.json"
 
 # A location: root is a lower-case drive ("j:") or "/" (a POSIX root); parts are the segments below it.
 Loc = namedtuple("Loc", "root parts")
-# One protected folder: display is the path as configured, segs its lower-case segments below root.
-Folder = namedtuple("Folder", "display root segs")
+# One protected folder: display is the path as configured, segs its lower-case segments below root. tail is how many trailing
+# segments rule 0 matches, optional that a missing path is no config problem, scoped that its ancestors stop at its own parent,
+# spell the lower-case spellings of each segment (the long name plus its 8.3 short name; filled in by configure).
+Folder = namedtuple("Folder", "display root segs tail optional scoped spell")
+Folder.__new__.__defaults__ = (1, False, False, ())
 
 
 class ConfigProblem(Exception):
@@ -49,7 +60,7 @@ _BAD_PATH_CHARS = re.compile(r'[*?\[\]{}^$|+<>"]')
 _DRIVE_PATH = re.compile(r"^([A-Za-z]):(?:[\\/](.*))?$", re.S)
 
 
-def _canon_config_path(raw):
+def _canon_config_path(raw, tail=1, optional=False, scoped=False):
     """A configured path as a Folder, or raise ValueError with the reason it is not acceptable."""
     if not isinstance(raw, str) or not raw.strip():
         raise ValueError("an entry is not a non-empty string")
@@ -80,30 +91,74 @@ def _canon_config_path(raw):
         raise ValueError("the path %r holds a . or .. segment" % p)
     if not re.search(r"[A-Za-z0-9]", segs[-1]):
         raise ValueError("the folder name in %r has no letter or digit (the name rule would match that punctuation anywhere)" % p)
-    return Folder(p, root, tuple(s.lower() for s in segs))
+    if len(segs) < tail:
+        raise ValueError("tail %d is more than the %d segments below the root of %r" % (tail, len(segs), p))
+    return Folder(p, root, tuple(s.lower() for s in segs), tail, optional, scoped)
 
 
-def _read_config_file(path):
-    """The Folder list one file holds; raise ConfigProblem naming the file when it cannot be trusted."""
+class _DuplicateKey(Exception):
+    """A JSON object that holds the same key twice (json.load would silently keep the last one)."""
+
+
+def _no_duplicate_keys(pairs):
+    seen = set()
+    for k, _ in pairs:
+        if k in seen:
+            raise _DuplicateKey(k)
+        seen.add(k)
+    return dict(pairs)
+
+
+_ENTRY_KEYS = frozenset(("path", "tail", "optional"))
+
+
+def _entry_folder(entry):
+    """The Folder one config entry stands for (its path not yet checked against the disk): a string is the old form
+    (tail 1, required, every ancestor protected); an object is {"path", "tail", "optional"} and is scoped."""
+    if isinstance(entry, dict):
+        extra = sorted(str(k) for k in entry if k not in _ENTRY_KEYS)
+        if extra:
+            raise ValueError("an entry has an unknown key %s (allowed: path, tail, optional)" % ", ".join(repr(k) for k in extra))
+        if "path" not in entry:
+            raise ValueError("an entry has no \"path\"")
+        tail, optional = entry.get("tail", 1), entry.get("optional", False)
+        if type(tail) is not int or tail < 1:
+            raise ValueError("\"tail\" of %r must be a whole number from 1 up (not %r)" % (entry["path"], tail))
+        if type(optional) is not bool:
+            raise ValueError("\"optional\" of %r must be true or false (not %r)" % (entry["path"], optional))
+        return _canon_config_path(entry["path"], tail, optional, True)
+    if isinstance(entry, str):
+        return _canon_config_path(entry)
+    raise ValueError("an entry is neither a path string nor an object (%r)" % (entry,))
+
+
+def _read_config_file(path, missing=None):
+    """The Folder list one file holds; raise ConfigProblem naming the file when it cannot be trusted. An optional entry whose
+    path is missing is accepted and its path appended to `missing` (when given)."""
     try:
         with open(path, encoding="utf-8-sig") as fh:
-            data = json.load(fh)
+            data = json.load(fh, object_pairs_hook=_no_duplicate_keys)
     except FileNotFoundError:
         raise ConfigProblem("%s is missing" % path)
+    except _DuplicateKey as e:
+        raise ConfigProblem("%s holds the key %s twice (a duplicate would silently keep the last one)" % (path, e))
     except (OSError, UnicodeDecodeError) as e:
         raise ConfigProblem("%s cannot be read (%s)" % (path, e.__class__.__name__))
     except ValueError:
         raise ConfigProblem("%s is not valid JSON" % path)
     if not isinstance(data, dict) or not isinstance(data.get("protected_folders"), list):
-        raise ConfigProblem('%s does not hold {"protected_folders": [ ... ]} (a list of strings)' % path)
+        raise ConfigProblem('%s does not hold {"protected_folders": [ ... ]} (a list of paths or objects)' % path)
     out = []
     for entry in data["protected_folders"]:
         try:
-            folder = _canon_config_path(entry)
+            folder = _entry_folder(entry)
         except ValueError as e:
             raise ConfigProblem("%s: %s" % (path, e))
         if not os.path.exists(folder.display):
-            raise ConfigProblem("%s: the path %r does not exist on disk" % (path, folder.display))
+            if not folder.optional:
+                raise ConfigProblem("%s: the path %r does not exist on disk" % (path, folder.display))
+            if missing is not None:
+                missing.append(folder.display)
         out.append(folder)
     return out
 
@@ -131,9 +186,10 @@ def config_files(argv, env):
     return files, False
 
 
-def load_folders(argv=None, env=None):
-    """(folders, problem): the protected folders for this call, or a ConfigProblem message when a config named or
-    found cannot be trusted. ([], None) means the guard is off."""
+def load_folders_ex(argv=None, env=None):
+    """(folders, problem, missing_optional): load_folders plus the paths of optional entries that do not exist (for the health
+    check). ([], None, []) means the guard is off."""
+    missing = []
     try:
         files, named = config_files(argv, env)
         folders, seen = [], set()
@@ -144,10 +200,17 @@ def load_folders(argv=None, env=None):
             seen.add(key)
             if not named and not os.path.isfile(f):
                 continue
-            folders.extend(_read_config_file(f))
-        return folders, None
+            folders.extend(_read_config_file(f, missing))
+        return folders, None, missing
     except ConfigProblem as e:
-        return [], str(e)
+        return [], str(e), []
+
+
+def load_folders(argv=None, env=None):
+    """(folders, problem): the protected folders for this call, or a ConfigProblem message when a config named or
+    found cannot be trusted. ([], None) means the guard is off."""
+    folders, problem, _ = load_folders_ex(argv, env)
+    return folders, problem
 
 
 # ---------------------------------------------------------------- state derived from the folders (see configure)
@@ -159,8 +222,11 @@ class _State(object):
     child_res = ()
     first_wild_res = ()
     name_re = None
+    tail_re = None              # rule 0 for the path-qualified entries (tail above 1); None when there are none
+    has_scoped = False
+    inside_cache = {}           # (segment, tool, cwd) -> whether a word lands inside a scoped entry; reset by configure
     cwd_climb = None
-    expanded = 0                # characters the variable expansions of the call being judged have added so far (see _EXPAND_CAP)
+    expanded = 0               # characters the variable expansions of the call being judged have added so far (see _EXPAND_CAP)
 
 
 _S = _State()
@@ -185,10 +251,32 @@ def _home_loc():
     return loc if isinstance(loc, Loc) else None
 
 
+def _alt(c):
+    """Regex source for one path segment: a string is itself, a tuple is the alternatives (the long name and its 8.3 short name)."""
+    if isinstance(c, str):
+        return re.escape(c)
+    return "(?:" + "|".join(re.escape(x) for x in c) + ")"
+
+
+def _comp_alts(f):
+    """The folder's segments as _forms and the child patterns want them: the configured spelling, or a tuple holding it and the
+    other spellings (the 8.3 short name) the segment has."""
+    out = []
+    for i, comp in enumerate(_display_comps(f)):
+        extra = [s for s in (f.spell[i] if i < len(f.spell) else ()) if s != comp.lower()]
+        out.append((comp,) + tuple(extra) if extra else comp)
+    return out
+
+
+def _wants(f):
+    """Per segment, the lower-case spellings that name it (the long name, plus the 8.3 short name when it has one)."""
+    return f.spell if len(f.spell) == len(f.segs) else tuple((s,) for s in f.segs)
+
+
 def _forms(root, comps, end):
     """Regex sources that name the directory root/comps in text. With end=True each ends as a complete token (the
     root-token check); with end=False it is a prefix that a path continues from."""
-    esc = [re.escape(c) for c in comps]
+    esc = [_alt(c) for c in comps]
     tail = "".join(r"[\\/]+" + c for c in esc)
     stop = (_END + _NOT_NAME) if end else ""
     out = []
@@ -211,48 +299,120 @@ def _forms(root, comps, end):
     return out
 
 
+_NEVER = re.compile(r"(?!x)x")                 # matches nothing (an empty alternation would match everything)
+
+
+def _name_words(name):
+    """One path segment as a rule-0 pattern. Between two words of the name: space, _ and -, plus the characters a shell puts around
+    an escaped or quoted space (a backslash in Git Bash, a backtick in PowerShell, a caret in cmd, a quote pair in any of them), so
+    'Keep\\ Out\\ Zone' still matches."""
+    if not re.search(r"[A-Za-z0-9]", name):
+        return re.escape(name)
+    return r"[\s_\-\\`^'\"]*".join(re.escape(w) for w in re.split(r"[\s_\-]+", name) if w)
+
+
+def _short_form(path):
+    """The 8.3 short spelling of an existing path ("C:\\Users\\PARTNE~1\\x"), or "" when there is none or it cannot be read.
+    Windows only; a failure of any kind means "no short form". Tests replace this function."""
+    if not IS_WINDOWS:
+        return ""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+        k32.GetShortPathNameW.restype = wintypes.DWORD
+        size = 1024
+        buf = ctypes.create_unicode_buffer(size)
+        n = k32.GetShortPathNameW(path, buf, size)
+        if n == 0 or n >= size:
+            return ""
+        return buf.value
+    except Exception:
+        return ""
+
+
+def _with_spellings(f):
+    """The folder with its per-segment spellings filled in: the lower-case segment, plus its 8.3 short name when the volume made
+    one. A path that does not exist (a missing optional entry) has none."""
+    comps = _display_comps(f)
+    spell = [[s] for s in f.segs]
+    if len(comps) == len(f.segs):
+        drive = f.root != "/"
+        path = (f.root[0].upper() + ":\\" + "\\".join(comps)) if drive else ("/" + "/".join(comps))
+        try:
+            short = _short_form(path) if os.path.exists(f.display) else ""
+        except Exception:
+            short = ""
+        parts = [p for p in re.split(r"[\\/]+", short) if p] if short else []
+        if drive and parts:
+            parts = parts[1:]                                # the drive letter
+        if len(parts) == len(comps):                         # one segment for each of the folder's
+            for i, p in enumerate(parts):
+                if p.lower() != f.segs[i] and p.lower() not in spell[i]:
+                    spell[i].append(p.lower())
+    return f._replace(spell=tuple(tuple(s) for s in spell))
+
+
+def _name_hit(text):
+    """Rule 0: does the text name a protected folder (a last name, or a path-qualified tail)? A tail is also read with quotes
+    removed and ./ and seg/../ folded, the way the shell resolves them."""
+    if _S.name_re.search(text):
+        return True
+    if _S.tail_re is None:
+        return False
+    return bool(_S.tail_re.search(text) or _S.tail_re.search(_clean_for_0c(text)))
+
+
 def configure(folders):
     """Compile the text patterns for these folders. Called once per hook call (and per test)."""
+    folders = [_with_spellings(f) for f in folders]
     _S.folders = tuple(folders)
+    _S.has_scoped = any(f.scoped for f in folders)
+    _S.inside_cache = {}
     home = _home_loc()
     anc_tokens, cwd_tokens, child = [], [], []
     for f in folders:
-        for k in range(len(f.segs)):                        # every proper ancestor, the root first
-            comps = _display_comps(f)[:k]
-            anc_tokens.extend(_forms(f.root, comps, True))
-            cwd_tokens.extend(_forms(f.root, comps, False))
+        alts = _comp_alts(f)
+        # every proper ancestor, the root first; a scoped entry (an object entry) has only its own parent
+        for k in (range(len(f.segs)) if not f.scoped else [len(f.segs) - 1]):
+            anc_tokens.extend(_forms(f.root, alts[:k], True))
+            cwd_tokens.extend(_forms(f.root, alts[:k], False))
         child.append((f, 0, _forms(f.root, [], False)))
         if home and home.root == f.root and len(home.parts) < len(f.segs) \
                 and tuple(p.lower() for p in home.parts) == f.segs[:len(home.parts)]:
             hk = len(home.parts)                          # the home directory is on the way to the folder
-            comps = _display_comps(f)[hk:]
-            for k in range(len(f.segs) - hk):
-                tail = "".join(r"[\\/]+" + re.escape(c) for c in comps[:k])
+            comps = alts[hk:]
+            for k in (range(len(f.segs) - hk) if not f.scoped else [len(f.segs) - hk - 1]):
+                tail = "".join(r"[\\/]+" + _alt(c) for c in comps[:k])
                 anc_tokens.append(r"(?<![\w$])" + _HOME_FORMS + tail + _END + _NOT_NAME)
             child.append((f, hk, [r"(?<![\w$])" + _HOME_FORMS]))
     _S.root_any = re.compile("|".join(anc_tokens), re.IGNORECASE) if anc_tokens else None
     _S.cwd_anc = re.compile("^(?:" + "|".join(cwd_tokens) + r")[\\/]*$", re.IGNORECASE) if cwd_tokens else None
     res, first_wild = [], []
     for f, offset, prefixes in child:
-        comps = _display_comps(f)[offset:]
+        comps = _comp_alts(f)[offset:]
         for pre in prefixes:
-            levels = "".join(r"[\\/]+(?:%s|%s)" % (re.escape(c), _WILD_TOKEN) for c in comps)
+            levels = "".join(r"[\\/]+(?:%s|%s)" % (_alt(c), _WILD_TOKEN) for c in comps)
             res.append((re.compile("(?:" + pre + ")(" + levels + r")(?=[\\/\s'\"|;&)]|$)", re.IGNORECASE), f, offset))
             first_wild.append(re.compile("(?:" + pre + r")[\\/]+(" + _WILD_TOKEN + ")", re.IGNORECASE))
     _S.child_res = tuple(res)
     _S.first_wild_res = tuple(first_wild)
-    words = []
+    words, tails = [], []
     for f in folders:
-        name = _display_comps(f)[-1]
-        parts = [re.escape(w) for w in re.split(r"[\s_\-]+", name) if w]
-        if not re.search(r"[A-Za-z0-9]", name):
-            words.append(re.escape(name))
-        else:
-            # between two words: space, _ and -, plus the characters a shell puts around an escaped or quoted space (a backslash
-            # in Git Bash, a backtick in PowerShell, a caret in cmd, a quote pair in any of them), so 'Keep\ Out\ Zone' still matches
-            words.append(r"(?<![A-Za-z0-9])" + r"[\s_\-\\`^'\"]*".join(parts) + r"(?![A-Za-z0-9])")
-    _S.name_re = re.compile("|".join(words), re.IGNORECASE)
-    drives = sorted({f.root for f in folders if f.root != "/"})
+        alts = _comp_alts(f)
+        if f.tail <= 1:                      # the folder's last name, as ever (its 8.3 short name too)
+            last = alts[-1]
+            for name in ((last,) if isinstance(last, str) else last):
+                words.append(r"(?<![A-Za-z0-9])" + _name_words(name) + r"(?![A-Za-z0-9])"
+                             if re.search(r"[A-Za-z0-9]", name) else re.escape(name))
+        else:                                # its last `tail` segments in full: the bare last name alone is not enough
+            joined = r"\.*[\\/]+".join("(?:" + "|".join(_name_words(n) for n in ((c,) if isinstance(c, str) else c)) + ")"
+                                    for c in alts[-f.tail:])
+            tails.append(r"(?<![A-Za-z0-9])" + joined + r"(?![A-Za-z0-9])")
+    _S.name_re = re.compile("|".join(words), re.IGNORECASE) if words else _NEVER
+    _S.tail_re = re.compile("|".join(tails), re.IGNORECASE) if tails else None
+    drives = sorted({f.root for f in folders if f.root != "/" and not f.scoped})
     climb = []
     for d in drives:
         L = "[" + re.escape(d[0]) + re.escape(d[0]).upper() + "]"
@@ -380,26 +540,28 @@ def _seg_match(want, seg):
     """(matches, by_wildcard): does the typed segment `seg` name the protected segment `want` (lower case), exactly
     or by a wildcard, case-insensitively? A brace expansion too big to finish counts as a match: nobody needs that
     next to a protected folder."""
+    wants = (want,) if isinstance(want, str) else want         # one lower-case name, or the spellings of one segment
     low = seg.lower()
-    if low == want:
+    if low in wants:
         return True, False
     if not _WILD.search(seg):
         return False, False
     expansions, truncated = _expand_braces(low)
-    if truncated or any(fnmatch.fnmatchcase(want, e) for e in expansions):
+    if truncated or any(fnmatch.fnmatchcase(w, e) for w in wants for e in expansions):
         return True, True
     return False, False
 
 
-def _covers_by_glob(root, segs):
+def _covers_by_glob(root, segs, scoped_only=False):
     """True when the typed segments, from `root`, reach a protected folder through at least one wildcard (J:\\Pr*,
     C:\\Us*\\me\\sec*): every segment up to the folder's depth matches and one of them is a wildcard. The exact
-    spelling is rule 0's."""
+    spelling is rule 0's. scoped_only: look at the object entries only (the containment check, which must not add denies
+    for a string entry)."""
     for f in _S.folders:
-        if f.root != root or len(segs) < len(f.segs):
+        if f.root != root or len(segs) < len(f.segs) or (scoped_only and not f.scoped):
             continue
         wild = False
-        for want, seg in zip(f.segs, segs):
+        for want, seg in zip(_wants(f), segs):
             ok, by_wild = _seg_match(want, seg)
             if not ok:
                 break
@@ -412,12 +574,27 @@ def _covers_by_glob(root, segs):
 
 def _is_ancestor(loc):
     """True when the location is a directory above a protected folder (its drive root, J:\\, included), so a
-    recursive search that starts there walks into it. Wildcard segments count where they could match."""
+    recursive search that starts there walks into it. Wildcard segments count where they could match. A scoped (object) entry
+    has only one ancestor, its own parent."""
     if not isinstance(loc, Loc):
         return False
     for f in _S.folders:
-        if f.root == loc.root and len(loc.parts) < len(f.segs) \
-                and all(_seg_match(want, seg)[0] for want, seg in zip(f.segs, loc.parts)):
+        if f.root != loc.root:
+            continue
+        depth_ok = len(loc.parts) == len(f.segs) - 1 if f.scoped else len(loc.parts) < len(f.segs)
+        if depth_ok and all(_seg_match(want, seg)[0] for want, seg in zip(_wants(f), loc.parts)):
+            return True
+    return False
+
+
+def _inside(loc):
+    """True when the location is inside a scoped (object) entry: its full path, or anything below it, spelled out (the long
+    name or the 8.3 short one, any case; a wildcard segment is not read as a match here, the wildcard rules do that)."""
+    if not isinstance(loc, Loc) or not _S.has_scoped:
+        return False
+    for f in _S.folders:
+        if f.scoped and f.root == loc.root and len(loc.parts) >= len(f.segs) \
+                and all(seg.lower().rstrip(". ") in want for want, seg in zip(_wants(f), loc.parts)):     # Windows drops a trailing dot or space
             return True
     return False
 
@@ -1259,6 +1436,48 @@ def _has_script_block(s):
                           re.sub(r"'[^']*'|\"[^\"]*\"", "''", s), re.IGNORECASE))
 
 
+def _words_inside_cached(seg, tool, cwd):
+    """_words_inside, remembered per (segment, tool, cwd) for the call being judged: nested scans read the same segment again."""
+    key = (seg, tool, cwd)
+    hit = _S.inside_cache.get(key)
+    if hit is None:
+        hit = _S.inside_cache[key] = _words_inside(seg, tool, cwd)
+    return hit
+
+
+def _words_inside(seg, tool, cwd):
+    """True when a word of this command (after the command word) resolves, against the cwd, to a place inside a scoped (object)
+    entry: `cat companion/identity.md` from the folder above it, `ls work` after a `cd` into the folder's parent. The same
+    resolution the recursion rules use (_norm_variants), applied to one more list. A flag is skipped; a `--flag=path` value is not."""
+    for word in _SHELL_WORD.findall(_strip_leaders(seg)):
+        if len(word) > 1024:
+            continue
+        t = word
+        if _QUOTE_OR_ESC.search(word):
+            try:
+                t = _strip_shell_quotes(word, tool)     # what the program receives: "work"/x, wo''rk, wo\rk are all work
+            except Exception:
+                t = word.strip("'\"")
+        t = _REDIRECT_OP.sub("", t, count=1)             # <work/x, >work/x, 2>>work/x, and a lone < or > before the target
+        if t.startswith("-"):
+            m = _PARAM_VALUE.match(t)                    # --file=path, PowerShell -Path:path (a drive letter stays whole)
+            t = m.group(1) if m else ""
+        if not t:
+            continue
+        # a wildcard the shell expands; a fully quoted word is no wildcard to Bash (a grep pattern such as '*'), but a cmdlet expands it
+        wild = bool(_WILD.search(t)) and not (tool == "Bash" and re.fullmatch(r"'[^']*'|\"[^\"]*\"", word))
+        for loc in _norm_variants(t, cwd, tool):
+            if _inside(loc) or (wild and isinstance(loc, Loc) and _covers_by_glob(loc.root, loc.parts, True)):
+                return True
+    return False
+
+
+_SHELL_WORD = re.compile(r"(?:\"[^\"]*\"|'[^']*'|[^\s\"'])+")
+_QUOTE_OR_ESC = re.compile(r"['\"\\`$]")
+_REDIRECT_OP =re.compile(r"^\d*[<>]{1,2}&?")
+_PARAM_VALUE = re.compile(r"^--?[A-Za-z][\w-]*[=:](.+)$")
+
+
 def _scan_statement(s, tool, st, depth):
     if not s:
         return False
@@ -1289,6 +1508,8 @@ def _scan_statement(s, tool, st, depth):
     if not segs:
         return False
     infos = [_command_positions(seg) for seg in segs]
+    if _S.has_scoped and any(_words_inside_cached(seg, tool, st[0]) for seg in segs):
+        return True                                     # a path word that lands inside a path-qualified entry
     for seg, ip in zip(segs, infos):
         # Rule 0c, per segment: the name by wildcard. Skipped for commands that only print text (a commit message or an
         # echo that mentions J:\*); a grep-family pattern is dropped first (a regex is not a path).
@@ -1394,7 +1615,7 @@ def _name_glob_in(text):
     reaches the folder through a wildcard (J:\\Pr*, /j/{Pr,X}*, C:\\Us*\\me\\sec*). Each level is the folder's own
     segment or one wildcard segment, and at least one wildcard must really match the segment it stands for."""
     for rx, folder, offset in _S.child_res:
-        want = folder.segs[offset:]
+        want = _wants(folder)[offset:]
         for m in rx.finditer(text):
             segs = [s for s in re.split(r"[\\/]+", m.group(1)) if s]
             if len(segs) != len(want):
@@ -1421,7 +1642,7 @@ def _glob_pattern_hit(pattern, base):
     for loc in locs:
         if not isinstance(loc, Loc):
             continue
-        if _covers_by_glob(loc.root, loc.parts):
+        if _covers_by_glob(loc.root, loc.parts) or _inside(loc):
             return True
         for i, seg in enumerate(loc.parts):              # a ** segment walks every folder below the ones before it
             if "**" in seg and _is_ancestor(Loc(loc.root, loc.parts[:i])):
@@ -1437,6 +1658,8 @@ def _root_rules_hit(tool_name, tool_input, command, cwd0):
             return True
         path = str(tool_input.get("path") or "")
         bases = _norm_variants(path, cwd0, "PowerShell") if path else [cwd0]
+        if any(_inside(b) for b in bases):                   # the search starts inside a scoped entry
+            return True
         if tool_name == "Grep":
             return any(_is_ancestor(b) for b in bases)
         return any(_glob_pattern_hit(str(tool_input.get("pattern") or ""), b) for b in bases)
@@ -1670,13 +1893,13 @@ def _evaluate_inner(tool_name, tool_input, cwd, command, argv=None, env=None):
             stripped = _strip_shell_quotes(command, tool_name)
         except Exception:
             stripped = command
-        if stripped not in texts and _S.name_re.search(stripped):
+        if stripped not in texts and _name_hit(stripped):
             return name_message()     # the name once the shell has removed quotes: P\rivate, Pri''vate, Pri"va"te
     return None
 
 
 def _evaluate_text(tool_name, tool_input, cwd, command):
-    if _S.name_re.search(command):
+    if _name_hit(command):
         return name_message()
     cwd = cwd or ""
     seen = _root_token_seen(command, cwd)

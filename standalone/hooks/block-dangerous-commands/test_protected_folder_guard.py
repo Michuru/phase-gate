@@ -11,6 +11,7 @@ are a drive or filesystem root, the temp path, `home`, `work` and, through `~`, 
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1311,3 +1312,552 @@ def test_variables_that_grow_ten_fold_per_step_cannot_stall_the_hook(fake, tool)
     verdict = _denied(fake, tool, cmd)
     assert time.time() - start < 15, "took %.1f s" % (time.time() - start)
     assert verdict is not None, "not denied: " + _spell(fake, cmd)
+
+
+# ---------------------------------------------------------------- path-qualified entries, optional paths, 8.3 short names
+# Design Docs/protected-folder-path-qualified-entries.md. A config entry may be {"path": ..., "tail": N, "optional": true}.
+
+def _entry(path, tail=None, optional=None):
+    e = {"path": str(path)}
+    if tail is not None:
+        e["tail"] = tail
+    if optional is not None:
+        e["optional"] = optional
+    return e
+
+
+def _write_raw_cfg(path, text):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def _forms_of(p):
+    p = Path(p)
+    out = [str(p), p.as_posix()]
+    if WIN:
+        out += [msys(p), "/mnt" + msys(p)]
+    return out
+
+
+class _PQ(object):
+    """Fresh engine module plus a fake `Claude/personal/...` tree and a config of five object entries."""
+
+    def __init__(self, tmp):
+        self.mod = _fresh_module("pfg_pq_%s" % abs(hash(str(tmp))))
+        self.tmp = tmp
+        self.root = tmp / "Claude"
+        self.personal = self.root / "personal"
+        self.elsewhere = tmp / "elsewhere"
+        self.elsewhere.mkdir()
+        for d in ("app-one/work", "app-two/work/companion", "app-two/companion", "app-three/work",
+                  "app-three/other", "app-four/work/exports"):
+            (self.personal / d).mkdir(parents=True)
+        (self.personal / "app-three/work/token.txt").write_text("x")
+        (self.root / "work").mkdir()
+        (self.root / "slm-eval" / "work").mkdir(parents=True)
+        p = self.personal
+        self.entries = [_entry(p / "app-two/work/companion", 2), _entry(p / "app-one/work", 2),
+                        _entry(p / "app-three/work/token.txt", 3),
+                        _entry(p / "app-four/work/events.jsonl", 3, True),
+                        _entry(p / "app-four/work/token.txt", 3, True)]
+        self.cfg = _write_raw_cfg(tmp / "cfg" / "protected-folders.json", json.dumps({"protected_folders": self.entries}))
+        self.argv = ["--config", str(self.cfg)]
+
+    def ev(self, tool, cmd, cwd=None):
+        return self.mod.evaluate(tool, {"command": cmd}, str(cwd or self.elsewhere), cmd, self.argv, {})
+
+    def grep(self, path=None, cwd=None, pattern="foo"):
+        ti = {"pattern": pattern, "output_mode": "files_with_matches"}
+        if path is not None:
+            ti["path"] = str(path)
+        command = "\n".join(str(ti.get(k) or "") for k in ("path", "glob", "pattern"))
+        return self.mod.evaluate("Grep", ti, str(cwd or self.elsewhere), command, self.argv, {})
+
+    def glob(self, pattern, path=None, cwd=None):
+        ti = {"pattern": pattern}
+        if path is not None:
+            ti["path"] = str(path)
+        command = "\n".join(str(ti.get(k) or "") for k in ("path", "glob", "pattern"))
+        return self.mod.evaluate("Glob", ti, str(cwd or self.elsewhere), command, self.argv, {})
+
+
+@pytest.fixture
+def pq(tmp_path):
+    return _PQ(tmp_path)
+
+
+# ---- config parsing
+def _problem(mod, tmp_path, text):
+    cfg = _write_raw_cfg(tmp_path / "bad" / "protected-folders.json", text)
+    folders, problem = mod.load_folders(["--config", str(cfg)], {})
+    return folders, problem, cfg
+
+
+def test_object_entries_load_with_their_tail_optional_and_scoped_flags(pq):
+    folders, problem = pq.mod.load_folders(pq.argv, {})
+    assert problem is None and len(folders) == 5
+    assert [f.tail for f in folders] == [2, 2, 3, 3, 3]
+    assert [f.optional for f in folders] == [False, False, False, True, True]
+    assert all(f.scoped for f in folders)
+    folders, problem, missing = pq.mod.load_folders_ex(pq.argv, {})
+    assert problem is None and len(missing) == 2
+    assert all("events.jsonl" in m or "token.txt" in m for m in missing)
+
+
+def test_a_string_entry_is_unchanged_tail_one_required_and_not_scoped(fake):
+    mod = _fresh_module("pfg_strings")
+    folders, problem = mod.load_folders(["--config", str(fake.cfg)], {})
+    assert problem is None and len(folders) == 1
+    f = folders[0]
+    assert (f.tail, f.optional, f.scoped) == (1, False, False)
+    assert mod.Folder("x", "j:", ("a",)).tail == 1          # every old three-field construction still works
+
+
+@pytest.mark.parametrize("text", [
+    '{"protected_folders": [{"path": "@P@", "color": "red"}]}',                                  # unknown key
+    '{"protected_folders": [{"path": "@P@", "tail": 1, "tail": 2}]}',                            # duplicate key in an entry
+    '{"protected_folders": [], "protected_folders": ["@P@"]}',                                  # duplicate top-level key
+    '{"protected_folders": ["@P@"], "protected_folders": []}',                                  # a second, empty list turns the guard off
+    '{"protected_folders": [{"path": "@P@", "optional": false, "optional": true}]}',
+    '{"protected_folders": [{"path": "@P@", "tail": true}]}',                                    # bool is an int in Python
+    '{"protected_folders": [{"path": "@P@", "tail": 0}]}',
+    '{"protected_folders": [{"path": "@P@", "tail": 99}]}',                                      # more than the path has
+    '{"protected_folders": [{"path": "@P@", "tail": 1.5}]}',
+    '{"protected_folders": [{"path": "@P@", "tail": "2"}]}',
+    '{"protected_folders": [{"tail": 1}]}',                                                      # missing path
+    '{"protected_folders": [{"path": 5}]}',                                                      # non-string path
+    '{"protected_folders": [{"path": ""}]}',
+    '{"protected_folders": [5]}',                                                                # neither a string nor an object
+    '{"protected_folders": [["@P@"]]}',
+    '{"protected_folders": [null]}',
+    '{"protected_folders": [{"path": "@P@", "optional": "yes"}]}',
+    '{"protected_folders": [{"path": "@P@", "optional": 1}]}',
+    '{"protected_folders": [{"path": "relative/dir"}]}',                                         # the old path checks still apply to objects
+    '{"protected_folders": [{"path": "@P@-missing"}]}',                                          # required and absent
+])
+def test_a_bad_entry_is_a_config_problem_that_names_the_file(pq, tmp_path, text):
+    target = json.dumps(str(pq.personal / "app-one" / "work"))[1:-1]
+    folders, problem, cfg = _problem(pq.mod, tmp_path, text.replace("@P@", target))
+    assert problem is not None, text
+    assert str(cfg) in problem
+    assert folders == []
+
+
+def test_an_optional_entry_that_is_missing_is_accepted_and_a_required_one_is_not(pq, tmp_path):
+    gone = json.dumps(str(pq.personal / "nope" / "work" / "x.txt"))[1:-1]
+    _, problem, _ = _problem(pq.mod, tmp_path, '{"protected_folders": [{"path": "%s", "tail": 3, "optional": true}]}' % gone)
+    assert problem is None
+    _, problem, _ = _problem(pq.mod, tmp_path, '{"protected_folders": [{"path": "%s", "tail": 3}]}' % gone)
+    assert problem is not None and "does not exist" in problem
+
+
+# ---- rule 0 for a tail-qualified entry
+RULE0_DENY = [
+    "cat personal/app-two/work/companion/x",
+    "cat work/companion/identity.md",
+    "cat app-two/work/companion",
+    'type "work\\companion"',
+    "cat 'work\\companion\\x'",
+    "cat work\\companion/x",
+    "cat work/./companion/x",
+    "cat work\\x\\..\\companion",
+    "cat work//companion/x",
+    "cat WORK/Companion/x",
+    "cat app-one/work/x",
+    "cat personal/app-one/work",
+    "cat app-three/work/token.txt",
+    "cat app-four/work/events.jsonl",
+    "cat app-four/work/token.txt",
+    "cat $'work\\x2fcompanion/x'",
+    "cat work/companion-v2",                    # a name that merely begins with the tail matches, as the last-name rule always did
+    "cat app-three/work/token.txt.example",
+]
+RULE0_ALLOW = [
+    "cat slm-eval/work/x",
+    "cat personal/app-two/companion/loop.py",
+    'git commit -m "work on companion"',
+    "echo work",
+    "echo companion",
+    "ls work",
+    "cat app-four/work/exports/x.json",
+    "cat other-tool/work/token.txt",
+    "cat token.txt",
+]
+
+
+@pytest.mark.parametrize("cmd", RULE0_DENY)
+def test_a_tail_entry_is_denied_by_name_in_every_common_spelling(pq, cmd):
+    assert pq.ev(BASH, cmd) is not None, "not denied: " + cmd
+
+
+@pytest.mark.parametrize("cmd", RULE0_ALLOW)
+def test_a_tail_entry_leaves_look_alikes_and_bare_words_alone(pq, cmd):
+    assert pq.ev(BASH, cmd) is None, "wrongly denied: " + cmd
+
+
+def test_a_tail_entry_is_denied_by_its_absolute_path_in_every_slash_style(pq):
+    for p in (pq.personal / "app-two/work/companion", pq.personal / "app-one/work",
+              pq.personal / "app-three/work/token.txt"):
+        for form in _forms_of(p):
+            assert pq.ev(BASH, "cat %s/x" % form) is not None, form
+            assert pq.ev(PS, "Get-Content '%s'" % form) is not None, form
+    for form in _forms_of(pq.root / "work") + _forms_of(pq.root / "slm-eval" / "work"):
+        assert pq.ev(BASH, "ls %s" % form) is None, form
+
+
+def test_the_name_rule_of_a_tail_entry_reads_a_grep_pattern_and_a_glob_like_any_other_text(pq):
+    assert pq.grep(pattern="app-two/work/companion") is not None
+    assert pq.grep(pattern="work") is None
+    assert pq.glob("**/work/companion/*") is not None
+
+
+# ---- optional entries still protect by name
+def test_an_optional_entry_protects_by_name_while_its_path_is_missing(pq):
+    assert not (pq.personal / "app-four/work/events.jsonl").exists()
+    assert pq.ev(BASH, "cat personal/app-four/work/events.jsonl") is not None
+    assert pq.ev(BASH, "mkdir -p x/app-four/work && cat x/app-four/work/token.txt") is not None
+    assert pq.ev(BASH, "cat personal/app-four/work/exports/a.json") is None
+
+
+# ---- ancestors stop at the entry's own parent (S1)
+ANCESTOR_ALLOW = [
+    (BASH, "rg -n foo"), (BASH, "find . -name x"), (BASH, "grep -rn foo . --include=*.md"), (BASH, "ls -R"),
+    (PS, "Get-ChildItem -Recurse"), (PS, "gci . -r"), (BASH, "git status"),
+]
+
+
+@pytest.mark.parametrize("where", ["root", "personal"])
+@pytest.mark.parametrize("tool,cmd", ANCESTOR_ALLOW, ids=[c for _, c in ANCESTOR_ALLOW])
+def test_a_recursive_search_from_far_above_a_tail_entry_is_allowed(pq, where, tool, cmd):
+    cwd = pq.root if where == "root" else pq.personal
+    assert pq.ev(tool, cmd, cwd=cwd) is None, "wrongly denied: %s in %s" % (cmd, cwd)
+
+
+@pytest.mark.parametrize("where", ["root", "personal"])
+def test_grep_and_glob_from_far_above_a_tail_entry_are_allowed(pq, where):
+    cwd = pq.root if where == "root" else pq.personal
+    assert pq.grep(cwd=cwd) is None
+    assert pq.grep(path=cwd, cwd=pq.elsewhere) is None
+    for pattern in ("**/*.md", "**/NOTES.md", "*.md", "**/*.py"):
+        assert pq.glob(pattern, cwd=cwd) is None, pattern
+        assert pq.glob(pattern, path=cwd, cwd=pq.elsewhere) is None, pattern
+
+
+def test_recursion_from_far_above_by_absolute_path_is_allowed(pq):
+    for base in (pq.root, pq.personal):
+        for form in _forms_of(base):
+            assert pq.ev(BASH, "find %s -name x" % form) is None, form
+            assert pq.ev(BASH, "rg -n foo %s" % form) is None, form
+        assert pq.ev(PS, "Get-ChildItem %s -Recurse" % base) is None
+
+
+RECURSE_DENY = [
+    ("app-one", BASH, "rg -n foo"), ("app-one", BASH, "find . -name x"), ("app-one", PS, "Get-ChildItem -Recurse"),
+    ("app-one", BASH, "grep -rn foo . --include=*.md"),
+    ("app-two/work", BASH, "rg -n foo"),                 # the parent of app-two/work/companion
+    ("app-three/work", BASH, "find . -name x"),   # the parent of the file entry
+]
+
+
+@pytest.mark.parametrize("sub,tool,cmd", RECURSE_DENY, ids=["%s %s" % (s, c) for s, _, c in RECURSE_DENY])
+def test_recursion_from_the_entrys_own_parent_is_still_denied(pq, sub, tool, cmd):
+    assert pq.ev(tool, cmd, cwd=pq.personal / sub) is not None
+
+
+def test_grep_and_glob_from_the_entrys_own_parent_are_still_denied(pq):
+    parent = pq.personal / "app-one"
+    assert pq.grep(cwd=parent) is not None
+    assert pq.grep(path=parent) is not None
+    assert pq.glob("**/*.md", cwd=parent) is not None
+    assert pq.glob("**/*.md", path=parent) is not None
+    assert pq.grep(path=pq.personal / "app-two/work") is not None
+
+
+def test_an_object_entry_with_tail_one_is_scoped_too(fake):
+    mod = _fresh_module("pfg_obj_tail1")
+    cfg = _write_raw_cfg(fake.tmp / "cfg2" / "protected-folders.json", json.dumps({"protected_folders": [_entry(fake.folder)]}))
+    argv = ["--config", str(cfg)]
+
+    def grep(path):
+        ti = {"pattern": "x", "path": str(path)}
+        return mod.evaluate("Grep", ti, str(fake.elsewhere), "\n".join([str(path), "", "x"]), argv, {})
+    assert grep(fake.work) is not None                     # the parent
+    assert grep(fake.home) is None and grep(fake.tmp) is None      # above the parent: not an ancestor of a scoped entry
+    assert mod.evaluate(BASH, {"command": "ls Private Notes"}, str(fake.elsewhere), "ls Private Notes", argv, {}) is not None
+
+
+# ---- containment (S2)
+def _cwd_cases(pq):
+    p = pq.personal
+    return [
+        (p / "app-two/work", BASH, "cat companion/identity.md"),
+        (p / "app-one", BASH, "cat work/token.txt"),
+        (p / "app-one", BASH, "ls work"),
+        (p / "app-one", PS, "Get-Content work\\x.txt"),
+        (p / "app-three", BASH, "cat work/token.txt"),
+        (p / "app-three/work", BASH, "cat token.txt"),
+        (pq.root, BASH, "cd personal/app-one && ls work"),
+        (pq.root, BASH, "cd personal/app-one/work; cat x"),
+        (p / "app-one/work", BASH, "cat x.txt"),
+        (p / "app-two/work/companion", BASH, "cat identity.md"),
+        (p / "app-one", BASH, "cat ./work/x"),
+        (p / "app-one/work", BASH, "cat ../work/x"),
+        (p / "app-one", PS, "cd work; Get-Content x"),
+        (p / "app-one", BASH, "bash -c 'cat work/x'"),
+    ]
+
+
+def test_a_relative_word_that_lands_inside_a_tail_entry_is_denied(pq):
+    for cwd, tool, cmd in _cwd_cases(pq):
+        assert pq.ev(tool, cmd, cwd=cwd) is not None, "not denied: %s (cwd %s)" % (cmd, cwd)
+
+
+def test_a_relative_word_that_stays_outside_a_tail_entry_is_allowed(pq):
+    p = pq.personal
+    for cwd, tool, cmd in [
+        (p / "app-two", BASH, "cat companion/loop.py"),
+        (p / "app-two", BASH, "ls companion"),
+        (p / "app-one", BASH, "ls"),
+        (p / "app-three", BASH, "cat other/x"),
+        (p / "app-three/work", BASH, "ls"),
+        (p / "app-four/work", BASH, "cat exports/x.json"),
+        (pq.root, BASH, "ls work"),                          # the day-job repo
+        (pq.root, BASH, "cd slm-eval && ls work"),
+        (pq.root, BASH, "git commit -m 'work on companion'"),
+    ]:
+        assert pq.ev(tool, cmd, cwd=cwd) is None, "wrongly denied: %s (cwd %s)" % (cmd, cwd)
+
+
+def test_grep_and_glob_that_land_inside_a_tail_entry_are_denied(pq):
+    p = pq.personal
+    assert pq.glob("work/*", path=p / "app-one") is not None
+    assert pq.glob("work/*", cwd=p / "app-one") is not None
+    assert pq.glob("*", path=p / "app-one/work") is not None
+    assert pq.glob("*.txt", path=p / "app-three/work") is not None    # a wildcard that reaches the file entry
+    assert pq.glob("*.md", path=p / "app-three/work") is None
+    assert pq.grep(path=p / "app-one/work") is not None
+    assert pq.grep(cwd=p / "app-one/work") is not None
+    assert pq.grep(path=p / "app-two/work/companion") is not None
+    assert pq.grep(path=p / "app-two/companion") is None
+    assert pq.glob("**/*.md", path=pq.root / "slm-eval") is None
+
+
+def test_containment_does_not_apply_to_a_plain_string_entry(fake):
+    mod = _fresh_module("pfg_contain_string")
+    argv = ["--config", str(fake.cfg)]
+    cmd = "ls Public"
+    assert mod.evaluate(BASH, {"command": cmd}, str(fake.work), cmd, argv, {}) is None
+
+
+# ---- through the real hook, once
+def test_the_hook_denies_a_tail_entry_and_leaves_the_day_job_alone(pq):
+    for cmd, cwd, denied in [("cat work/companion/x", pq.elsewhere, True), ("cat slm-eval/work/x", pq.elsewhere, False),
+                             ("cat work/token.txt", pq.personal / "app-one", True),
+                             ("rg -n foo", pq.root, False), ("rg -n foo", pq.personal / "app-one", True)]:
+        reason = run_hook(BASH, cmd, cfg=pq.cfg, cwd=str(cwd), env={})
+        assert (reason is not None) == denied, cmd + " in " + str(cwd)
+    assert run_hook("Grep", cfg=pq.cfg, cwd=str(pq.root), env={}, tool_input={"pattern": "x"}) is None
+    assert run_hook("Glob", cfg=pq.cfg, cwd=str(pq.root), env={}, tool_input={"pattern": "**/*.md"}) is None
+
+
+# ---- 8.3 short names (S3)
+def _short_stub(mapping):
+    """A stand-in for the guard's short-path lookup: the given path with each long segment swapped for its short one."""
+    def short(path):
+        return os.sep.join(mapping.get(seg, seg) for seg in re.split(r"[\\/]", path))
+    return short
+
+
+def test_short_spellings_are_matched_in_every_layer_with_a_stubbed_lookup(tmp_path):
+    mod = _fresh_module("pfg_short_stub")
+    base = tmp_path / "Claude" / "personal"
+    (base / "App Three" / "Work Files").mkdir(parents=True)
+    (tmp_path / "elsewhere").mkdir()
+    cfg = _write_raw_cfg(tmp_path / "cfg" / "protected-folders.json",
+                         json.dumps({"protected_folders": [_entry(base / "App Three" / "Work Files", 2)]}))
+    argv = ["--config", str(cfg)]
+    mod._short_form = _short_stub({"App Three": "PARTNE~1", "Work Files": "WORKFI~1"})
+
+    def ev(tool, cmd, cwd=None):
+        return mod.evaluate(tool, {"command": cmd}, str(cwd or tmp_path / "elsewhere"), cmd, argv, {})
+    short_parent = base / "PARTNE~1"
+    assert ev(BASH, "cat PARTNE~1/WORKFI~1/x") is not None            # both short
+    assert ev(BASH, "cat App\\ Three/WORKFI~1/x") is not None       # mixed long and short
+    assert ev(BASH, "cat PARTNE~1/Work\\ Files/x") is not None
+    assert ev(BASH, "cat partne~1/workfi~1") is not None             # any case
+    assert ev(BASH, "cat PARTNE~1/other/x") is None
+    ti = {"pattern": "x", "path": str(short_parent)}
+    assert mod.evaluate("Grep", ti, str(tmp_path / "elsewhere"), "\n".join([str(short_parent), "", "x"]), argv, {}) is not None
+    assert ev(BASH, "rg foo", cwd=short_parent) is not None           # the short parent as the cwd
+    assert ev(BASH, "cat WORKFI~1/x", cwd=base / "App Three") is not None     # containment through a short spelling
+    assert ev(BASH, "cat WORKFI~1/x", cwd=base) is None
+
+
+def test_a_missing_path_gets_no_short_lookup(tmp_path):
+    mod = _fresh_module("pfg_short_missing")
+    calls = []
+    mod._short_form = lambda path: calls.append(path) or path
+    base = tmp_path / "Claude" / "personal"
+    cfg = _write_raw_cfg(tmp_path / "cfg" / "protected-folders.json",
+                         json.dumps({"protected_folders": [_entry(base / "Gone Dir" / "events.jsonl", 2, True)]}))
+    mod.evaluate(BASH, {"command": "ls"}, str(tmp_path), "ls", ["--config", str(cfg)], {})
+    assert calls == []
+
+
+@windows_only
+def test_short_names_on_a_real_c_drive_folder_are_matched():
+    root = os.environ.get("LOCALAPPDATA")
+    assert root and os.path.isdir(os.path.join(root, "Temp")), "no %LOCALAPPDATA%\\Temp to test short names on"
+    base = Path(tempfile.mkdtemp(prefix="pfg-", dir=os.path.join(root, "Temp")))
+    try:
+        mod = _fresh_module("pfg_short_real")
+        (base / "personal" / "App Three" / "Work Files").mkdir(parents=True)
+        (base / "elsewhere").mkdir()
+        target = base / "personal" / "App Three" / "Work Files"
+        short = mod._short_form(str(target))
+        assert short and short.lower() != str(target).lower(), "this volume made no short name for %s (got %r)" % (target, short)
+        short_parts = re.split(r"[\\/]", short)
+        sp_parent, sp_leaf = short_parts[-2], short_parts[-1]
+        assert "~" in sp_parent and "~" in sp_leaf, short
+        cfg = _write_raw_cfg(base / "cfg" / "protected-folders.json", json.dumps({"protected_folders": [_entry(target, 2)]}))
+        argv = ["--config", str(cfg)]
+
+        def ev(tool, cmd, cwd=None):
+            return mod.evaluate(tool, {"command": cmd}, str(cwd or base / "elsewhere"), cmd, argv, {})
+        assert ev(BASH, "cat %s/%s/x" % (sp_parent, sp_leaf)) is not None
+        assert ev(BASH, "cat App\\ Three/%s/x" % sp_leaf) is not None
+        assert ev(BASH, "cat %s/other/x" % sp_parent) is None
+        parent_short = Path(short).parent
+        ti = {"pattern": "x", "path": str(parent_short)}
+        assert mod.evaluate("Grep", ti, str(base / "elsewhere"), "\n".join([str(parent_short), "", "x"]), argv, {}) is not None
+    finally:
+        shutil.rmtree(str(base), ignore_errors=True)
+
+
+# ---------------------------------------------------------------- fix round 1 (Opus review of tasks 1 to 7)
+def _fix_cases(pq):
+    p = pq.personal
+    psc, pic, lcw = p / "app-three", p / "app-one", p / "app-two/work"
+    return {
+        # 1: redirection targets, and the command word picked before redirections are dropped
+        "redirect": [
+            (psc, BASH, "cat <work/token.txt"), (psc, BASH, "t=$(< work/token.txt)"),
+            (psc, BASH, "t=$(tr -d x <work/token.txt)"), (psc, BASH, "< work/token.txt cat"),
+            (pic, BASH, "echo hi >work/x"), (pic, BASH, "echo hi > work/x"), (pic, BASH, "echo hi 2>work/x"),
+            (pic, BASH, "echo hi >>work/x"),
+        ],
+        # 2: quotes and escapes the shell removes before the program sees the word
+        "quotes": [
+            (psc, BASH, 'cat "work"/token.txt'), (psc, BASH, 'cat work/"token.txt"'), (psc, BASH, "cat wo''rk/token.txt"),
+            (psc, BASH, "cat wo\\rk/token.txt"), (lcw, BASH, "cat compan\\ion/x"), (psc, BASH, "cat 'work'/'token.txt'"),
+        ],
+        # 3: PowerShell -Param:value
+        "psparam": [
+            (psc, PS, "Get-Content -Path:work\\token.txt"), (psc, PS, "Get-Content -LiteralPath:work\\token.txt"),
+            (pic, PS, "Get-ChildItem -Path:work"), (pic, BASH, "cat --file=work/x"),
+        ],
+        # 4: a wildcard word the shell expands into the entry
+        "wild": [
+            (psc, BASH, "cat work*/token.txt"), (psc, BASH, "cat work/tok*"), (lcw.parent, BASH, "cat */companion/identity.md"),
+            (lcw.parent, BASH, "cat work/compan*/identity.md"), (pq.root, BASH, "cat personal/app-one/w*"),
+            (pq.root, BASH, "cat personal/app-two/work/compan*/identity.md"), (pic, BASH, "ls */"),
+            (psc, BASH, "ls work/?oken.txt"),
+        ],
+        # 5: Windows drops a trailing dot
+        "dot": [
+            (psc, PS, "gc work\\token.txt."), (psc, PS, "gc work.\\token.txt"), (pic, BASH, "cat work./x"),
+            (pq.elsewhere, BASH, "cat personal/app-one/work./x"), (pq.elsewhere, PS, "gc personal\\app-one\\work.\\x"),
+            (pq.elsewhere, BASH, "cat work./companion./x"),
+        ],
+    }
+
+
+@pytest.mark.parametrize("group", ["redirect", "quotes", "psparam", "wild", "dot"])
+def test_fix_round_one_words_that_land_inside_a_tail_entry_are_denied(pq, group):
+    for cwd, tool, cmd in _fix_cases(pq)[group]:
+        assert pq.ev(tool, cmd, cwd=cwd) is not None, "not denied: %s (cwd %s)" % (cmd, cwd)
+
+
+def test_fix_round_one_look_alikes_stay_allowed(pq):
+    p = pq.personal
+    for cwd, tool, cmd in [
+        (p / "app-three", BASH, "cat <other/x"), (p / "app-one", BASH, "echo hi >out.txt"),
+        (p / "app-one", BASH, "git commit -m 'fix work stuff' 2>&1"), (p / "app-one", BASH, "echo hi 2>&1 >/dev/null"),
+        (p / "app-three", BASH, 'cat "other"/x'), (p / "app-one", PS, "Get-ChildItem -Path:src"),
+        (p / "app-one", BASH, "ls src/*"), (p / "app-one", BASH, "cat *.md"), (p / "app-three", BASH, "cat oth*/x"),
+        (p / "app-one", BASH, "grep -n '*' src/a.py"), (pq.root, BASH, "ls */"), (pq.root, BASH, "cat slm-eval/work./x"),
+    ]:
+        assert pq.ev(tool, cmd, cwd=cwd) is None, "wrongly denied: %s (cwd %s)" % (cmd, cwd)
+
+
+def test_fix_round_one_a_wildcard_word_adds_no_deny_for_a_string_only_config(fake):
+    mod = _fresh_module("pfg_wild_string")
+    argv = ["--config", str(fake.cfg)]
+    for cwd in (fake.work, fake.home, fake.tmp, fake.other):
+        for cmd in ("ls *", "ls */", "cat */x", "ls ../*", "cat <x", "cat 'Public'/x", "cat wo*/x"):
+            hit = mod.evaluate(BASH, {"command": cmd}, str(cwd), cmd, argv, {})
+            assert hit is None, "wrongly denied: %s in %s: %r" % (cmd, cwd, hit)
+
+
+def test_fix_round_one_a_trailing_dot_in_a_name_is_matched_by_rule_zero(pq):
+    for cmd in ("cat personal/app-one/work./x", "cat app-one./work/x", "cat personal/app-two/work./companion./x"):
+        assert pq.ev(BASH, cmd) is not None, cmd
+
+
+# ---- the 8.3 lookup's failure paths, and the glob layers reading short names (review item 13)
+class _FakeK32(object):
+    def __init__(self, fn):
+        self.GetShortPathNameW = fn
+
+
+def _short_form_with(monkeypatch, mod, fn):
+    import ctypes
+    monkeypatch.setattr(mod, "IS_WINDOWS", True)
+    monkeypatch.setattr(ctypes, "WinDLL", lambda *a, **k: _FakeK32(fn), raising=False)
+    return mod._short_form("C:\\some\\Long Path")
+
+
+@windows_only
+def test_short_form_gives_no_short_name_when_the_api_fails(monkeypatch):
+    mod = _fresh_module("pfg_short_fail")
+
+    def ok(path, buf, size):
+        buf.value = "C:\\SOME\\LONGPA~1"
+        return len("C:\\SOME\\LONGPA~1")
+    assert _short_form_with(monkeypatch, mod, ok) == "C:\\SOME\\LONGPA~1"          # the control: a working API gives the name
+    assert _short_form_with(monkeypatch, mod, lambda path, buf, size: 0) == ""        # the call failed
+    assert _short_form_with(monkeypatch, mod, lambda path, buf, size: 5000) == ""     # the buffer was too small
+    assert _short_form_with(monkeypatch, mod, lambda path, buf, size: 1024) == ""     # exactly the buffer size is "too small" too
+
+    def boom(path, buf, size):
+        raise OSError("no")
+    assert _short_form_with(monkeypatch, mod, boom) == ""
+
+
+def test_the_glob_layers_read_short_names(tmp_path):
+    base = tmp_path / "Claude" / "personal"
+    (base / "App Three" / "Work Files").mkdir(parents=True)
+    (tmp_path / "elsewhere").mkdir()
+    cfg = _write_raw_cfg(tmp_path / "cfg" / "protected-folders.json",
+                         json.dumps({"protected_folders": [_entry(base / "App Three" / "Work Files", 2)]}))
+    argv = ["--config", str(cfg)]
+    with_short = _fresh_module("pfg_glob_short")
+    with_short._short_form = _short_stub({"App Three": "PARTNE~1", "Work Files": "WORKFI~1"})
+    without = _fresh_module("pfg_glob_noshort")
+    without._short_form = lambda path: ""
+
+    def glob(mod, pattern):
+        return mod.evaluate("Glob", {"pattern": pattern, "path": str(base)}, str(tmp_path / "elsewhere"),
+                            "\n".join([str(base), "", pattern]), argv, {})
+
+    def text(mod, cmd):
+        return mod.evaluate(BASH, {"command": cmd}, str(tmp_path / "elsewhere"), cmd, argv, {})
+    # _covers_by_glob: only the short names can match these wildcard segments
+    assert glob(with_short, "PARTNE~1/WORKFI~*") is not None
+    assert glob(without, "PARTNE~1/WORKFI~*") is None
+    # _name_glob_in: an absolute path whose last two segments are short-name wildcards
+    cmd = "cat %s/PARTNE~1/WORKFI~*" % base.as_posix()
+    assert text(with_short, cmd) is not None
+    assert text(without, cmd) is None

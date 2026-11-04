@@ -1,5 +1,6 @@
 {
   "protected_folders": [
-    "C:\\Users\\you\\Documents\\Private Files"
+    "C:\\Users\\you\\Documents\\Private Files",
+    {"path": "C:\\Users\\you\\Projects\\work\\clients", "tail": 2, "optional": true}
   ]
 }

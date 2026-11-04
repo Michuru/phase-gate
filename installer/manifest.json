@@ -102,13 +102,13 @@
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/protected_folder_guard.py",
-          "source_blob": "b871058fad13c8b864870471cf17c2b795773479",
+          "source_blob": "b5951bd8ccfad16defd905ff50d280a9f30a73dd",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/protected_folder_guard.py"
         },
         {
           "path": "standalone/hooks/block-dangerous-commands/test_protected_folder_guard.py",
-          "source_blob": "2fea2b3480a22643c53cfe7e9a95e962d5c5dbc1",
+          "source_blob": "1ef51a1248b9f111cc0eb7e33d7b2fa0da5bebdc",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/test_protected_folder_guard.py"
         },
