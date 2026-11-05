@@ -1,12 +1,12 @@
 ---
 name: execution-gate
-description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Runs automatically as /build's opening gate whenever implementation actually starts (no approval question) — still directly invocable standalone too, e.g. to preview cost before deciding. Does not execute anything itself, and does not replace implement-queue (which parallelizes across several already-approved separate designs, not within one).
+description: Analyze one already-decided design doc's own task breakdown and decide, task by task, how it should actually be executed — stays on the main model (at what scrutiny level), delegates to docs-writer, forks for context hygiene, or is blocked on the user — plus whether a genuinely-independent subset is worth a one-off parallel Workflow call. Runs automatically as /build's opening gate whenever implementation actually starts (no approval question) — still directly invocable standalone too, e.g. to preview cost before deciding. Does not execute anything itself.
 ---
 
 # Execution gate: decide how one design's tasks should run
 
-`spec` produces the design doc and its task breakdown. `implement-queue` parallelizes several
-already-approved, separately-scoped designs against each other. Neither owns the gap this skill fills:
+`spec` produces the design doc and its task breakdown, but does not decide how that breakdown should
+run. That is the gap this skill fills:
 taking **one already-decided design's own task list** and deciding, task by task, whether it stays on the
 main model (and at what scrutiny level), gets delegated to `docs-writer`/`code-reviewer`, gets forked off
 for context hygiene, belongs to the user, or — rarely — forms a genuinely-independent subset worth a
@@ -23,7 +23,7 @@ silent stop is indistinguishable from this skill never having been invoked — t
 `spec`'s tier check was written to prevent. Recording the decline is cheap; recording nothing is
 not distinguishable from "never checked."
 
-## Step 1: The parallelization/Workflow-worthiness gate — and the `/implement-queue` eligibility check
+## Step 1: The parallelization/Workflow-worthiness gate — and the checklist eligibility check
 
 Run this first, before classifying any individual task. The question is **logical dependency and
 file-level overlap**, not shared state: does task N's output feed task N+1 (a strict sequence), or would
@@ -31,29 +31,30 @@ two candidate-parallel tasks edit the same file or region? If yes to either, sta
 parallel-`Workflow` candidate — execute sequentially," and skip Bucket E (Step 4) for every task in this
 design.
 
-**Shared git state alone does not disqualify, and must not be treated as if it does.** `implement-queue`
-already runs parallel agents against this repo's single git history today, and solves it structurally via
-worktree isolation (its Step 2's single captured `baseCommit`; its Step 5's scoped-patch application that
-never merges or fast-forwards a worktree branch). Reading "concurrent agents might touch git" as
+**Shared git state alone does not disqualify, and must not be treated as if it does.** Parallel agents
+can work against a repo's single git history safely when each runs in an isolated worktree off one captured
+base commit and the lead applies their results as scoped patches, never merging or fast-forwarding a
+worktree branch. Reading "concurrent agents might touch git" as
 disqualifying would disqualify every design in this repo and make Bucket E permanently dead code. A real
 disqualifier looks like a repo-restructure precedent: a strict task-to-task sequence where a later task
 rewrites history/state the rest depend on — a dependency chain, not a concurrency hazard.
 
-**Run a second, independent check here too: whole-design `/implement-queue` eligibility — not just Bucket
-E's parallel-worthiness.** `implement-queue`'s Step 6 anomaly check treats any touched path under
+**Run a second, independent check here too: whole-design checklist eligibility — not just Bucket
+E's parallel-worthiness.** Any touched path under
 `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, or anything under `.claude/` (skills,
-workflows, settings, hooks) as tainted — those are the forbidden paths `GIT_BOUNDARY` reserves to the
-harvest step alone, so a queued run of such a design would flag nearly every item as tainted and harvest
-nothing. If **any** task in this design's own breakdown touches one of those paths, the **whole design**
-is disqualified from `/implement-queue`'s "Ready to implement" checklist — independent of Step 1's
+workflows, settings, hooks) is a forbidden path. This is a conservative rule carried over from the
+retired parallel queue, whose harvest step rejected those paths; a parallel `Workflow`'s harvest
+(Bucket E) would flag the same paths. It is the same test `spec`'s `references/backlog-the-design.md`
+owns, run here so the verdict is recorded. If **any** task in this design's own breakdown touches one of those paths, the **whole design**
+is disqualified from `BACKLOG.md`'s "Ready to implement" checklist — independent of Step 1's
 parallelization test above, and regardless of how independent the design's own tasks are from each other.
 A design can pass the dependency/overlap test and still be forbidden-path-disqualified, or vice versa;
-check both. State this disqualification explicitly and record it as the design's `/implement-queue`
+check both. State this disqualification explicitly and record it as the design's checklist
 eligibility verdict in Step 6's Execution-strategy section (not left implicit, and not folded into Bucket
 E's note) — if disqualified, the design stays tracked wherever it already lives (its own tool section, or
 a cross-cutting section like `BACKLOG.md`'s "Environment / machine setup") rather than added to the
 "Ready to implement" checklist, and Bucket E (Step 4) is skipped for the whole design too, since the same
-disqualifier applies to both queues. This exact scenario has happened once by hand already: a design doc
+disqualifier applies to a Workflow's harvest. This exact scenario has happened once by hand already: a design doc
 for this very kind of execution-planning work had most of its own tasks touch forbidden paths and had to
 be pulled from the checklist and tracked manually before this check existed as a repeatable step.
 
@@ -124,10 +125,11 @@ lists are at least loosely interdependent by construction, since they're steps o
 several separate designs.
 
 If found, this becomes **Bucket E**. Its output is a *recommendation to author a one-off, scoped
-`Workflow` call* for just that subset, reusing `implement-queue`'s proven worktree-isolation and
-harvest-anomaly-check pattern — **never** a queue entry for `implement-queue` itself. That skill's own
-checklist mechanism expects each item to be a whole, independently-implementable design
-(`{designDocPath, backlogEntryText, toolName}`), not a task fragment pulled out of a larger one.
+`Workflow` call* for just that subset, which you author yourself (this export ships no template for it);
+isolate each parallel agent in its own worktree and check what it returns against the subset's own scope
+before applying it — **never** a checklist entry. The checklist holds each item as a whole,
+independently-implementable design (design doc path, tool name, tier, "no unmet prerequisite"), not a
+task fragment pulled out of a larger one.
 
 ## Step 5: State a scrutiny label for every task, from a fixed vocabulary
 
@@ -156,11 +158,11 @@ Trimming after adoption is not a violation of the append-only rule; overwriting 
 most a pointer to it, or a one-line summary explicitly marked as derived — never a second full copy that
 can drift out of sync with this one.
 
-**Always include the `/implement-queue` eligibility verdict from Step 1's second check** — eligible, or
+**Always include the checklist eligibility verdict from Step 1's second check** — eligible, or
 disqualified-forbidden-path with the offending task numbers and paths named — even when the design was
 never destined for the checklist at all. This is a distinct line from Bucket E's recommendation (Step 7):
 Bucket E is about an independent *subset* running its own scoped `Workflow`, this verdict is about whether
-the *whole design* may ever appear on `BACKLOG.md`'s "Ready to implement" checklist as a single queue item.
+the *whole design* may ever appear on `BACKLOG.md`'s "Ready to implement" checklist as a single entry.
 
 **If you've configured the optional `local-delegate` component, include Step 3.5's `local-delegate`
 value as its own column** in the same table as the bucket/stakes/approval fields — never folded
@@ -177,23 +179,22 @@ blank cells) if you haven't configured the component or no task carries this sco
 
 If Step 4 fired (rare), note the recommended scoped-`Workflow` approach inside the same Execution-strategy
 section — this is guidance for whoever executes the design, not a `BACKLOG.md` checklist entry.
-`BACKLOG.md`'s "Ready to implement" checklist stays reserved for whole separate designs, exactly as
-`implement-queue` already expects it.
+`BACKLOG.md`'s "Ready to implement" checklist stays reserved for whole separate designs.
 
 ## Step 8: Report before anything downstream runs
 
-Report to the user before implementation, `implement-queue`, or any fork actually starts. The report must
+Report to the user before implementation or any fork actually starts. The report must
 include:
 
 1. **An enumerated task-number-to-bucket table covering every task in the design**, so an unclassified
    task is visible rather than assumed away. "No task left unclassified" is a *checked* output here, not
    just an instruction back in Step 2.
-2. **The `/implement-queue` eligibility verdict from Step 1's second check** — state it plainly (eligible,
+2. **The checklist eligibility verdict from Step 1's second check** — state it plainly (eligible,
    or disqualified-forbidden-path and why) so the user knows before deciding whether to backlog this design
    onto the checklist at all.
 3. **The projected cost of the recommended strategy** — how many `docs-writer` calls, forks,
-   `code-reviewer` passes, and (if Bucket E fired) `Workflow` agents it implies. `implement-queue` already
-   states agent count and rough spend before running so the user's yes is informed; this skill's entire
+   `code-reviewer` passes, and (if Bucket E fired) `Workflow` agents it implies. Agent count and rough spend should be
+   stated before running so the user's yes is informed; this skill's entire
    output is "run these tasks this way," and that number shouldn't go unstated here either. **If you've
    configured the `local-delegate` component, also state how many tasks carry `local-delegate:
    implement`** and which model would run them, per your own recorded configuration — the one line of
@@ -221,5 +222,5 @@ escalation of repeated review passes (`verify` Step 2) is also outside this gate
 - `/build` runs this skill automatically as its opening gate, with no approval question (`build/SKILL.md` Step 1); it stays directly invocable standalone, e.g. to preview cost before deciding. Making it a required step in your rules doc's tiered-work section was waived, not satisfied: it became effectively mandatory through `/build` by direct decision, not because an evidence bar was cleared.
 - **No per-task model field, by design.** Step 8's point 4 (a plain-prose recommendation, only when genuinely warranted) is the whole mechanism, and `stakes` does not imply a model choice (an irreversible push needs a human confirm, not a stronger model). Revisit only if a recurring structured need shows up.
 - For the full pipeline this skill fits into — from a problem arising through `backlog`/`spec`
-  and on to `implement-queue` and the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
+  and on to the standing QA/docs-sync/archive/commit conventions — see `WORKFLOW.md`
   at the repo root.

@@ -34,12 +34,9 @@ You need three things installed:
 - **git**
 - **Python 3**
 
-Two commands have their own hard requirement — not optional if you use them, with no fallback if it's
+One command has its own hard requirement — not optional if you use it, with no fallback if it's
 missing:
 
-- **`/implement-queue`** (builds several approved plans in parallel — skip this if you don't use it)
-  needs Claude Code's `Workflow` tool with worktree support. Check `/config` to confirm it's on —
-  there's no fallback without it.
 - **`/review-pr`** (reviews a GitHub pull request — skip this if you don't use it) needs the `gh`
   CLI, authenticated. Install it from
   [cli.github.com](https://cli.github.com), then run `gh auth login`. It also needs Claude Code's own
@@ -222,13 +219,12 @@ can still be refined before any of it reaches `/build`.
 
 ### Also included
 
-These cover real, common needs: parallel builds, onboarding an existing project, and reviewing
-someone else's pull request.
+These cover real, common needs: onboarding an existing project, and reviewing someone else's pull
+request.
 
 | Command | What it does |
 |---|---|
 | `/execution-gate` | Decide, per task, whether the AI does it directly, delegates it, or needs you |
-| `/implement-queue` | Build several approved plans at once, each in its own copy of the repo |
 | `/adopt` | One-time inventory for adding this to a project that already has code |
 | `/consolidate-docs` | Keep your always-loaded rules file from growing unbounded |
 | `/periodic-audit` | Check whether tests cover a tool's branches, and whether an old bug is back |

@@ -121,9 +121,8 @@ For every component in `<path>/installer/manifest.json`, produce a table row and
 - **A citation list, not one field** — every file this verdict actually depends on, each recorded as a
   `file_quote` entry (`path`, optionally `line`, and the actual `quote` read) or, on the adopter side, a
   `command_output` entry (the exact `command` and its literal `output`). A component needing multiple
-  things (e.g. `implement-queue` needing both the `Workflow` tool *and* worktree support *and* both
-  `code-reviewer`/`docs-writer` agent definitions) cites all of them, not one quote standing in for the
-  whole conjunction.
+  things (e.g. `review-pr` needing both `gh` installed *and* authenticated *and* a GitHub remote on the
+  repo) cites all of them, not one quote standing in for the whole conjunction.
 - **Both an `export`-side and an `adopter`-side citation** (the `side` field). "This file in the export
   says X" is only half the claim; "and that applies to your repo because Y" is the half that is actually
   unverifiable from the export alone and actually acted on.
@@ -139,8 +138,7 @@ For every component in `<path>/installer/manifest.json`, produce a table row and
 - **`status`** per `plan.schema.json`'s enum: `will_install`, `already_present_identical` (this run is a
   true no-op — compare against the receipt's recorded hashes if one exists), `already_present_will_update`
   (a real diff exists), `skipped_by_adopter`, or `skipped_prerequisite_missing` (state the missing
-  prerequisite by name — e.g. `review-pr` needs `gh` installed and authenticated; `implement-queue` needs
-  `Workflow`/worktree support and fails fast per D3, no reduced mode is shipped).
+  prerequisite by name — e.g. `review-pr` needs `gh` installed and authenticated and a GitHub remote).
 
 **`plan.json`'s `components` array gets one row per component in `<path>/installer/manifest.json`,
 and never a single combined row for a whole shelf.** `dependencies.json` supplies the *edges*

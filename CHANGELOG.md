@@ -28,6 +28,9 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 - Still not caught, and stated in the README: a name built at run time (`$(printf ...)`, `[char]32`, a
   variable holding anything other than plain text), brace expansion, a wildcard relative to the
   folder's parent, and a few embedded-script walks.
+- Not tested: the guard's stated Python 3.9 floor (no interpreter older than 3.11 was available to run it).
+  The guard's suite was also run on Linux under Python 3.14: 309 passed, 224 skipped by platform (Windows
+  path forms, `findstr`, tests that need a second temp location), 0 failed.
 
 ### Added
 - `block-dangerous-commands`, protected-folder option: a config entry can now be an object,
@@ -75,10 +78,24 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 - `backlog`: a note to use `Edit`, not a patch script, on `BACKLOG.md` when a cross-session write guard
   is in use. The guard itself is not exported.
 
+### Removed
+- `implement-queue`: the skill, its workflow script (`process/workflows/implement-queue.js`), its manifest
+  and dependency entries, and every line of the README, `docs/` and installer files that named it. The
+  source repo retired it, and its replacement cannot ship (it depends on scripts this export leaves out),
+  so this is a hand edit, not a port. Its requirement for the `Workflow` tool with worktree support goes
+  with it: `/review-pr` is now the only command with a hard external requirement. `build` with no design
+  named now offers the "Ready to implement" checklist and builds each pick one at a time in the session,
+  closing each out (commit, archive, remove its checklist line) before the next, and skipping a design
+  whose phase record already says `## Build — done` or `## Shipped`; `execution-gate` keeps its
+  checklist-eligibility check, worded without the queue. `initiate`, `ship`, `verify`, `spec`'s
+  `backlog-the-design.md`, the docs and the explainer page no longer describe it. The hashes of the hand-edited
+  skills are not re-pinned, so `drift_check.py` still lists them for the next drift round.
+
 ### Decided, not ported
 Reviewed and deliberately left in the source repo, with the manifest hashes re-pinned so
 `drift_check.py` no longer counts them as drifted; the next drift is measured from here.
-- `initiate`, `build`, `execution-gate`, `implement-queue`, `ship` and `spec`'s `backlog-the-design.md`:
+- `initiate`, `build`, `execution-gate`, `implement-queue`, `ship` and `spec`'s `backlog-the-design.md`
+  (`implement-queue` was later removed from the export: see Removed above):
   the source repo's one "Ready to implement" list, a route verdict recorded by the gate, and a teams
   runbook for unattended builds. The runbook depends on the source repo's agent boundary guard (a hook
   that is not exported) and on a window started with an experimental variable, and a teams run is

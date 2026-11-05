@@ -60,9 +60,7 @@ distinct from `## Verification`, which is the plan `spec` already wrote at draft
   done`, the recommendation is **`/ship`**. Named alternative if escalation is still unresolved
   (`## QA gate — blocked: <what>`): stop here and surface the blocker rather than proceeding to
   `/ship` on an unresolved finding.
-- **Scoped specifically to this gate — not a repo-level rule, and not reachable from `backlog`'s or
-  `implement-queue`'s own separate QA loops**, since forked/`implement-queue` executors are
-  fixed-prompt workflow stages that never run `spec`/`build`/`verify` at all (not because of any
-  git-state restriction).
+- **Scoped specifically to this gate — not a repo-level rule, and not reachable from `backlog`'s own
+  separate QA loop** (not because of any git-state restriction).
 - Local-model fit: not applicable — QA/correctness verification is exactly the open-ended-judgment
   category local SLMs tend to be unreliable for; keep `code-reviewer` on a full model regardless.

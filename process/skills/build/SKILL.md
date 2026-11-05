@@ -1,22 +1,29 @@
 ---
 name: build
-description: Implement an approved spec doc — runs execution-gate automatically as its opening gate (no approval question, cost stated, stopping itself when trivial per that gate's own Step 0), then executes the design's tasks at whatever bucket/scrutiny level the gate assigned. For several independent already-approved designs on BACKLOG.md's "Ready to implement" checklist, runs implement-queue as its batch mode instead. Use when the user invokes /build, or asks to implement/build a design doc that's already been approved via /spec.
+description: Implement an approved spec doc — runs execution-gate automatically as its opening gate (no approval question, cost stated, stopping itself when trivial per that gate's own Step 0), then executes the design's tasks at whatever bucket/scrutiny level the gate assigned. With no design named, it offers BACKLOG.md's "Ready to implement" checklist and builds each pick one at a time in this session. Use when the user invokes /build, or asks to implement/build a design doc that's already been approved via /spec.
 ---
 
 # Build: implement an approved design
 
 Implements an approved design. `execution-gate` runs automatically as its opening gate. Two modes — **single-design** (the common
-case: implement one already-approved `Design Docs/<slug>.md`) and **batch** (several independent,
-already-approved designs sitting on `BACKLOG.md`'s "Ready to implement" checklist, delegated
-straight to `implement-queue`) — decided by what's actually being asked for, not a fixed choice.
+case: implement one already-approved `Design Docs/<slug>.md`) and **checklist** (no design named:
+offer the approved designs sitting on `BACKLOG.md`'s "Ready to implement" checklist and build each
+pick one at a time, in this session) — decided by what's actually being asked for, not a fixed choice.
 
 ## Step 0: Which mode?
 
 - **A specific design doc named or clearly implied** (the user just approved one, or points at a
   `Design Docs/<slug>.md`) → single-design mode, below.
 - **"Run the queue" / "build what's ready" / no specific design named, and `BACKLOG.md`'s "Ready to
-  implement" checklist is non-empty** → batch mode: invoke `implement-queue` directly. Nothing
-  further in this skill applies — that skill owns its own full flow end to end.
+  implement" checklist is non-empty** → checklist mode: read that section of `BACKLOG.md`, ask which
+  to build with `AskUserQuestion` (multi-select, at most 4 options per question: ask in chunks of 3
+  designs plus an "all of these" option), then take the picks one at a time: Steps 1 to 4 below for
+  each, and close each pick out before the next starts: after `/verify`, commit it, then archive its
+  `BACKLOG.md` entry and remove its checklist line (`/ship` when the tool has a deploy target,
+  otherwise `backlog`'s archive step), so a built design never stays on the checklist.
+  **A design whose phase record already says `## Build — done` or `## Shipped`** is reported as
+  already built and left out of the picks (a `done` heading whose task range does not cover every
+  task in the design, such as `## Build — done, tasks 1-4` of 12, is partial and does not count).
 - **Both a specific design and a non-empty checklist** → ask which was meant, rather than guessing.
 
 ## Step 1: Run `execution-gate` automatically — no approval question
@@ -75,8 +82,7 @@ Route each task per `execution-gate`'s own bucket assignment from Step 1 above:
 - **Bucket C (fork)** — forked off for context hygiene.
 - **Bucket D (user-executed)** — wait on the user; never attempt it yourself.
 - **Bucket E (rare, independent subset)** — a one-off scoped `Workflow` call for just that
-  subset, per `execution-gate`'s own recommendation. Never routed through `implement-queue` — that
-  skill's checklist mechanism expects a whole separate design, never a task fragment of one.
+  subset, per `execution-gate`'s own recommendation.
 
 **Write `## Build — running` into the design doc the moment this step starts** (write-on-entry,
 per `spec`'s phase-record convention, its `references/phase-records.md`), and update it to `## Build — done` (or `blocked: <what, on whom>`
@@ -90,8 +96,8 @@ toward your own break-even numbers for this feature, not just a pass/fail note.
 ## Step 3: Backlogging stays in `spec`
 
 `build` only implements. Backlogging a design (the forbidden-path test, the "Ready to implement"
-checklist line, the auto-commit) is `spec`'s `references/backlog-the-design.md`; `implement-queue`
-Step 1 owns checklist eligibility.
+checklist line, the auto-commit) is `spec`'s `references/backlog-the-design.md`, which owns the
+checklist eligibility test (its forbidden-path test; `execution-gate` runs the same test and records the verdict).
 
 ## Step 4: Hand off to `/verify`
 

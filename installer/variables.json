@@ -51,7 +51,7 @@
       "kind": "default",
       "value": "Ready to implement",
       "substitution": true,
-      "description": "Heading text of the backlog section implement-queue reads as its work queue."
+      "description": "Heading text of the backlog section build and initiate read as the queue of approved designs."
     },
 
     "default_branch": {

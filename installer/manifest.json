@@ -148,7 +148,7 @@
     {
       "name": "initiate",
       "shelf": "process",
-      "description": "Session-start ranker - surveys tracked state (a live handoff primer, the implement-queue checklist, every design doc's own Kind/Status record), sorts everything by actionability, and closes by naming the correct next command.",
+      "description": "Session-start ranker - surveys tracked state (a live handoff primer, the Ready to implement checklist, every design doc's own Kind/Status record), sorts everything by actionability, and closes by naming the correct next command.",
       "files": [
         {
           "path": "process/skills/initiate/SKILL.md",
@@ -193,7 +193,7 @@
     {
       "name": "build",
       "shelf": "process",
-      "description": "Implement an approved spec doc - runs execution-gate automatically as its opening gate, then executes per the recorded strategy; runs implement-queue as its batch mode.",
+      "description": "Implement an approved spec doc - runs execution-gate automatically as its opening gate, then executes per the recorded strategy.",
       "files": [
         {
           "path": "process/skills/build/SKILL.md",
@@ -525,25 +525,6 @@
           "source_blob": null,
           "source_hash_type": null,
           "source_path": null
-        }
-      ]
-    },
-    {
-      "name": "implement-queue",
-      "shelf": "process",
-      "description": "Implement approved design docs in parallel worktrees with a bounded QA fix loop.",
-      "files": [
-        {
-          "path": "process/skills/implement-queue/SKILL.md",
-          "source_blob": "d66147c52168a67bc85fcfc581fe50662bfaaedf",
-          "source_hash_type": "git-blob",
-          "source_path": ".claude/skills/implement-queue/SKILL.md"
-        },
-        {
-          "path": "process/workflows/implement-queue.js",
-          "source_blob": "015f7a59728e83df384e5fbfab152b2303f03f6f7571fd452445d1ed4ae1c06e",
-          "source_hash_type": "sha256",
-          "source_path": "ClaudeCode/workflows/implement-queue.js"
         }
       ]
     },

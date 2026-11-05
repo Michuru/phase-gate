@@ -71,7 +71,7 @@
           },
           "prerequisite_note": {
             "type": "string",
-            "description": "Present only when status is skipped_prerequisite_missing - e.g. review-pr needs a gh remote, implement-queue needs Workflow/worktree support (D3 fail-fast)."
+            "description": "Present only when status is skipped_prerequisite_missing - e.g. review-pr needs a gh remote."
           },
           "citations": {
             "type": "array",

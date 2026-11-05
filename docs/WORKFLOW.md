@@ -49,7 +49,7 @@ closing the loop:
      +--------------------------------------------------------------------------------------+
 ```
 
-**Exempt from rule 5, deliberately**: `execution-gate`, `implement-queue`, `consolidate-docs`,
+**Exempt from rule 5, deliberately**: `execution-gate`, `consolidate-docs`,
 `review-pr` — automatic gates or narrow standalone utilities, not steps in the operator-facing chain
 the diagram above shows.
 
@@ -97,8 +97,8 @@ the doc's own `## Design review` section, whose heading names the actual reviewi
 ### 5. `/build` — implementation
 
 Two modes: **single-design** (the common case — implement one already-approved design doc) and
-**batch** (`implement-queue`, for several independent already-approved designs sitting on
-`BACKLOG.md`'s "Ready to implement" checklist).
+**checklist** (no design named: offer the approved designs sitting on `BACKLOG.md`'s "Ready to
+implement" checklist and build each pick one at a time, in this session).
 
 ### 6. Execution (automatic gate, inside `/build`)
 
@@ -121,7 +121,7 @@ survives two consecutive passes.
 For a work item with a deploy target (a `publish-*` skill exists for the tool): dispatches to that
 skill for the actual publish mechanics (check locally, copy from source of truth, confirm before
 visible to others, verify live), then owns archive-and-commit. For anything with no deploy target,
-archive-and-commit stays with whichever of `/backlog`/`implement-queue` produced the item — `/ship`
+archive-and-commit stays with `/backlog`'s archive step (which `/build`'s checklist mode also uses for each pick it builds) — `/ship`
 states this split explicitly rather than leaving it inferred.
 
 ### Back to `/backlog`
@@ -136,7 +136,7 @@ The operator's own context lifecycle — independent of which work-axis phase is
 fire at any point in it:
 
 - **`/initiate`** — session start. Surveys a live `handoff` primer, `BACKLOG.md`'s
-  implement-queue checklist, and every `Design Docs/` file's own `Kind:`/`Status:` record; routes
+  Ready to implement checklist, and every `Design Docs/` file's own `Kind:`/`Status:` record; routes
   to whichever is actually next, and always reports what's blocked and on whom.
 - **`/adopt`** — a one-time scoping-inventory pass for a project with real existing code or a
   scope/spec document but no `Design Docs/`/`BACKLOG.md` history yet. `/initiate` detects this case

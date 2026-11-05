@@ -26,13 +26,12 @@
           "initiate",
           "adopt",
           "build",
-          "implement-queue",
           "backlog",
           "end-task"
         ]
       },
       "external_prerequisites": [],
-      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/implement-queue/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself. end-task is soft since the 1.4.0 drift port: references/backlog-the-design.md's close-out line runs end-task's open-items check before saying a session is safe to clear, and the same line already recommends /end-task when the session has uncommitted work; without end-task installed the line's check is simply done by hand."
+      "notes": "Renamed from design-gate 2026-09-05 (two-axis SDLC redesign). Implementation (former Step 4) and the QA gate (former Step 5) moved out to their own skills, build and verify - spec no longer depends on code-reviewer directly at all, only on docs-writer for Step 6's docs-sync delegation. execution-gate is no longer a spec-stage dependency of any kind: /build now runs it automatically as its own opening gate, not an optional call spec's Step 3.5 merely recommends considering - see build's own entry for that edge. Step 0.5's scoping-inventory pointer was re-pointed 2026-09-06 (next-command-contract redesign) from initiate directly to adopt, the skill initiate itself now hands off to for that case - both are named in the step's own text (adopt as the owner, initiate as the skill that detects and routes there), so both are soft edges. initiate/adopt/build/backlog are pipeline-stage pointers to next-phase skills spec's own steps mention, not skills spec invokes itself. end-task is soft since the 1.4.0 drift port: references/backlog-the-design.md's close-out line runs end-task's open-items check before saying a session is safe to clear, and the same line already recommends /end-task when the session has uncommitted work; without end-task installed the line's check is simply done by hand."
     },
     "initiate": {
       "shelf": "process",
@@ -43,12 +42,11 @@
         ],
         "soft": [
           "adopt",
-          "spec",
-          "implement-queue"
+          "spec"
         ]
       },
       "external_prerequisites": [],
-      "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - bucket A's last rank is an unblocked BACKLOG.md item, handed off to backlog List mode, and the report's own closing line always names backlog as the alternative regardless of which bucket-A item ranks first. adopt/spec/implement-queue are soft: offered conditionally (the no-process-history case hands off to adopt entirely, per the 2026-09-06 next-command-contract redesign that moved the scoping-inventory body out of this skill; a queued design goes to spec; a non-empty checklist to implement-queue), never invoked unconditionally."
+      "notes": "handoff is hard: Step 1.1 invokes its incoming-mode scan unconditionally, no stated fallback. backlog is hard for a different reason - bucket A's last rank is an unblocked BACKLOG.md item, handed off to backlog List mode, and the report's own closing line always names backlog as the alternative regardless of which bucket-A item ranks first. adopt/spec are soft: offered conditionally (the no-process-history case hands off to adopt entirely, per the 2026-09-06 next-command-contract redesign that moved the scoping-inventory body out of this skill; a queued design goes to spec; a non-empty checklist is built one design at a time through build), never invoked unconditionally."
     },
     "adopt": {
       "shelf": "process",
@@ -85,12 +83,11 @@
           "verify"
         ],
         "soft": [
-          "implement-queue",
           "local-delegate"
         ]
       },
       "external_prerequisites": [],
-      "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. implement-queue is soft: batch mode is one of two mutually-exclusive entry paths (Step 0), and single-design mode - the common case - needs it not at all. local-delegate is soft: a Bucket A task flagged (local-delegate: implement) calls its runner script before drafting, but build is fully functional with the flag unset (the shipped default) or the component not installed at all - it just never fires."
+      "notes": "The renamed design's own headline change: /build runs execution-gate automatically as its opening gate, unconditionally, with no approval question and no stated fallback - a genuinely hard edge now, where the pre-redesign equivalent (design-gate considering execution-gate) was explicitly optional. Step 4 invokes /verify unconditionally once implementation finishes - also hard. local-delegate is soft: a Bucket A task flagged (local-delegate: implement) calls its runner script before drafting, but build is fully functional with the flag unset (the shipped default) or the component not installed at all - it just never fires."
     },
     "verify": {
       "shelf": "process",
@@ -112,7 +109,7 @@
         "soft": []
       },
       "external_prerequisites": [],
-      "notes": "No dependency edges of its own kind: Step 1's publish-* dispatch is to an adopter's own tool-specific skill, never a component this export ships, and is fully conditional with an explicit stated fallback ('most work items have nothing to publish'). Step 2's archive-and-commit is functionally identical to what backlog/implement-queue already do for a no-deploy-target item - ship doesn't invoke either of them, they're alternate owners of the same step for different cases, stated explicitly in all three skills' own text rather than left to be inferred."
+      "notes": "No dependency edges of its own kind: Step 1's publish-* dispatch is to an adopter's own tool-specific skill, never a component this export ships, and is fully conditional with an explicit stated fallback ('most work items have nothing to publish'). Step 2's archive-and-commit is functionally identical to what backlog already does for a no-deploy-target item - ship doesn't invoke it, they're alternate owners of the same step for different cases, stated explicitly in both skills' own text rather than left to be inferred."
     },
     "execution-gate": {
       "shelf": "process",
@@ -123,35 +120,11 @@
         ],
         "soft": [
           "spec",
-          "implement-queue",
           "backlog"
         ]
       },
       "external_prerequisites": [],
       "notes": "Planning-phase skill - it recommends which bucket (main model / docs-writer / code-reviewer / fork) each task should use, it doesn't invoke them itself. Hard edge reflects that its output is meaningless without those agents existing to delegate to. Invoked automatically by build now (see build's own entry) rather than being invoked by spec at all."
-    },
-    "implement-queue": {
-      "shelf": "process",
-      "depends_on": {
-        "hard": [
-          "code-reviewer",
-          "docs-writer",
-          "spec",
-          "backlog"
-        ],
-        "soft": [
-          "execution-gate",
-          "ship"
-        ]
-      },
-      "external_prerequisites": [
-        {
-          "name": "Workflow tool with worktree support",
-          "degrades": "fail-fast",
-          "note": "D3 (build spec section 0): no reduced sequential mode is shipped. The skill and the process/workflows/implement-queue.js script both assume this is available; state the precondition in the README rather than building a second implementation."
-        }
-      ],
-      "notes": "The .js workflow script (process/workflows/implement-queue.js) sets agentType: 'code-reviewer' / 'docs-writer' directly in its own agent() calls - confirmed by reading the built file, not inferred. spec/backlog are hard here because this skill's own checklist mechanism is meaningless without the upstream skills that populate and gate it. execution-gate is soft, not hard, for a corrected reason as of the two-axis redesign: it is no longer 'always optional' at all - build now runs it automatically and unconditionally - but implement-queue's own batch mode never invokes execution-gate directly itself; it only reads an already-filled execution-strategy section if one exists (written by build's automatic run, on a design implemented that way before reaching the queue) and works correctly without it. ship is soft: Step 5.4 dispatches archive-and-commit to it for a deploy-target item, conditionally, with an explicit stated fallback (do the archive move directly) for the no-deploy-target case."
     },
     "consolidate-docs": {
       "shelf": "process",

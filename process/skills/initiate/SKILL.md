@@ -1,6 +1,6 @@
 ---
 name: initiate
-description: "Session-start ranker: surveys the project's tracked state (live handoff primer, BACKLOG.md implement-queue checklist, Design Docs/ Kind/Status records), sorts by actionability, and names the correct next command for the top item. Use when the user types /initiate, asks \"what's going on,\" \"what should I work on,\" \"what's in flight,\" or wants to pick up where things left off."
+description: "Session-start ranker: surveys the project's tracked state (live handoff primer, BACKLOG.md Ready to implement checklist, Design Docs/ Kind/Status records), sorts by actionability, and names the correct next command for the top item. Use when the user types /initiate, asks \"what's going on,\" \"what should I work on,\" \"what's in flight,\" or wants to pick up where things left off."
 ---
 
 # Initiate: the session-start ranker
@@ -61,8 +61,8 @@ first one found, the way a signal ladder would:
 - **B — waiting on your decision.** Any `Status: blocked-on-user: <what>` item (including the legacy
   plain `blocked: <detail>` form). Cheap, high-leverage unblocks — one line each, named plainly. A
   decision only the user can make is functionally actionable, unlike bucket C.
-- **A — actionable now.** Ranked: live `handoff` primer (Step 1.1) → `implement-queue` checklist
-  (Step 1.3, if non-empty) → unblocked in-flight item (a `Kind: work-item` doc with `Status: running`
+- **A — actionable now.** Ranked: live `handoff` primer (Step 1.1) → Ready to implement checklist
+  (Step 1.3, if non-empty; its next command is `/build`) → unblocked in-flight item (a `Kind: work-item` doc with `Status: running`
   and no `blocked-on`/`blocked-on-user`) → unblocked `BACKLOG.md` item (hand off to `/backlog` List
   mode for the raw list; don't reimplement it here).
 
@@ -110,8 +110,8 @@ Start #1 with /spec, or /backlog for the full list?
   (`handoff` primers, `BACKLOG.md`'s checklist, Design Docs' own `Kind:`/`Status:` lines); it
   persists none of its own. This is why a scenario dry-run for cross-session state logic doesn't
   apply here — that's reserved for skills that do carry real state via an archive gate.
-- **Cross-reference, never duplicate.** If your setup has `end-task`, `handoff`, `backlog`, `adopt`,
-  and `implement-queue` skills, don't add a second copy here of anything those already own. If a
+- **Cross-reference, never duplicate.** If your setup has `end-task`, `handoff`, `backlog` and `adopt`
+  skills, don't add a second copy here of anything those already own. If a
   bucket's handling needs more explanation than the routing line above, that explanation belongs in
   the skill it routes to, not here.
 - **A clearly-biggest-tier planning request has skipped straight to `EnterPlanMode` without invoking

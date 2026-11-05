@@ -36,7 +36,7 @@ the installer rewrites every reference across the skills, the agents, and `metho
 | `mistakes_file` | `MISTAKES.md` | Process mistakes: how work was done wrongly, not what's broken in the code. |
 | `design_docs_dir` | `Design Docs/` | Where `spec` saves design documents. |
 | `notes_file_pattern` | `{tool}.NOTES.md` | Companion notes naming. `{tool}` is replaced with the component name. |
-| `checklist_section` | `Ready to implement` | The backlog heading `implement-queue` reads as its work queue. |
+| `checklist_section` | `Ready to implement` | The backlog heading `build` and `initiate` read as the queue of approved designs. |
 
 Two notes:
 
