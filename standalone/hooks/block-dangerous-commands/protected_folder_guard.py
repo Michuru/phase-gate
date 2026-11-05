@@ -9,7 +9,7 @@ boundary would be an operating-system permission, which is a separate decision.
 
 Config: protected-folders.json, `{"protected_folders": [<entry>, ...]}`. An entry is an absolute path string (the folder's
 last name is rule 0, every ancestor up to the drive root is protected, the path must exist), or an object
-`{"path": "<absolute path>", "tail": N, "optional": true}` (Design Docs/protected-folder-path-qualified-entries.md):
+`{"path": "<absolute path>", "tail": N, "optional": true}`:
 `tail` (default 1) is how many trailing path segments identify it in rule 0, so `work/companion` is matched in full and
 the bare word `work` is left alone; an object entry's ancestors stop at its own parent; a relative path word that lands
 inside it (from the cwd or after a `cd`) is denied; `optional` only means "do not raise when the path is missing" (the

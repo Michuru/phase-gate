@@ -1315,7 +1315,7 @@ def test_variables_that_grow_ten_fold_per_step_cannot_stall_the_hook(fake, tool)
 
 
 # ---------------------------------------------------------------- path-qualified entries, optional paths, 8.3 short names
-# Design Docs/protected-folder-path-qualified-entries.md. A config entry may be {"path": ..., "tail": N, "optional": true}.
+# A config entry may be {"path": ..., "tail": N, "optional": true} (path-qualified entries).
 
 def _entry(path, tail=None, optional=None):
     e = {"path": str(path)}
