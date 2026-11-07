@@ -260,8 +260,11 @@
       "shelf": "standalone",
       "depends_on": {
         "hard": [],
-        "soft": []
+        "soft": [
+          "block-dangerous-commands"
+        ]
       },
+      "notes": "The protected-folder check runs only when protected_folder_guard.py (installed with block-dangerous-commands) sits in the same hooks folder as this hook, and says nothing otherwise; a guard installed user-level needs this hook installed user-level beside it (see its README).",
       "external_prerequisites": [
         {
           "name": "python3 or python on PATH",

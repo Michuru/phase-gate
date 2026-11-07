@@ -40,6 +40,16 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   path forms, `findstr`, tests that need a second temp location), 0 failed.
 
 ### Added
+- `hooks-health-check`: if the `block-dangerous-commands` protected-folder option is installed beside
+  it, the session-start check now reports a protected-folders config that does not parse, or a
+  `--config` file that is missing (the guard denies every Grep, Glob and recursive shell command until
+  it is fixed). With the guard absent or no config found it says nothing. `python
+  hooks-health-check.py --report` prints the entries by mode and lists optional entries whose folder
+  is missing on disk, and from a project folder it also reads the project-level config. The config
+  file can be named by a new `PROTECTED_FOLDERS_CONFIG` constant or by `--config <file>` on the
+  hook's own command line (`~` and `$HOME` expanded). A guard from before optional entries is
+  tolerated (counts are reported as unavailable). Checked by a throwaway-copy run that covers each of
+  these cases and an independent Opus review (11 findings, all addressed); the run is not shipped.
 - `block-dangerous-commands`, protected-folder option: a config entry can now be an object,
   `{"path": ..., "tail": N, "optional": true}`. `tail` matches the folder by its last N path segments
   (so `acme/work` is caught and the bare word `work` is not), `optional` stops a missing path from

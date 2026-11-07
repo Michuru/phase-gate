@@ -413,11 +413,11 @@
     {
       "name": "hooks-health-check",
       "shelf": "standalone",
-      "description": "SessionStart hook: verifies core.hooksPath and required git hooks are actually wired up.",
+      "description": "SessionStart hook: verifies core.hooksPath and required git hooks are actually wired up, and, when the protected-folder guard sits beside it, that the guard's config is sound.",
       "files": [
         {
           "path": "standalone/hooks/hooks-health-check/hooks-health-check.py",
-          "source_blob": "9d84d17665b8aaacf6a965c9155d608e7f6592bc",
+          "source_blob": "27cb0519bf06b4f50db1d61687429d13a96fee32",
           "source_hash_type": "git-blob",
           "source_path": ".claude/scripts/hooks-health-check.py"
         },
