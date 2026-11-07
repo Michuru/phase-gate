@@ -9,6 +9,8 @@ window. Fires a systemMessage once per debounce tier (35/50/60/70/80/90) per
 session, never more often.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import sys

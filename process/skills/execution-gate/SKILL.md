@@ -42,9 +42,8 @@ rewrites history/state the rest depend on — a dependency chain, not a concurre
 **Run a second, independent check here too: whole-design checklist eligibility — not just Bucket
 E's parallel-worthiness.** Any touched path under
 `CLAUDE.md`, `BACKLOG.md`, `BACKLOG_ARCHIVE.md`, `MISTAKES.md`, or anything under `.claude/` (skills,
-workflows, settings, hooks) is a forbidden path. This is a conservative rule carried over from the
-retired parallel queue, whose harvest step rejected those paths; a parallel `Workflow`'s harvest
-(Bucket E) would flag the same paths. It is the same test `spec`'s `references/backlog-the-design.md`
+workflows, settings, hooks) is a forbidden path. This is a conservative rule: a checklist design must
+not touch these paths, and a parallel `Workflow`'s harvest (Bucket E) would flag the same paths. It is the same test `spec`'s `references/backlog-the-design.md`
 owns, run here so the verdict is recorded. If **any** task in this design's own breakdown touches one of those paths, the **whole design**
 is disqualified from `BACKLOG.md`'s "Ready to implement" checklist — independent of Step 1's
 parallelization test above, and regardless of how independent the design's own tasks are from each other.

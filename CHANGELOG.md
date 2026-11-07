@@ -7,6 +7,20 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+### Fixed
+- `context-usage-nudge`: the script used the `int | None` annotation form at definition time, which
+  stops it on Python 3.9 (it needs 3.10). It now imports `from __future__ import annotations`, so the
+  annotation is never evaluated and the script no longer needs 3.10 for it. Read from the source, not
+  run on 3.9 (no 3.9 interpreter was available).
+- `build`, checklist mode: a pick that blocks (an owner question, a failed `/verify`) now gets a
+  `## Build — blocked: <what, on whom>` record, stays on the checklist, and the next pick starts only
+  after the owner says whether to go on. Before, the text said what to skip and how to close each pick
+  out, but not what to do when one stops.
+- `execution-gate`: one sentence still pointed at the retired parallel queue; it now states the rule
+  without naming a skill this export no longer ships.
+- The 1.5.0 "Removed" entry no longer says the hand-edited skills are un-pinned (the drift round
+  re-pinned them).
+
 ## [1.5.0] - 2026-11-06
 
 ### Fixed
@@ -108,7 +122,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
   whose phase record already says `## Build — done` or `## Shipped`; `execution-gate` keeps its
   checklist-eligibility check, worded without the queue. `initiate`, `ship`, `verify`, `spec`'s
   `backlog-the-design.md`, the docs and the explainer page no longer describe it. The hashes of the hand-edited
-  skills are not re-pinned, so `drift_check.py` still lists them for the next drift round.
+  skills were left un-pinned at first and are re-pinned in the 2026-11-06 drift round (see Decided, not
+  ported).
 
 ### Decided, not ported
 Reviewed and deliberately left in the source repo, with the manifest hashes re-pinned so

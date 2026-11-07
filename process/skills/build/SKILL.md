@@ -20,7 +20,9 @@ pick one at a time, in this session) — decided by what's actually being asked 
   designs plus an "all of these" option), then take the picks one at a time: Steps 1 to 4 below for
   each, and close each pick out before the next starts: after `/verify`, commit it, then archive its
   `BACKLOG.md` entry and remove its checklist line (`/ship` when the tool has a deploy target,
-  otherwise `backlog`'s archive step), so a built design never stays on the checklist.
+  otherwise `backlog`'s archive step), so a built design never stays on the checklist. **A pick that
+  blocks** (an owner question, a failed `/verify`) gets a `## Build — blocked: <what, on whom>` record in
+  its design, stays on the checklist, and the next pick starts only after the owner says whether to go on.
   **A design whose phase record already says `## Build — done` or `## Shipped`** is reported as
   already built and left out of the picks (a `done` heading whose task range does not cover every
   task in the design, such as `## Build — done, tasks 1-4` of 12, is partial and does not count).
