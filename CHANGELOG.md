@@ -146,6 +146,19 @@ Reviewed and deliberately left in the source repo, with the manifest hashes re-p
   of the source repo, which is not exported, so the two files stay drifted on purpose and the hashes are
   re-pinned. The first live use of `/handoff from-session` happened 2026-11-01 on the source repo with
   no defect, which was the revisit condition of the entry above.
+- Drift round of 2026-11-06, nine components re-pinned after the owner declined each change (decided
+  2026-11-06):
+  - `build`, `verify`, `execution-gate`, `initiate`: wording that describes the source repo's queue run
+    (several designs built from one window, a design-scoped diff and an away mode for the reviewer). The
+    export has no queue run, and the hand edit that removed `implement-queue` already reworded their
+    checklist parts.
+  - `end-task`: the "primer consume" and "claims release" wording at the checkpoint and final-route steps.
+    The export has no claims.
+  - `backlog`: one sentence naming chain mode's next-command and snooze rules. The export has no chain mode.
+  - `spec` (`design-review-gate.md`, `backlog-the-design.md`): ration-mode wording, decided on 2026-11-01.
+  - `handoff` and `references/incoming.md`: the "Name the window" step (suggest a `/rename` when a window
+    is unnamed). It mentions chain-run primers and claims, which the export does not carry, so it cannot
+    be copied as written. Revisit if an adapted version is wanted.
 
 ## [1.4.0] - 2026-10-24
 

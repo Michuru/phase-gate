@@ -152,7 +152,7 @@
       "files": [
         {
           "path": "process/skills/initiate/SKILL.md",
-          "source_blob": "18d05887088c859d1bd9d99ceca8cbfa6e2e167d",
+          "source_blob": "d58bfccbee1c5577b2e2ec5695c53f833431e8a0",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/initiate/SKILL.md"
         }
@@ -178,7 +178,7 @@
       "files": [
         {
           "path": "process/skills/end-task/SKILL.md",
-          "source_blob": "c405787998ff2f8f95f8b6dd61182c23ef370a19",
+          "source_blob": "26428ce726b2784ec756f4199c9c02607da5a142",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/end-task/SKILL.md"
         },
@@ -197,7 +197,7 @@
       "files": [
         {
           "path": "process/skills/build/SKILL.md",
-          "source_blob": "fa2783aceb4d877c76d0add11ae515db4490f995",
+          "source_blob": "398e41b3cc922f743507fb9dc89ae9ef829683a9",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/build/SKILL.md"
         }
@@ -210,7 +210,7 @@
       "files": [
         {
           "path": "process/skills/verify/SKILL.md",
-          "source_blob": "f0b95aee6b8df3e424c4299b40b70f43fe2cafe4",
+          "source_blob": "37f9babf08d4cac17f18d168142fd5c0992d2bff",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/verify/SKILL.md"
         }
@@ -223,7 +223,7 @@
       "files": [
         {
           "path": "process/skills/ship/SKILL.md",
-          "source_blob": "94623b3a7e6cf95678ee6253db182f2bddec5005",
+          "source_blob": "e1a748150be44aea496791b67a5575300af30d69",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/ship/SKILL.md"
         }
@@ -329,7 +329,7 @@
         },
         {
           "path": "process/skills/spec/references/design-review-gate.md",
-          "source_blob": "e22bb1621321dbc9a4f7e34093b51392c993df8a",
+          "source_blob": "75174be43b879fb2c70465bacf46f9212f4329ed",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/references/design-review-gate.md"
         },
@@ -347,7 +347,7 @@
         },
         {
           "path": "process/skills/spec/references/backlog-the-design.md",
-          "source_blob": "0a57741464a91d76a8af6b494c529247b2717936",
+          "source_blob": "26899a5f419621d5300b6e1489a124babb68608d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/spec/references/backlog-the-design.md"
         }
@@ -373,7 +373,7 @@
       "files": [
         {
           "path": "process/skills/execution-gate/SKILL.md",
-          "source_blob": "a605560ad0ffd209375bc934d568a6bbbcaa8264",
+          "source_blob": "4bd2b672833dc91621eb557fa56b737dbcf06a8d",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/execution-gate/SKILL.md"
         }
@@ -386,13 +386,13 @@
       "files": [
         {
           "path": "process/skills/handoff/SKILL.md",
-          "source_blob": "84ca84dddeda61d08425c4f22e55b0879690b0a8",
+          "source_blob": "f556ecba955b268af796ba1e30465e2cd6781dd2",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/SKILL.md"
         },
         {
           "path": "process/skills/handoff/references/incoming.md",
-          "source_blob": "d41d1fcee236a10c7a59d76b234d7350c598cad6",
+          "source_blob": "e832f4a387701ca017a4ff0a32ee2b863490fc25",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/handoff/references/incoming.md"
         },
@@ -629,7 +629,7 @@
       "files": [
         {
           "path": "process/skills/backlog/SKILL.md",
-          "source_blob": "bcfcdf865aa5f6ce720acf7eaa6c158f00fa7d2d",
+          "source_blob": "d3bcd284e41bf22c3c07f0a98bdc8575fb9ea78b",
           "source_hash_type": "git-blob",
           "source_path": ".claude/skills/backlog/SKILL.md"
         }
