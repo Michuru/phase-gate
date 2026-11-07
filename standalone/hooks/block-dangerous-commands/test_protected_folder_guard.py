@@ -666,6 +666,53 @@ def test_windows_switches_of_native_tools_are_not_drive_letters(fake):
     assert run_hook(PS, "attrib /s %s%s*" % (fake.home, BS), cfg=fake.cfg, cwd=other, env=fake.env) is not None
 
 
+@windows_only
+def test_git_bash_doubled_slash_switches_are_recursion_markers(fake):
+    """Under Git Bash a Windows switch is written with a doubled slash (//s, //t, //r) so MSYS leaves it alone; the guard
+    reads it as the single-slash switch, so a recursive command above a protected folder is still denied."""
+    home, other = str(fake.home).replace(BS, "/"), str(fake.other).replace(BS, "/")
+    for cmd in ["dir //s %s", "attrib //s %s/*", "icacls %s //t", "takeown //r //f %s", "findstr //s //c:hello %s/*",
+                "where //r %s x"]:
+        assert run_hook(BASH, cmd % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None, "not denied: " + cmd
+        assert run_hook(BASH, cmd % other, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied: " + cmd
+    # grep and rg take no slash switches: a pattern such as //go:build is a pattern, so the path after it is still judged
+    for cmd in ["grep -rn //go:build %s", "rg //go %s", "rg -n //go %s", "grep -r //fix %s"]:
+        assert run_hook(BASH, cmd % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None, "not denied: " + cmd
+        assert run_hook(BASH, cmd % other, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied: " + cmd
+
+
+@windows_only
+def test_combined_switches_and_cmd_double_slash_wrapper_are_seen(fake):
+    """bf1c655b: switches run together (dir /s/b, dir /b/s, attrib /s/d, Git Bash dir //s//b) are recursion markers, and
+    `cmd //c <command>` (Git Bash's form of cmd /c) is a wrapper, so the inner command is judged."""
+    home, other = str(fake.home).replace(BS, "/"), str(fake.other).replace(BS, "/")
+    for tool, cmd in [(BASH, "dir //s//b %s"), (BASH, "dir //b//s %s"), (BASH, "attrib //s//d %s/*"),
+                      (PS, "dir /s/b %s"), (PS, "dir /b/s %s"), (PS, "attrib /s/d %s/*"),
+                      (BASH, "cmd //c dir /s/b %s"), (BASH, "cmd //c dir //s %s"), (BASH, 'cmd //c "dir /s /b %s"'),
+                      (PS, "cmd /c dir /s/b %s")]:
+        assert run_hook(tool, cmd % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None, "not denied: " + cmd
+        assert run_hook(tool, cmd % other, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied: " + cmd
+    # a plain path made of short pieces is not split into switches
+    assert run_hook(BASH, "ls /usr/bin", cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None
+    # QA finding 2: a minus or colon inside a run-together switch (/a-d, /o-d, /a:d) is still one switch
+    for tool, cmd in [(PS, "dir /s/b/a-d %s"), (PS, "dir /b/s/a-d %s"), (PS, "dir /a-d/s %s"), (PS, "dir /s/o-d %s"),
+                      (PS, "dir /a:d/s %s"), (BASH, "dir //s//b//a-d %s"), (BASH, 'cmd //c "dir /s/b/a-d %s"')]:
+        assert run_hook(tool, cmd % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None, "not denied: " + cmd
+        assert run_hook(tool, cmd % other, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied: " + cmd
+    # QA finding 1: no path argument, cwd above the protected folder: the combined form is judged like the separated one
+    for tool, cmd in [(PS, "dir /s/b"), (PS, "dir /b/s"), (PS, "attrib /s/d"), (PS, "cmd /c dir /s/b"), (PS, "icacls * /t/c"),
+                      (BASH, "dir //s//b"), (BASH, "cmd //c dir /s/b"), (BASH, "icacls * //t//c")]:
+        assert run_hook(tool, cmd, cfg=fake.cfg, cwd=str(fake.home), env=fake.env) is not None, "not denied at ancestor cwd: " + cmd
+        assert run_hook(tool, cmd, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied below: " + cmd
+    assert run_hook(BASH, "cd %s && cmd //c dir /s/b" % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None
+    # QA finding 3: findstr with run-together switches keeps its pattern, so a root-looking pattern is not read as a path
+    for tool, cmd in [(PS, "findstr /s/i J:/ %s/*"), (PS, "findstr /s/i %s %s/*"), (BASH, "findstr //s//i J:/ %s/*")]:
+        n = cmd.count("%s")
+        assert run_hook(tool, cmd % ((other,) * n), cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is None, "wrongly denied: " + cmd
+    assert run_hook(PS, "findstr /s/i foo *", cfg=fake.cfg, cwd=str(fake.home), env=fake.env) is not None
+    assert run_hook(PS, "findstr /s/c:foo %s/*" % home, cfg=fake.cfg, cwd=str(fake.other), env=fake.env) is not None
+
+
 def test_findstr_c_gives_the_pattern_so_the_next_word_is_a_path(fake):
     if not WIN:
         pytest.skip("findstr is Windows-only")

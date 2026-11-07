@@ -8,6 +8,13 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 ## [Unreleased]
 
 ### Fixed
+- `block-dangerous-commands`, protected-folder option: two ways past the recursion check. A switch run
+  together with another (`dir /s/b`, `dir /b/s`, `attrib /s/d`, and Git Bash's `//s//b`) was not read as
+  a switch, because the marker test compared whole tokens; each switch is now read. And `cmd //c` and
+  `cmd //k` (the Git Bash spelling) are now seen as a wrapper for the command that follows. The
+  fallback recursion pattern also reads `//s`, `//r` and `//t`. The source repo's matching hosted-run
+  rule is not part of the export. One known over-deny: two short path segments such as `tree /a/b` read
+  as run-together switches when the working folder is above a protected folder.
 - `block-dangerous-commands`, protected-folder option: a protected folder reachable through its
   Windows 8.3 short name (`COMPAN~1`) was getting through. The short spelling of each existing
   protected path is now matched wherever the long name is. Only volumes that generate short names are

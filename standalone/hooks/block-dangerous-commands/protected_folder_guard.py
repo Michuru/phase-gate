@@ -890,7 +890,7 @@ def _command_positions(seg):
             # from the command, so offer every early word as a command position (the unrelated ones match nothing)
             for tm in list(re.finditer(r"\S+", args))[:8]:
                 tk = tm.group(0).strip("'\"")
-                if tk.startswith("-") or "=" in tk or tk.lower() in ("/c", "/k") or tk.isdigit():
+                if tk.startswith("-") or "=" in tk or tk.lower() in ("/c", "/k", "//c", "//k") or tk.isdigit():
                     continue
                 w2 = re.split(r"[\\/]", tk)[-1].lower()
                 out.append((w2[:-4] if w2.endswith((".exe", ".com")) else w2, args[tm.end():]))
@@ -909,7 +909,7 @@ def _strip_switch_flags(text):
     if any(w in windows_native or (w in ("dir", "tree") and _TOOL_CTX[0] != "Bash") for w in words):
         text = re.sub(r"(?<![\w.:/\\$\-])/[A-Za-z](?![\w.\-/\\])", " ", text)
     if "cmd" in words or re.search(r"(?i)\bcmd(?:\.exe)?['\"]\s*,\s*['\"]/[ck]", text):
-        text = re.sub(r"(?i)(?<=\s)/[ck](?=\s)", " ", text)
+        text = re.sub(r"(?i)(?<=\s)//?[ck](?=\s)", " ", text)
         text = re.sub(r"(?i)(\bcmd(?:\.exe)?['\"]\s*,\s*['\"])/[ck](?=['\"])", r"\1 ", text)
     return text
 
@@ -939,13 +939,13 @@ def _grep_drops(first, toks):
         elif t.startswith(("--regexp=", "--file=")) or (re.match(r"-[ef]", t) and len(t) > 2 and not t.startswith("--")):
             drops.add(i)                                       # the pattern is attached to its flag: -esalary
             have_pattern = True
-        elif first == "findstr" and re.match(r"/[cg]:", t, re.IGNORECASE):
+        elif first == "findstr" and any(re.match(r"/[cg]:", _undouble(p), re.IGNORECASE) for p in _split_switches(t)):
             drops.add(i)                                       # findstr /c:"text" or /g:file gives the pattern: no plain word is one
             have_pattern = True
     if not have_pattern:
         for i, t in enumerate(toks[1:], 1):
-            if t.startswith("-") or re.fullmatch(r"/[A-Za-z?]{1,3}(?::\S*)?", t):
-                continue                                       # a flag (findstr's /s and /i included)
+            if t.startswith("-") or (first == "findstr" and _is_switch(t)):
+                continue                                       # a flag (only findstr takes slash switches: /s /i, or //s under Git Bash)
             drops.add(i)                                       # the first plain word is the pattern
             break
     return drops
@@ -973,7 +973,7 @@ def _seg_rooted(seg, tool, cwd, first_in_pipe=True, feeds=False):
         return True
     has_path, plain_seen = False, 0
     for t in _tokens(text)[1:]:
-        if t.startswith("-") or re.fullmatch(r"/[A-Za-z?]{1,3}(?::\S*)?", t):
+        if t.startswith("-") or _is_switch(t):
             continue
         plain_seen += 1
         if t in ("\\", "/") and (not slash_ok or (plain_seen > 1 and IS_WINDOWS)):
@@ -1011,8 +1011,35 @@ def _depth_limited(word, toks):
     return False
 
 
+def _undouble(t):
+    """Under Git Bash a Windows switch is written with a doubled slash (//s, //t, //r, //c:x) so MSYS leaves it alone; read
+    it as the single-slash switch. Only two slashes then up to three letters count, so //server/share stays a path."""
+    return re.sub(r"^//(?=[A-Za-z?]{1,3}(?::\S*)?$)", "/", t)
+
+
+# one switch piece: a single letter, optionally with a minus (/a-d, /o-d) or a colon value (/a:d, /c:text); pieces of three
+# letters (/usr, /bin) are paths, so /usr/bin is never split
+_SWITCH_PIECE = r"//?[A-Za-z?](?:-?[A-Za-z]|:[^/\s]*)?"
+
+
+def _split_switches(t):
+    """cmd.exe takes switches run together (/s/b, /b/s/a); under Git Bash they are doubled (//s//b). Two or more short
+    switches in one token are read as separate switches, so `dir /s/b` is seen as recursive. A longer path (/usr/local) is
+    not split: each piece may hold at most three letters and the pieces must rebuild the whole token."""
+    parts = re.findall(_SWITCH_PIECE, t)
+    if len(parts) >= 2 and "".join(parts) == t:
+        return [_undouble(p) for p in parts]
+    return [t]
+
+
+def _is_switch(t):
+    """One slash switch (/s, //s under Git Bash, /a:d) or several run together (/s/b, /s/b/a-d, //s//b)."""
+    return bool(re.fullmatch(r"/[A-Za-z?]{1,3}(?::\S*)?", _undouble(t))) or len(_split_switches(t)) > 1
+
+
 def _marker(word, args, tool):
-    raw = [t.strip("'\"`)}];,") for t in args.split()]        # `& ([scriptblock]::Create('gci J:\ -r'))` leaves -r' attached
+    raw = [_undouble(t.strip("'\"`)}];,")) for t in args.split()]        # `& ([scriptblock]::Create('gci J:\ -r'))` leaves -r' attached
+    raw = [p for t in raw for p in _split_switches(t)]                    # /s/b, /b/s, //s//b: switches run together
     low = [t.lower() for t in raw]
     if word in ("find", "rg", "fd", "fdfind") and _depth_limited(word, _tokens(args)):
         return False
@@ -1048,7 +1075,7 @@ def _has_marker(infos, seg, tool):
 
 def _is_sink(seg, direct, tool):
     low = re.sub(r"&\s*(['\"])([^'\"]*)\1", r"& \2", seg)                         # & "Get-ChildItem" runs the command
-    low = re.sub(r"(?i)(/c|-c|-command)\s+(['\"])(.*?)\2", r"\1 \3", low)         # cmd /c "dir ..." runs it too
+    low = re.sub(r"(?i)(//?c|-c|-command)\s+(['\"])(.*?)\2", r"\1 \3", low)        # cmd /c "dir ..." runs it too
     low = re.sub(r"'[^']*'|\"[^\"]*\"", "''", low).lower()                        # any other word in a string is not a command
     if re.search(r"(?<![\w-])(?:get-childitem|gci|get-content|gc|get-item|resolve-path|find|ls|dir)(?![\w-])"
                  r"|\[io\.directory\]|system\.io\.directory|getfiles|getdirectories|enumeratefiles"
@@ -1072,6 +1099,7 @@ def _is_sink(seg, direct, tool):
         if word in _GREPS:
             pattern_seen = False
             for t in _tokens(args):
+                t = _undouble(t)
                 if re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive|/s", t, re.IGNORECASE):
                     return True
                 if t.startswith("-") or re.fullmatch(r"/[A-Za-z?]{1,3}", t):
@@ -1560,10 +1588,10 @@ def _scan_statement(s, tool, st, depth):
                 inner = ("PowerShell" if any(w in ("powershell", "pwsh", "cmd", "start-process") for w in words)
                          else "Bash" if any(w in ("bash", "sh", "wsl") for w in words) else tool)
                 nested = [a or b for a, b in re.findall(r"\"([^\"]*)\"|'([^']*)'", seg)]
-                tail = re.search(r"\s(?:-c|-command|/c)\s+(.*)$", seg, re.S | re.IGNORECASE)
+                tail = re.search(r"\s(?:-c|-command|//?c)\s+(.*)$", seg, re.S | re.IGNORECASE)
                 if tail:
                     nested.append(tail.group(1))
-                nested += [re.sub(r"(?i)^\s*(?:/[ck]|-c|-command)\s+", "", t) for t in nested]    # Start-Process cmd -ArgumentList '/c dir ...'
+                nested += [re.sub(r"(?i)^\s*(?://?[ck]|-c|-command)\s+", "", t) for t in nested]    # Start-Process cmd -ArgumentList '/c dir ...'
                 if any(_scan_text(t, inner, st[0], depth + 1, st[1]) for t in nested):
                     return True
         if any(_scan_text(g, tool, st[0], depth + 1, st[1]) for g in _groups(s)):
@@ -1702,7 +1730,7 @@ def _any_marker_inner(text, tool, depth=0):
             return True
         for seg in segs:
             nested = [a or b for a, b in re.findall(r"\"([^\"]*)\"|'([^']*)'", seg)]
-            tail = re.search(r"\s(?:-c|-command|/c)\s+(.*)$", seg, re.S | re.IGNORECASE)
+            tail = re.search(r"\s(?:-c|-command|//?c)\s+(.*)$", seg, re.S | re.IGNORECASE)
             if tail:
                 nested.append(tail.group(1))
             if any(_any_marker(n, "Bash", depth + 1) for n in nested) or any(_any_marker(g, tool, depth + 1) for g in _groups(seg)):

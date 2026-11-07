@@ -150,7 +150,7 @@ def _config_wanted():
 _NAMED_CONFIG = _config_wanted()
 _FALLBACK_RECURSION = re.compile(
     r"(?i)(?<![\w.\-])(?:find|rg|fd|fdfind|tree|du|tar|7z|7za|rsync|robocopy|xcopy|ag|ack|locate|compress-archive)(?:\.exe)?(?![\w.\-])"
-    r"|\s-(?=[a-z]*[rs])[a-z]{1,4}(?![\w\-])|\s-rec\w*|\s--recursive\b|\s/[srt](?![\w\-:])"      # -r -rn -lR -rf -s, -Recurse, /s /r /t
+    r"|\s-(?=[a-z]*[rs])[a-z]{1,4}(?![\w\-])|\s-rec\w*|\s--recursive\b|\s//?[srt](?![\w\-:])"      # -r -rn -lR -rf -s, -Recurse, /s /r /t (//s under Git Bash)
     r"|(?<![\w.\-])cp\s+(?:-[a-z]+\s+)*-[a-z]*a|\bshutil\.(?:copytree|make_archive)\b"
     r"|\bos\.walk\b|\brglob\b|\bwalk_files\b|\bget-childitem\b|\bgci\b")
 
