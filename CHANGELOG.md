@@ -7,6 +7,8 @@ Notable changes, tagged as GitHub releases when they land. Format loosely follow
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-06
+
 ### Fixed
 - `block-dangerous-commands`, protected-folder option: two ways past the recursion check. A switch run
   together with another (`dir /s/b`, `dir /b/s`, `attrib /s/d`, and Git Bash's `//s//b`) was not read as
